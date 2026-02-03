@@ -165,7 +165,7 @@ void cactus_attention_f16(
         scale = 1.0f / sqrtf(static_cast<float>(head_dim));
     }
     
-    if (head_dim == 64 && (head_dim % 8 == 0)) {
+    if (head_dim == 64 && mask == nullptr && window_size == 0) {
         cactus_attention_f16_h64(
             queries, keys, values, output,
             batch_size, seq_len, kv_seq_len,
