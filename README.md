@@ -97,7 +97,7 @@ graph.hard_reset();
 | Device | LFM2.5-1.2B<br>(1k-Prefill/100-Decode) | LFM2.5-VL-1.6B<br>(256px-Latency & Decode) | Whisper-Small<br>(30s-audio-Latency & Decode)
 |--------|--------|--------|----------|
 | Mac M4 Pro | 582/77 tps| 0.2s & 76tps | 0.1s & 111tps |
-| iPad/Mac M4 | - | - | - |
+| iPad/Mac M4 Air | 379tps/46tps (30MB RAM) | 1.47s/46tps (53MB RAM) | 1.21s/100tps (122MB RAM) |
 | iPhone 17 Pro | 300/33 tps | 0.3s & 33tps | 0.3s & 114tps |
 | Galaxy S25 Ultra | 226/36 tps | 2.6s & 33tps | 2.3s & 90tps |
 | Pixel 10 Pro | - | - | - |
