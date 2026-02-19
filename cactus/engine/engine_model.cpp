@@ -241,12 +241,7 @@ uint32_t Model::decode(const std::vector<uint32_t>& tokens, float temperature, f
 
     gb->execute(profile_file);
 
-    static const bool disable_entropy = []() {
-        const char* env = std::getenv("CACTUS_DISABLE_ENTROPY");
-        return env && std::atoi(env) != 0;
-    }();
-
-    if (out_entropy && !disable_entropy) {
+    if (out_entropy) {
         const auto& logits_buf = gb->get_output_buffer(logits_node_id);
         void* logits_ptr = gb->get_output(logits_node_id);
         size_t vocab_size = logits_buf.shape.back();
@@ -286,8 +281,6 @@ uint32_t Model::decode(const std::vector<uint32_t>& tokens, float temperature, f
 
         double max_entropy = std::log(static_cast<double>(vocab_size));
         *out_entropy = static_cast<float>(entropy / max_entropy);
-    } else if (out_entropy) {
-        *out_entropy = 0.0f;
     }
 
     post_execute_updates(gb, tokens.size());
@@ -647,14 +640,6 @@ bool Model::has_npu_prefill() const {
 }
 
 size_t Model::get_prefill_chunk_size() const {
-    const char* env_chunk = std::getenv("CACTUS_PREFILL_CHUNK_SIZE");
-    if (env_chunk) {
-        long parsed = std::strtol(env_chunk, nullptr, 10);
-        if (parsed > 0) {
-            return static_cast<size_t>(parsed);
-        }
-    }
-
     if (has_npu_prefill()) {
         return static_cast<size_t>(npu_prefill_->get_chunk_size());
     }

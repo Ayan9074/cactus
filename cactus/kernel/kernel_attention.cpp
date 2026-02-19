@@ -6,21 +6,11 @@
 #include <limits>
 #include <cstring>
 #include <vector>
-#include <cstdlib>
 #include <cstdint>
 
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
 #endif
-
-static inline bool cactus_attention_use_int8_score_path() {
-    static const bool enabled = []() {
-        const char* env = std::getenv("CACTUS_ATTN_INT8_SCORE");
-        if (!env) return true;
-        return std::atoi(env) != 0;
-    }();
-    return enabled;
-}
 
 static inline void cactus_quantize_query_groupwise(
     const __fp16* q_vec,
@@ -807,7 +797,7 @@ void cactus_attention_hybrid_int8_fp16(
                 const __fp16* q_vec = Q_base + q_pos * q_seq_stride + q_head_idx * head_dim;
                 __fp16* o_vec = O_base + q_pos * o_seq_stride + q_head_idx * head_dim;
                 const bool use_int8_score_path =
-                    (seq_len == 1) && (cache_len > 0) && (quant_group_size > 0) && cactus_attention_use_int8_score_path();
+                    (seq_len == 1) && (cache_len > 0) && (quant_group_size > 0);
                 if (use_int8_score_path) {
                     cactus_quantize_query_groupwise(
                         q_vec,
