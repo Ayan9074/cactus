@@ -376,7 +376,7 @@ void cactus_gemm_int8(
 ) {
     if (M == 0 || K == 0 || N == 0) return;
 
-    constexpr size_t TILE_M = 4;
+    constexpr size_t TILE_M = 8;
     constexpr size_t TILE_N = 4;
 
     const size_t num_groups = K / group_size;
@@ -397,34 +397,96 @@ void cactus_gemm_int8(
                 const size_t actual_m = m_end - m_start;
                 const size_t actual_n = n_end - n_start;
 
-                float32x4_t running_sum[TILE_M] = {
-                    vdupq_n_f32(0.0f), vdupq_n_f32(0.0f),
-                    vdupq_n_f32(0.0f), vdupq_n_f32(0.0f)
-                };
+                float32x4_t running_sum[TILE_M];
+                for (size_t mi = 0; mi < TILE_M; ++mi) {
+                    running_sum[mi] = vdupq_n_f32(0.0f);
+                }
 
-                for (size_t g = 0; g < num_groups; g++) {
+                size_t g = 0;
+                for (; g + 1 < num_groups; g += 2) {
+                    const size_t k_base0 = g * group_size;
+                    const size_t k_base1 = (g + 1) * group_size;
+                    const int8_t* b_base0 = B + (n_block * K + k_base0) * 4;
+                    const int8_t* b_base1 = B + (n_block * K + k_base1) * 4;
+
+                    __builtin_prefetch(b_base0 + group_size * 8, 0, 3);
+
+                    int8x16_t b000 = vld1q_s8(b_base0);
+                    int8x16_t b001 = vld1q_s8(b_base0 + 16);
+                    int8x16_t b002 = vld1q_s8(b_base0 + 32);
+                    int8x16_t b003 = vld1q_s8(b_base0 + 48);
+                    int8x16_t b010 = vld1q_s8(b_base0 + 64);
+                    int8x16_t b011 = vld1q_s8(b_base0 + 80);
+                    int8x16_t b012 = vld1q_s8(b_base0 + 96);
+                    int8x16_t b013 = vld1q_s8(b_base0 + 112);
+
+                    int8x16_t b100 = vld1q_s8(b_base1);
+                    int8x16_t b101 = vld1q_s8(b_base1 + 16);
+                    int8x16_t b102 = vld1q_s8(b_base1 + 32);
+                    int8x16_t b103 = vld1q_s8(b_base1 + 48);
+                    int8x16_t b110 = vld1q_s8(b_base1 + 64);
+                    int8x16_t b111 = vld1q_s8(b_base1 + 80);
+                    int8x16_t b112 = vld1q_s8(b_base1 + 96);
+                    int8x16_t b113 = vld1q_s8(b_base1 + 112);
+
+                    const __fp16* scale_ptr0 = B_scales + (n_block * num_groups + g) * 4;
+                    const __fp16* scale_ptr1 = B_scales + (n_block * num_groups + g + 1) * 4;
+                    float32x4_t scales0 = vcvt_f32_f16(vld1_f16(scale_ptr0));
+                    float32x4_t scales1 = vcvt_f32_f16(vld1_f16(scale_ptr1));
+
+                    for (size_t mi = 0; mi < actual_m; mi++) {
+                        const int8_t* a_ptr0 = A + (m_start + mi) * K + k_base0;
+                        const int8_t* a_ptr1 = A + (m_start + mi) * K + k_base1;
+
+                        int32x4_t acc0 = vdupq_n_s32(0);
+                        int32x4_t acc1 = vdupq_n_s32(0);
+
+                        int8x16_t a_vec = vld1q_s8(a_ptr0);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b000, a_vec, 0);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b001, a_vec, 1);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b002, a_vec, 2);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b003, a_vec, 3);
+
+                        a_vec = vld1q_s8(a_ptr0 + 16);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b010, a_vec, 0);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b011, a_vec, 1);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b012, a_vec, 2);
+                        acc0 = CACTUS_DOTQ_LANE(acc0, b013, a_vec, 3);
+
+                        a_vec = vld1q_s8(a_ptr1);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b100, a_vec, 0);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b101, a_vec, 1);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b102, a_vec, 2);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b103, a_vec, 3);
+
+                        a_vec = vld1q_s8(a_ptr1 + 16);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b110, a_vec, 0);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b111, a_vec, 1);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b112, a_vec, 2);
+                        acc1 = CACTUS_DOTQ_LANE(acc1, b113, a_vec, 3);
+
+                        running_sum[mi] = vmlaq_f32(running_sum[mi], vcvtq_f32_s32(acc0), scales0);
+                        running_sum[mi] = vmlaq_f32(running_sum[mi], vcvtq_f32_s32(acc1), scales1);
+                    }
+                }
+
+                for (; g < num_groups; g++) {
                     const size_t k_base = g * group_size;
                     const int8_t* b_base = B + (n_block * K + k_base) * 4;
-
-                    __builtin_prefetch(b_base + group_size * 4, 0, 3);
 
                     int8x16_t b00 = vld1q_s8(b_base);
                     int8x16_t b01 = vld1q_s8(b_base + 16);
                     int8x16_t b02 = vld1q_s8(b_base + 32);
                     int8x16_t b03 = vld1q_s8(b_base + 48);
-                
                     int8x16_t b10 = vld1q_s8(b_base + 64);
                     int8x16_t b11 = vld1q_s8(b_base + 80);
                     int8x16_t b12 = vld1q_s8(b_base + 96);
                     int8x16_t b13 = vld1q_s8(b_base + 112);
 
-                    const __fp16* scale_ptr = B_scales + (n_block * num_groups + g) * 4;
-                    float16x4_t scales_f16 = vld1_f16(scale_ptr);
-                    float32x4_t scales = vcvt_f32_f16(scales_f16);
+                    float32x4_t scales = vcvt_f32_f16(vld1_f16(B_scales + (n_block * num_groups + g) * 4));
 
                     for (size_t mi = 0; mi < actual_m; mi++) {
                         const int8_t* a_ptr = A + (m_start + mi) * K + k_base;
-
                         int32x4_t acc = vdupq_n_s32(0);
 
                         int8x16_t a_vec = vld1q_s8(a_ptr);

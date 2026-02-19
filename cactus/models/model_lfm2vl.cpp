@@ -373,7 +373,11 @@ size_t Lfm2VlModel::forward(const std::vector<uint32_t>& tokens, bool use_cache)
     }
     
     auto* gb = static_cast<CactusGraph*>(graph_handle_);
-    gb->soft_reset();
+    if (use_cache) {
+        gb->soft_reset_keep_pool();
+    } else {
+        gb->soft_reset();
+    }
     
     auto backend = config_.default_backend == Config::Backend::CPU
         ? ComputeBackend::CPU
@@ -498,7 +502,7 @@ uint32_t Lfm2VlModel::decode_with_images(
     }
 
     auto* gb = static_cast<CactusGraph*>(graph_handle_);
-    gb->soft_reset();
+    gb->soft_reset_keep_pool();
     auto backend = config_.default_backend == Config::Backend::CPU
         ? ComputeBackend::CPU
         : ComputeBackend::NPU;

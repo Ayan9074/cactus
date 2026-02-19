@@ -308,7 +308,9 @@ namespace CactusThreading {
         static size_t get_gemv_threads(size_t N_blocks, size_t pool_size) {
             if (N_blocks < GEMV_MIN_N_BLOCKS) return 1;
             if (N_blocks < 512) return std::min(pool_size, static_cast<size_t>(2));
-            return std::min(pool_size, static_cast<size_t>(4));
+            if (N_blocks < 2048) return std::min(pool_size, static_cast<size_t>(4));
+            if (N_blocks < 8192) return std::min(pool_size, static_cast<size_t>(6));
+            return pool_size;
         }
         #endif
     };
