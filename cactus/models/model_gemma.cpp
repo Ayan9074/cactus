@@ -157,11 +157,7 @@ size_t GemmaModel::forward(const std::vector<uint32_t>& tokens, bool use_cache) 
     }
 
     auto* gb = static_cast<CactusGraph*>(graph_handle_);
-    if (use_cache) {
-        gb->soft_reset_keep_pool();
-    } else {
-        gb->soft_reset();
-    }
+    gb->soft_reset();
 
     auto seq_len = static_cast<size_t>(tokens.size());
 

@@ -6,79 +6,10 @@
 #include <limits>
 #include <cstring>
 #include <vector>
-#include <cstdint>
 
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
 #endif
-
-static inline void cactus_quantize_query_groupwise(
-    const __fp16* q_vec,
-    int8_t* q_int8,
-    float* q_scales,
-    size_t head_dim,
-    size_t quant_group_size,
-    size_t num_quant_groups
-) {
-    constexpr float kMinScale = 1e-8f;
-    for (size_t quant_group = 0; quant_group < num_quant_groups; ++quant_group) {
-        const size_t dim_base = quant_group * quant_group_size;
-        const size_t dim_end = std::min(dim_base + quant_group_size, head_dim);
-
-        float max_abs = 0.0f;
-        for (size_t dim = dim_base; dim < dim_end; ++dim) {
-            max_abs = std::max(max_abs, std::fabs(static_cast<float>(q_vec[dim])));
-        }
-
-        if (max_abs < kMinScale) {
-            q_scales[quant_group] = kMinScale / 127.0f;
-            std::memset(q_int8 + dim_base, 0, dim_end - dim_base);
-            continue;
-        }
-
-        const float inv_scale = 127.0f / max_abs;
-        q_scales[quant_group] = max_abs / 127.0f;
-
-        for (size_t dim = dim_base; dim < dim_end; ++dim) {
-            const float qv = static_cast<float>(q_vec[dim]) * inv_scale;
-            int q_int = static_cast<int>(std::round(qv));
-            q_int = std::max(-127, std::min(127, q_int));
-            q_int8[dim] = static_cast<int8_t>(q_int);
-        }
-    }
-}
-
-static inline int32_t cactus_dot_int8_int8(const int8_t* a, const int8_t* b, size_t count) {
-    size_t i = 0;
-    int32x4_t acc = vdupq_n_s32(0);
-
-#if defined(__ARM_FEATURE_DOTPROD)
-    for (; i + 16 <= count; i += 16) {
-        const int8x16_t av = vld1q_s8(a + i);
-        const int8x16_t bv = vld1q_s8(b + i);
-        acc = vdotq_s32(acc, av, bv);
-    }
-#else
-    for (; i + 16 <= count; i += 16) {
-        const int8x8_t a0 = vld1_s8(a + i);
-        const int8x8_t b0 = vld1_s8(b + i);
-        const int8x8_t a1 = vld1_s8(a + i + 8);
-        const int8x8_t b1 = vld1_s8(b + i + 8);
-
-        const int16x8_t p0 = vmull_s8(a0, b0);
-        const int16x8_t p1 = vmull_s8(a1, b1);
-
-        acc = vaddq_s32(acc, vpaddlq_s16(p0));
-        acc = vaddq_s32(acc, vpaddlq_s16(p1));
-    }
-#endif
-
-    int32_t sum = vaddvq_s32(acc);
-    for (; i < count; ++i) {
-        sum += static_cast<int32_t>(a[i]) * static_cast<int32_t>(b[i]);
-    }
-    return sum;
-}
 
 #ifdef __APPLE__
 static void cactus_attention_f16_h64_accelerate(
@@ -749,35 +680,12 @@ void cactus_attention_hybrid_int8_fp16(
     const size_t q_seq_stride = num_q_heads * head_dim;
     const size_t kv_seq_stride = num_kv_heads * head_dim;
     const size_t o_seq_stride = num_q_heads * head_dim;
-    const size_t accum_blocks = head_dim_aligned / VECTOR_WIDTH;
 
     CactusThreading::parallel_for(batch_size * num_q_heads * seq_len, CactusThreading::Thresholds::ATTENTION,
         [=](size_t start_idx, size_t end_idx) {
-            thread_local std::vector<float> block_scores_tls;
-            thread_local std::vector<float32x4_t> output_accum_low_tls;
-            thread_local std::vector<float32x4_t> output_accum_high_tls;
-            thread_local std::vector<int8_t> q_quantized_tls;
-            thread_local std::vector<float> q_quant_scales_tls;
-
-            if (block_scores_tls.size() < BLOCK_SIZE) {
-                block_scores_tls.resize(BLOCK_SIZE);
-            }
-            if (output_accum_low_tls.size() < accum_blocks) {
-                output_accum_low_tls.resize(accum_blocks);
-                output_accum_high_tls.resize(accum_blocks);
-            }
-            if (q_quantized_tls.size() < head_dim) {
-                q_quantized_tls.resize(head_dim);
-            }
-            if (q_quant_scales_tls.size() < num_quant_groups) {
-                q_quant_scales_tls.resize(num_quant_groups);
-            }
-
-            float* block_scores = block_scores_tls.data();
-            float32x4_t* output_accum_low = output_accum_low_tls.data();
-            float32x4_t* output_accum_high = output_accum_high_tls.data();
-            int8_t* q_quantized = q_quantized_tls.data();
-            float* q_quant_scales = q_quant_scales_tls.data();
+            std::vector<float> block_scores(BLOCK_SIZE);
+            std::vector<float32x4_t> output_accum_low(head_dim_aligned / VECTOR_WIDTH * 2);
+            std::vector<float32x4_t> output_accum_high(head_dim_aligned / VECTOR_WIDTH * 2);
 
             for (size_t work_idx = start_idx; work_idx < end_idx; ++work_idx) {
                 const size_t batch_idx = work_idx / (num_q_heads * seq_len);
@@ -796,23 +704,11 @@ void cactus_attention_hybrid_int8_fp16(
 
                 const __fp16* q_vec = Q_base + q_pos * q_seq_stride + q_head_idx * head_dim;
                 __fp16* o_vec = O_base + q_pos * o_seq_stride + q_head_idx * head_dim;
-                const bool use_int8_score_path =
-                    (seq_len == 1) && (cache_len > 0) && (quant_group_size > 0);
-                if (use_int8_score_path) {
-                    cactus_quantize_query_groupwise(
-                        q_vec,
-                        q_quantized,
-                        q_quant_scales,
-                        head_dim,
-                        quant_group_size,
-                        num_quant_groups
-                    );
-                }
 
                 float running_max = -std::numeric_limits<float>::infinity();
                 float running_sum = 0.0f;
 
-                for (size_t i = 0; i < accum_blocks; ++i) {
+                for (size_t i = 0; i < output_accum_low.size(); ++i) {
                     output_accum_low[i] = vdupq_n_f32(0.0f);
                     output_accum_high[i] = vdupq_n_f32(0.0f);
                 }
@@ -841,62 +737,39 @@ void cactus_attention_hybrid_int8_fp16(
                             continue;
                         }
 
-                        float score = 0.0f;
+                        float32x4_t score_accum_low = vdupq_n_f32(0.0f);
+                        float32x4_t score_accum_high = vdupq_n_f32(0.0f);
 
                         if (kv_pos < cache_len) {
                             const int8_t* k_vec = K_cached_base + kv_pos * kv_seq_stride + kv_head_idx * head_dim;
                             const float* k_scale_base = k_scales + (kv_pos * num_kv_heads + kv_head_idx) * num_quant_groups;
 
-                            if (use_int8_score_path) {
-                                float dot_accum = 0.0f;
-                                for (size_t quant_group = 0; quant_group < num_quant_groups; ++quant_group) {
-                                    const size_t dim_base = quant_group * quant_group_size;
-                                    const size_t dim_end = std::min(dim_base + quant_group_size, head_dim);
-                                    const size_t group_count = dim_end - dim_base;
-                                    const int32_t dot_i32 = cactus_dot_int8_int8(
-                                        q_quantized + dim_base,
-                                        k_vec + dim_base,
-                                        group_count
-                                    );
-                                    dot_accum += static_cast<float>(dot_i32) *
-                                                 (q_quant_scales[quant_group] * k_scale_base[quant_group]);
+                            for (size_t quant_group = 0; quant_group < num_quant_groups; quant_group++) {
+                                const size_t dim_base = quant_group * quant_group_size;
+                                const float k_scale = k_scale_base[quant_group];
+                                const float32x4_t k_scale_vec = vdupq_n_f32(k_scale);
+
+                                #pragma unroll
+                                for (size_t i = 0; i < 4; i++) {
+                                    const size_t dim_block = dim_base + i * VECTOR_WIDTH;
+                                    if (dim_block >= head_dim_aligned) break;
+
+                                    float16x8_t q_vec_f16 = vld1q_f16(&q_vec[dim_block]);
+                                    float32x4_t q_low = vcvt_f32_f16(vget_low_f16(q_vec_f16));
+                                    float32x4_t q_high = vcvt_f32_f16(vget_high_f16(q_vec_f16));
+
+                                    int8x8_t k_vec_i8 = vld1_s8(&k_vec[dim_block]);
+                                    int16x8_t k_vec_i16 = vmovl_s8(k_vec_i8);
+                                    float32x4_t k_low = vmulq_f32(vcvtq_f32_s32(vmovl_s16(vget_low_s16(k_vec_i16))), k_scale_vec);
+                                    float32x4_t k_high = vmulq_f32(vcvtq_f32_s32(vmovl_s16(vget_high_s16(k_vec_i16))), k_scale_vec);
+
+                                    score_accum_low = vfmaq_f32(score_accum_low, q_low, k_low);
+                                    score_accum_high = vfmaq_f32(score_accum_high, q_high, k_high);
                                 }
-                                score = dot_accum * scale;
-                            } else {
-                                float32x4_t score_accum_low = vdupq_n_f32(0.0f);
-                                float32x4_t score_accum_high = vdupq_n_f32(0.0f);
-
-                                for (size_t quant_group = 0; quant_group < num_quant_groups; quant_group++) {
-                                    const size_t dim_base = quant_group * quant_group_size;
-                                    const float k_scale = k_scale_base[quant_group];
-                                    const float32x4_t k_scale_vec = vdupq_n_f32(k_scale);
-
-                                    #pragma unroll
-                                    for (size_t i = 0; i < 4; i++) {
-                                        const size_t dim_block = dim_base + i * VECTOR_WIDTH;
-                                        if (dim_block >= head_dim_aligned) break;
-
-                                        float16x8_t q_vec_f16 = vld1q_f16(&q_vec[dim_block]);
-                                        float32x4_t q_low = vcvt_f32_f16(vget_low_f16(q_vec_f16));
-                                        float32x4_t q_high = vcvt_f32_f16(vget_high_f16(q_vec_f16));
-
-                                        int8x8_t k_vec_i8 = vld1_s8(&k_vec[dim_block]);
-                                        int16x8_t k_vec_i16 = vmovl_s8(k_vec_i8);
-                                        float32x4_t k_low = vmulq_f32(vcvtq_f32_s32(vmovl_s16(vget_low_s16(k_vec_i16))), k_scale_vec);
-                                        float32x4_t k_high = vmulq_f32(vcvtq_f32_s32(vmovl_s16(vget_high_s16(k_vec_i16))), k_scale_vec);
-
-                                        score_accum_low = vfmaq_f32(score_accum_low, q_low, k_low);
-                                        score_accum_high = vfmaq_f32(score_accum_high, q_high, k_high);
-                                    }
-                                }
-
-                                score = vaddvq_f32(vaddq_f32(score_accum_low, score_accum_high)) * scale;
                             }
                         } else {
                             const size_t new_pos = kv_pos - cache_len;
                             const __fp16* k_vec = K_new_base + new_pos * kv_seq_stride + kv_head_idx * head_dim;
-                            float32x4_t score_accum_low = vdupq_n_f32(0.0f);
-                            float32x4_t score_accum_high = vdupq_n_f32(0.0f);
 
                             for (size_t dim_block = 0; dim_block < head_dim_aligned; dim_block += VECTOR_WIDTH) {
                                 float16x8_t q_vec_f16 = vld1q_f16(&q_vec[dim_block]);
@@ -910,9 +783,9 @@ void cactus_attention_hybrid_int8_fp16(
                                 score_accum_low = vfmaq_f32(score_accum_low, q_low, k_low);
                                 score_accum_high = vfmaq_f32(score_accum_high, q_high, k_high);
                             }
-                            score = vaddvq_f32(vaddq_f32(score_accum_low, score_accum_high)) * scale;
                         }
 
+                        float score = vaddvq_f32(vaddq_f32(score_accum_low, score_accum_high)) * scale;
                         block_scores[kv_idx] = score;
                         block_max = std::max(block_max, score);
                     }
@@ -921,7 +794,7 @@ void cactus_attention_hybrid_int8_fp16(
                         float scale_correction = expf(running_max - block_max);
                         running_sum *= scale_correction;
 
-                        for (size_t i = 0; i < accum_blocks; ++i) {
+                        for (size_t i = 0; i < output_accum_low.size() / 2; ++i) {
                             output_accum_low[i] = vmulq_n_f32(output_accum_low[i], scale_correction);
                             output_accum_high[i] = vmulq_n_f32(output_accum_high[i], scale_correction);
                         }

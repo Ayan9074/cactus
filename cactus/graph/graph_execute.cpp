@@ -753,39 +753,3 @@ void CactusGraph::soft_reset() {
         shrink_thread_local_buffers();
     }
 }
-
-void CactusGraph::soft_reset_keep_pool() {
-    std::set<size_t> cached_node_ids;
-    for (const auto& cache_entry : weight_cache_) {
-        cached_node_ids.insert(cache_entry.second);
-    }
-
-    for (size_t pid : persistent_node_ids_) {
-        cached_node_ids.insert(pid);
-    }
-
-    size_t max_preserved_id = 0;
-    for (const auto& node : nodes_) {
-        if ((node->op_type == OpType::INPUT && node->output_buffer.external_data) ||
-            cached_node_ids.count(node->id)) {
-            max_preserved_id = std::max(max_preserved_id, node->id);
-        }
-    }
-
-    auto preserved_nodes = std::move(nodes_);
-
-    nodes_.clear();
-    node_index_map_.clear();
-
-    for (auto& node : preserved_nodes) {
-        if ((node->op_type == OpType::INPUT && node->output_buffer.external_data) ||
-            cached_node_ids.count(node->id)) {
-            size_t index = nodes_.size();
-            node_index_map_[node->id] = index;
-            nodes_.push_back(std::move(node));
-        }
-    }
-
-    next_node_id_ = max_preserved_id + 1;
-    debug_nodes_.clear();
-}

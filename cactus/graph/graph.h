@@ -491,7 +491,6 @@ public:
     void execute(const std::string& profile_file = "");
     void hard_reset();
     void soft_reset();
-    void soft_reset_keep_pool();
     void set_prefill_mode(bool enabled) { prefill_mode_ = enabled; }
 
     void register_debug_node(uint32_t layer_idx, const std::string& name, size_t node_id);
