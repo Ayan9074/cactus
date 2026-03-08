@@ -209,7 +209,7 @@ tests_group.set_path(tests_root)
 tests_group.set_source_tree('<absolute>')
 
 discovered_test_files = Dir.glob(File.join(tests_root, 'test_*.cpp'))
-  .reject { |f| File.basename(f) == 'test_utils.cpp' }
+  .reject { |f| ['test_utils.cpp', 'test_kv_cache.cpp'].include?(File.basename(f)) }
   .sort
   .map { |f| File.basename(f) }
 

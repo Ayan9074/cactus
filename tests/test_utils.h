@@ -12,6 +12,7 @@
 #include <cmath>
 #include <atomic>
 #include <mutex>
+#include <cstdint>
 
 
 namespace TestUtils {
@@ -40,6 +41,13 @@ public:
     bool all_passed() const;
 
 private:
+    void maybe_log_attention_path_counts_();
+    bool attention_path_count_logging_enabled_ = false;
+    uint64_t last_attention_h64_accelerate_ = 0;
+    uint64_t last_attention_h64_sme2_ = 0;
+    uint64_t last_attention_h64_neon_ = 0;
+    uint64_t last_attention_generic_neon_ = 0;
+    uint64_t last_attention_generic_sme2_dispatch_ = 0;
     std::string suite_name_;
     int passed_count_;
     int total_count_;

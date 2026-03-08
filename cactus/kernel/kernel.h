@@ -179,6 +179,17 @@ void cactus_attention_hybrid_int8_fp16(
     float scale, size_t position_offset = 0, bool is_causal = true, size_t window_size = 0,
     size_t group_size = KV_QUANT_GROUP_SIZE);
 
+struct CactusAttentionPathCounters {
+    uint64_t h64_accelerate;
+    uint64_t h64_sme2;
+    uint64_t h64_neon;
+    uint64_t generic_neon;
+    uint64_t generic_sme2_dispatch;
+};
+
+void cactus_attention_path_counters_reset();
+CactusAttentionPathCounters cactus_attention_path_counters_get();
+
 void cactus_gated_deltanet_decode_f16(
     const __fp16* q_data,
     const __fp16* k_data,

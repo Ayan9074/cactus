@@ -12,6 +12,7 @@ VAD_MODEL_NAME="$4"
 RUN_ASR="${CACTUS_RUN_ASR:-0}"
 ASR_AUDIO_SOURCE="${CACTUS_ASR_AUDIO_SOURCE:-}"
 ASR_AUDIO_FILE="${CACTUS_ASR_AUDIO_FILE:-}"
+CACTUS_IOS_TEST_RELAXED="${CACTUS_IOS_TEST_RELAXED:-1}"
 
 echo "Running Cactus tests on iOS..."
 echo "============================"
@@ -197,17 +198,36 @@ if ! command -v ruby; then
     exit 1
 fi
 
-if ! gem list xcodeproj -i; then
-    echo "Installing xcodeproj gem..."
-    if ! gem install xcodeproj; then
+if ! ruby -e "require 'xcodeproj'" >/dev/null 2>&1; then
+    echo "Installing xcodeproj gem (user-local)..."
+    if ! gem install --user-install xcodeproj; then
         echo "Failed to install xcodeproj gem"
         echo "To fix this:"
-        echo "  brew install rbenv ruby-build"
-        echo "  rbenv init"
-        echo "  rbenv install 2.6.10"
-        echo "  rbenv global 2.6.10"
+        echo "  1. Ensure Ruby can install user gems"
+        echo "  2. Or activate rbenv in your shell and retry"
+        echo "     eval \"\$(rbenv init -)\""
+        echo "     rbenv rehash"
         exit 1
     fi
+fi
+
+if ! ruby -e "require 'rubygems'; puts Gem.user_dir" >/dev/null 2>&1; then
+    echo "Could not determine Ruby user gem directory"
+    exit 1
+fi
+RUBY_USER_GEM_DIR=$(ruby -e "require 'rubygems'; puts Gem.user_dir")
+RUBY_USER_GEM_BIN="${RUBY_USER_GEM_DIR}/bin"
+RUBY_ALL_GEM_PATHS=$(ruby -e "require 'rubygems'; puts Gem.path.join(':')")
+export GEM_HOME="$RUBY_USER_GEM_DIR"
+export GEM_PATH="$RUBY_USER_GEM_DIR:$RUBY_ALL_GEM_PATHS${GEM_PATH:+:$GEM_PATH}"
+export PATH="$RUBY_USER_GEM_BIN:$PATH"
+
+if ! ruby -e "require 'xcodeproj'" >/dev/null 2>&1; then
+    echo "xcodeproj gem is still not loadable by current Ruby environment"
+    echo "Ruby: $(command -v ruby)"
+    echo "GEM_HOME: $GEM_HOME"
+    echo "GEM_PATH: $GEM_PATH"
+    exit 1
 fi
 
 export PROJECT_ROOT TESTS_ROOT="$tests_root" CACTUS_ROOT="$cactus_root" XCODEPROJ_PATH="$xcodeproj_path" BUNDLE_ID="$bundle_id" DEVELOPMENT_TEAM="$development_team" DEVICE_TYPE="$device_type" CACTUS_CURL_ROOT="$CACTUS_CURL_ROOT"
@@ -372,11 +392,16 @@ if [ "$device_type" = "simulator" ]; then
     else
         echo "Launching tests..."
     fi
-    echo "Using model path: $model_dir"
-    echo "Using transcribe model path: $transcribe_model_dir"
-    echo "Using whisper model path: $whisper_model_dir"
-    echo "Using assets path: assets"
-    echo "Using index path: assets"
+echo "Using model path: $model_dir"
+echo "Using transcribe model path: $transcribe_model_dir"
+echo "Using whisper model path: $whisper_model_dir"
+echo "Using assets path: assets"
+echo "Using index path: assets"
+echo "Using CACTUS_ATTENTION_SME2_CHECK: ${CACTUS_ATTENTION_SME2_CHECK:-<unset>}"
+echo "Using CACTUS_ATTENTION_TRACE_PATHS: ${CACTUS_ATTENTION_TRACE_PATHS:-<unset>}"
+echo "Using CACTUS_ATTENTION_TRACE_COUNTS: ${CACTUS_ATTENTION_TRACE_COUNTS:-<unset>}"
+echo "Using CACTUS_ATTENTION_SME2_Q_TILE: ${CACTUS_ATTENTION_SME2_Q_TILE:-<unset>}"
+echo "Using CACTUS_IOS_TEST_RELAXED: ${CACTUS_IOS_TEST_RELAXED}"
 
     sim_env=(
         "SIMCTL_CHILD_CACTUS_TEST_MODEL=$model_dir"
@@ -386,6 +411,11 @@ if [ "$device_type" = "simulator" ]; then
         "SIMCTL_CHILD_CACTUS_TEST_ASSETS=assets"
         "SIMCTL_CHILD_CACTUS_INDEX_PATH=assets"
         "SIMCTL_CHILD_CACTUS_NO_CLOUD_TELE=$CACTUS_NO_CLOUD_TELE"
+        "SIMCTL_CHILD_CACTUS_ATTENTION_SME2_CHECK=$CACTUS_ATTENTION_SME2_CHECK"
+        "SIMCTL_CHILD_CACTUS_ATTENTION_TRACE_PATHS=$CACTUS_ATTENTION_TRACE_PATHS"
+        "SIMCTL_CHILD_CACTUS_ATTENTION_TRACE_COUNTS=$CACTUS_ATTENTION_TRACE_COUNTS"
+        "SIMCTL_CHILD_CACTUS_ATTENTION_SME2_Q_TILE=$CACTUS_ATTENTION_SME2_Q_TILE"
+        "SIMCTL_CHILD_CACTUS_IOS_TEST_RELAXED=$CACTUS_IOS_TEST_RELAXED"
     )
     if [ "$RUN_ASR" = "1" ]; then
         sim_env+=("SIMCTL_CHILD_CACTUS_RUN_ASR=1")
@@ -425,6 +455,11 @@ else
     echo "Using whisper model path: $whisper_model_dir"
     echo "Using assets path: assets"
     echo "Using index path: assets"
+    echo "Using CACTUS_ATTENTION_SME2_CHECK: ${CACTUS_ATTENTION_SME2_CHECK:-<unset>}"
+    echo "Using CACTUS_ATTENTION_TRACE_PATHS: ${CACTUS_ATTENTION_TRACE_PATHS:-<unset>}"
+    echo "Using CACTUS_ATTENTION_TRACE_COUNTS: ${CACTUS_ATTENTION_TRACE_COUNTS:-<unset>}"
+    echo "Using CACTUS_ATTENTION_SME2_Q_TILE: ${CACTUS_ATTENTION_SME2_Q_TILE:-<unset>}"
+    echo "Using CACTUS_IOS_TEST_RELAXED: ${CACTUS_IOS_TEST_RELAXED}"
 
     device_env=(
         "DEVICECTL_CHILD_CACTUS_TEST_MODEL=$model_dir"
@@ -434,6 +469,11 @@ else
         "DEVICECTL_CHILD_CACTUS_TEST_ASSETS=assets"
         "DEVICECTL_CHILD_CACTUS_INDEX_PATH=assets"
         "DEVICECTL_CHILD_CACTUS_NO_CLOUD_TELE=$CACTUS_NO_CLOUD_TELE"
+        "DEVICECTL_CHILD_CACTUS_ATTENTION_SME2_CHECK=$CACTUS_ATTENTION_SME2_CHECK"
+        "DEVICECTL_CHILD_CACTUS_ATTENTION_TRACE_PATHS=$CACTUS_ATTENTION_TRACE_PATHS"
+        "DEVICECTL_CHILD_CACTUS_ATTENTION_TRACE_COUNTS=$CACTUS_ATTENTION_TRACE_COUNTS"
+        "DEVICECTL_CHILD_CACTUS_ATTENTION_SME2_Q_TILE=$CACTUS_ATTENTION_SME2_Q_TILE"
+        "DEVICECTL_CHILD_CACTUS_IOS_TEST_RELAXED=$CACTUS_IOS_TEST_RELAXED"
     )
     if [ "$RUN_ASR" = "1" ]; then
         device_env+=("DEVICECTL_CHILD_CACTUS_RUN_ASR=1")

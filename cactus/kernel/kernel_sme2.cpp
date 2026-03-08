@@ -7,9 +7,15 @@
 #include "kernel.h"
 #include "kernel_utils.h"
 #include <arm_sme.h>
+#include <arm_neon.h>
 #include <algorithm>
 #include <atomic>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <limits>
 #include <memory>
+#include <vector>
 
 #if defined(__clang__)
 #define CACTUS_UNROLL4 _Pragma("clang loop unroll_count(4)")
@@ -611,6 +617,377 @@ void cactus_matmul_f16_sme2_caller(
         }
     });
     pool.wait_all();
+}
+
+namespace {
+constexpr size_t CACTUS_ATTN_H64_HEAD_DIM = 64;
+constexpr size_t CACTUS_ATTN_H64_Q_TILE_DEFAULT = 4;
+constexpr size_t CACTUS_ATTN_H64_Q_TILE_MAX = 8;
+constexpr size_t CACTUS_ATTN_H64_KV_TILE = 32;
+
+struct CactusAttentionH64Sme2Workspace {
+    alignas(64) __fp16 q_tile[CACTUS_ATTN_H64_Q_TILE_MAX * CACTUS_ATTN_H64_HEAD_DIM];
+    alignas(64) __fp16 k_tile[CACTUS_ATTN_H64_KV_TILE * CACTUS_ATTN_H64_HEAD_DIM];
+
+    alignas(64) float scores[CACTUS_ATTN_H64_Q_TILE_MAX * CACTUS_ATTN_H64_KV_TILE];
+    alignas(64) float out_accum[CACTUS_ATTN_H64_Q_TILE_MAX * CACTUS_ATTN_H64_HEAD_DIM];
+    float running_max[CACTUS_ATTN_H64_Q_TILE_MAX];
+    float running_sum[CACTUS_ATTN_H64_Q_TILE_MAX];
+
+    size_t packed_tile_rows = 0;
+    size_t packed_tile_pairs = 0;
+    std::vector<__fp16> score_a_packed;
+    std::vector<__fp16> score_b_packed;
+};
+
+static thread_local CactusAttentionH64Sme2Workspace g_attention_h64_sme2_workspace;
+
+static inline size_t cactus_div_up_size(size_t x, size_t y) {
+    return (x + y - 1) / y;
+}
+
+struct CactusSme2TileShape {
+    size_t tile_rows;
+    size_t tile_pairs;
+};
+
+static size_t cactus_attention_h64_sme2_q_tile() {
+    static const size_t q_tile = []() {
+        const char* env = std::getenv("CACTUS_ATTENTION_SME2_Q_TILE");
+        if (!env || env[0] == '\0') return CACTUS_ATTN_H64_Q_TILE_DEFAULT;
+        char* end = nullptr;
+        const long value = std::strtol(env, &end, 10);
+        if (end == env || (end && *end != '\0')) return CACTUS_ATTN_H64_Q_TILE_DEFAULT;
+        return (value >= 8) ? static_cast<size_t>(8) : CACTUS_ATTN_H64_Q_TILE_DEFAULT;
+    }();
+    return q_tile;
+}
+
+__arm_new("za") __arm_locally_streaming
+static CactusSme2TileShape __attribute__((noinline)) cactus_attention_h64_sme2_tile_shape() {
+    CactusSme2TileShape shape{};
+    shape.tile_rows = svcntsw();
+    shape.tile_pairs = svcnth();
+    return shape;
+}
+
+static inline void cactus_attention_h64_sme2_prepare_buffers(
+    CactusAttentionH64Sme2Workspace& ws,
+    size_t tile_rows,
+    size_t tile_pairs
+) {
+    if (ws.packed_tile_rows == tile_rows && ws.packed_tile_pairs == tile_pairs) return;
+    ws.packed_tile_rows = tile_rows;
+    ws.packed_tile_pairs = tile_pairs;
+
+    const size_t score_k_pairs = (CACTUS_ATTN_H64_HEAD_DIM + 1) / 2;
+    const size_t score_col_blocks = cactus_div_up_size(CACTUS_ATTN_H64_KV_TILE, tile_rows);
+    ws.score_a_packed.resize(score_k_pairs * tile_pairs);
+    ws.score_b_packed.resize(score_col_blocks * score_k_pairs * tile_pairs);
+}
+
+static inline void cactus_attention_pack_a_pairs_row_major(
+    const __fp16* a,
+    __fp16* a_packed,
+    size_t rows,
+    size_t row_stride,
+    size_t k,
+    size_t tile_rows,
+    size_t tile_pairs
+) {
+    const size_t k_pairs = (k + 1) / 2;
+    for (size_t kp = 0; kp < k_pairs; ++kp) {
+        const size_t k0 = kp * 2;
+        const size_t k1 = k0 + 1;
+        __fp16* dst = a_packed + kp * tile_pairs;
+        for (size_t r = 0; r < rows; ++r) {
+            const __fp16* row_ptr = a + r * row_stride;
+            dst[2 * r] = row_ptr[k0];
+            dst[2 * r + 1] = (k1 < k) ? row_ptr[k1] : static_cast<__fp16>(0);
+        }
+        for (size_t r = rows; r < tile_rows; ++r) {
+            dst[2 * r] = static_cast<__fp16>(0);
+            dst[2 * r + 1] = static_cast<__fp16>(0);
+        }
+    }
+}
+
+static inline void cactus_attention_pack_b_pairs_from_bt(
+    const __fp16* bt,
+    __fp16* b_packed,
+    size_t k,
+    size_t cols,
+    size_t tile_rows,
+    size_t tile_pairs
+) {
+    const size_t k_pairs = (k + 1) / 2;
+    const size_t col_blocks = cactus_div_up_size(cols, tile_rows);
+    for (size_t cb = 0; cb < col_blocks; ++cb) {
+        const size_t col0 = cb * tile_rows;
+        const size_t active_c = std::min(tile_rows, cols - col0);
+        for (size_t kp = 0; kp < k_pairs; ++kp) {
+            const size_t k0 = kp * 2;
+            const size_t k1 = k0 + 1;
+            __fp16* dst = b_packed + (cb * k_pairs + kp) * tile_pairs;
+            for (size_t c = 0; c < active_c; ++c) {
+                const __fp16* src = bt + (col0 + c) * k + k0;
+                dst[2 * c] = src[0];
+                dst[2 * c + 1] = (k1 < k) ? src[1] : static_cast<__fp16>(0);
+            }
+            for (size_t c = active_c; c < tile_rows; ++c) {
+                dst[2 * c] = static_cast<__fp16>(0);
+                dst[2 * c + 1] = static_cast<__fp16>(0);
+            }
+        }
+    }
+}
+
+static void __attribute__((noinline)) cactus_attention_mopa_packed_to_f32(
+    const __fp16* a_packed,
+    const __fp16* b_packed,
+    float* out,
+    size_t rows,
+    size_t k,
+    size_t cols,
+    size_t out_stride,
+    size_t tile_rows,
+    size_t tile_pairs
+) __arm_streaming __arm_inout("za") {
+    if (rows == 0 || cols == 0 || k == 0) return;
+
+    const size_t k_pairs = (k + 1) / 2;
+    const size_t col_blocks = cactus_div_up_size(cols, tile_rows);
+    const svfloat32_t z0_f32 = svdup_n_f32(0.0f);
+    const svbool_t pMh = svwhilelt_b16(static_cast<uint64_t>(0), static_cast<uint64_t>(rows * 2));
+
+    for (size_t cb = 0; cb < col_blocks; ++cb) {
+        const size_t col0 = cb * tile_rows;
+        const size_t active_c = std::min(tile_rows, cols - col0);
+        const svbool_t pNh = svwhilelt_b16(static_cast<uint64_t>(0), static_cast<uint64_t>(active_c * 2));
+        const svbool_t pN32 = svwhilelt_b32(static_cast<uint64_t>(0), static_cast<uint64_t>(active_c));
+
+        svzero_za();
+        for (size_t kp = 0; kp < k_pairs; ++kp) {
+            const svfloat16_t zA = svld1(pMh, a_packed + kp * tile_pairs);
+            const svfloat16_t zB = svld1(pNh, b_packed + (cb * k_pairs + kp) * tile_pairs);
+            svmopa_za32_f16_m(0, pMh, pNh, zA, zB);
+        }
+
+        for (size_t r = 0; r < rows; ++r) {
+            svfloat32_t row_out = svread_hor_za32_f32_m(
+                z0_f32,
+                pN32,
+                0,
+                static_cast<uint32_t>(r)
+            );
+            svst1(pN32, out + r * out_stride + col0, row_out);
+        }
+    }
+}
+
+__arm_new("za") __arm_locally_streaming
+static void __attribute__((noinline)) cactus_attention_score_tile_sme2_fp16(
+    CactusAttentionH64Sme2Workspace& ws,
+    size_t rows,
+    size_t kv_block,
+    size_t tile_rows,
+    size_t tile_pairs
+) {
+    cactus_attention_pack_a_pairs_row_major(
+        ws.q_tile,
+        ws.score_a_packed.data(),
+        rows,
+        CACTUS_ATTN_H64_HEAD_DIM,
+        CACTUS_ATTN_H64_HEAD_DIM,
+        tile_rows,
+        tile_pairs
+    );
+    cactus_attention_pack_b_pairs_from_bt(
+        ws.k_tile,
+        ws.score_b_packed.data(),
+        CACTUS_ATTN_H64_HEAD_DIM,
+        kv_block,
+        tile_rows,
+        tile_pairs
+    );
+    cactus_attention_mopa_packed_to_f32(
+        ws.score_a_packed.data(),
+        ws.score_b_packed.data(),
+        ws.scores,
+        rows,
+        CACTUS_ATTN_H64_HEAD_DIM,
+        kv_block,
+        CACTUS_ATTN_H64_KV_TILE,
+        tile_rows,
+        tile_pairs
+    );
+}
+} // namespace
+
+void cactus_attention_f16_h64_sme2_caller(
+    const __fp16* queries,
+    const __fp16* keys,
+    const __fp16* values,
+    __fp16* output,
+    size_t batch_size,
+    size_t seq_len,
+    size_t kv_seq_len,
+    size_t num_q_heads,
+    size_t num_kv_heads,
+    float scale,
+    size_t position_offset,
+    bool is_causal
+) {
+    constexpr float NEG_INF = -std::numeric_limits<float>::infinity();
+    const size_t group_size = num_q_heads / num_kv_heads;
+    const size_t q_batch_stride = seq_len * num_q_heads * CACTUS_ATTN_H64_HEAD_DIM;
+    const size_t kv_batch_stride = kv_seq_len * num_kv_heads * CACTUS_ATTN_H64_HEAD_DIM;
+    const size_t o_batch_stride = q_batch_stride;
+    const size_t q_seq_stride = num_q_heads * CACTUS_ATTN_H64_HEAD_DIM;
+    const size_t kv_seq_stride = num_kv_heads * CACTUS_ATTN_H64_HEAD_DIM;
+    const size_t o_seq_stride = q_seq_stride;
+
+    if (batch_size == 0 || seq_len == 0 || num_q_heads == 0 || num_kv_heads == 0 || group_size == 0) return;
+    if (kv_seq_len == 0) {
+        std::memset(output, 0, batch_size * o_batch_stride * sizeof(__fp16));
+        return;
+    }
+
+    const CactusSme2TileShape tile_shape = cactus_attention_h64_sme2_tile_shape();
+    const size_t tile_rows = tile_shape.tile_rows;
+    const size_t tile_pairs = tile_shape.tile_pairs;
+    if (tile_rows == 0 || tile_pairs == 0) return;
+    const size_t q_tile = std::min(std::min(cactus_attention_h64_sme2_q_tile(), tile_rows), CACTUS_ATTN_H64_Q_TILE_MAX);
+    if (q_tile == 0) return;
+    const size_t q_tiles = cactus_div_up_size(seq_len, q_tile);
+
+    CactusThreading::parallel_for(batch_size * num_q_heads * q_tiles, CactusThreading::Thresholds::ATTENTION,
+        [&](size_t start, size_t end) {
+            CactusAttentionH64Sme2Workspace& ws = g_attention_h64_sme2_workspace;
+            cactus_attention_h64_sme2_prepare_buffers(ws, tile_rows, tile_pairs);
+
+            for (size_t work = start; work < end; ++work) {
+                const size_t batch = work / (num_q_heads * q_tiles);
+                const size_t rem = work % (num_q_heads * q_tiles);
+                const size_t q_head = rem / q_tiles;
+                const size_t tile_idx = rem % q_tiles;
+                const size_t kv_head = q_head / group_size;
+                const size_t q0 = tile_idx * q_tile;
+                const size_t q_rows = std::min(q_tile, seq_len - q0);
+
+                size_t max_kv_end = 0;
+                size_t row_kv_end[CACTUS_ATTN_H64_Q_TILE_MAX] = {0, 0, 0, 0, 0, 0, 0, 0};
+                for (size_t r = 0; r < q_rows; ++r) {
+                    const size_t q_pos = q0 + r;
+                    const size_t abs_q = position_offset + q_pos;
+                    const size_t kv_end = is_causal ? std::min(kv_seq_len, abs_q + 1) : kv_seq_len;
+                    row_kv_end[r] = kv_end;
+                    max_kv_end = std::max(max_kv_end, kv_end);
+
+                    const __fp16* q_src = queries + batch * q_batch_stride + q_pos * q_seq_stride + q_head * CACTUS_ATTN_H64_HEAD_DIM;
+                    std::memcpy(ws.q_tile + r * CACTUS_ATTN_H64_HEAD_DIM, q_src, CACTUS_ATTN_H64_HEAD_DIM * sizeof(__fp16));
+                }
+
+                for (size_t r = 0; r < q_rows; ++r) {
+                    ws.running_max[r] = NEG_INF;
+                    ws.running_sum[r] = 0.0f;
+                    float* out_row = ws.out_accum + r * CACTUS_ATTN_H64_HEAD_DIM;
+                    std::memset(out_row, 0, CACTUS_ATTN_H64_HEAD_DIM * sizeof(float));
+                }
+
+                for (size_t kv0 = 0; kv0 < max_kv_end; kv0 += CACTUS_ATTN_H64_KV_TILE) {
+                    const size_t kv1 = std::min(kv0 + CACTUS_ATTN_H64_KV_TILE, max_kv_end);
+                    const size_t block_len = kv1 - kv0;
+
+                    for (size_t i = 0; i < block_len; ++i) {
+                        const size_t kv_pos = kv0 + i;
+                        const __fp16* k_src = keys + batch * kv_batch_stride + kv_pos * kv_seq_stride + kv_head * CACTUS_ATTN_H64_HEAD_DIM;
+                        std::memcpy(ws.k_tile + i * CACTUS_ATTN_H64_HEAD_DIM, k_src, CACTUS_ATTN_H64_HEAD_DIM * sizeof(__fp16));
+                    }
+
+                    cactus_attention_score_tile_sme2_fp16(ws, q_rows, block_len, tile_rows, tile_pairs);
+
+                    for (size_t r = 0; r < q_rows; ++r) {
+                        const size_t valid_len = (row_kv_end[r] > kv0)
+                            ? std::min(block_len, row_kv_end[r] - kv0)
+                            : 0;
+
+                        if (valid_len == 0) {
+                            std::memset(ws.scores + r * CACTUS_ATTN_H64_KV_TILE, 0, CACTUS_ATTN_H64_KV_TILE * sizeof(float));
+                            continue;
+                        }
+
+                        float* score_row = ws.scores + r * CACTUS_ATTN_H64_KV_TILE;
+                        float block_max = score_row[0] * scale;
+                        for (size_t i = 1; i < valid_len; ++i) {
+                            block_max = std::max(block_max, score_row[i] * scale);
+                        }
+
+                        const float prev_max = ws.running_max[r];
+                        const float new_max = std::max(prev_max, block_max);
+                        const float scale_old = (prev_max == NEG_INF) ? 0.0f : std::exp(prev_max - new_max);
+
+                        if (scale_old != 1.0f) {
+                            ws.running_sum[r] *= scale_old;
+                            float* out_row = ws.out_accum + r * CACTUS_ATTN_H64_HEAD_DIM;
+                            for (size_t d = 0; d < CACTUS_ATTN_H64_HEAD_DIM; ++d) {
+                                out_row[d] *= scale_old;
+                            }
+                        }
+                        ws.running_max[r] = new_max;
+
+                        float block_sum = 0.0f;
+                        for (size_t i = 0; i < valid_len; ++i) {
+                            const float p = std::exp(score_row[i] * scale - new_max);
+                            score_row[i] = p;
+                            block_sum += p;
+                        }
+                        for (size_t i = valid_len; i < CACTUS_ATTN_H64_KV_TILE; ++i) {
+                            score_row[i] = 0.0f;
+                        }
+
+                        ws.running_sum[r] += block_sum;
+                    }
+
+                    for (size_t i = 0; i < block_len; ++i) {
+                        const size_t kv_pos = kv0 + i;
+                        const __fp16* v_src = values + batch * kv_batch_stride + kv_pos * kv_seq_stride + kv_head * CACTUS_ATTN_H64_HEAD_DIM;
+                        for (size_t d = 0; d < CACTUS_ATTN_H64_HEAD_DIM; d += 8) {
+                            const float16x8_t vv = vld1q_f16(v_src + d);
+                            const float32x4_t v_low = vcvt_f32_f16(vget_low_f16(vv));
+                            const float32x4_t v_high = vcvt_f32_f16(vget_high_f16(vv));
+                            for (size_t r = 0; r < q_rows; ++r) {
+                                const float weight = ws.scores[r * CACTUS_ATTN_H64_KV_TILE + i];
+                                if (weight == 0.0f) continue;
+                                const float32x4_t wv = vdupq_n_f32(weight);
+                                float* out_row = ws.out_accum + r * CACTUS_ATTN_H64_HEAD_DIM;
+                                float32x4_t acc_lo = vld1q_f32(out_row + d);
+                                float32x4_t acc_hi = vld1q_f32(out_row + d + 4);
+                                acc_lo = vfmaq_f32(acc_lo, v_low, wv);
+                                acc_hi = vfmaq_f32(acc_hi, v_high, wv);
+                                vst1q_f32(out_row + d, acc_lo);
+                                vst1q_f32(out_row + d + 4, acc_hi);
+                            }
+                        }
+                    }
+                }
+
+                for (size_t r = 0; r < q_rows; ++r) {
+                    const size_t q_pos = q0 + r;
+                    __fp16* dst = output + batch * o_batch_stride + q_pos * o_seq_stride + q_head * CACTUS_ATTN_H64_HEAD_DIM;
+                    const float sum = ws.running_sum[r];
+                    if (sum <= 0.0f) {
+                        std::memset(dst, 0, CACTUS_ATTN_H64_HEAD_DIM * sizeof(__fp16));
+                        continue;
+                    }
+                    const float inv_sum = 1.0f / sum;
+                    const float* out_row = ws.out_accum + r * CACTUS_ATTN_H64_HEAD_DIM;
+                    for (size_t d = 0; d < CACTUS_ATTN_H64_HEAD_DIM; ++d) {
+                        dst[d] = static_cast<__fp16>(out_row[d] * inv_sum);
+                    }
+                }
+            }
+        });
 }
 
 #undef CACTUS_UNROLL4

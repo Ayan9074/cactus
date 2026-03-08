@@ -1,5 +1,7 @@
 #include "test_utils.h"
+#include "../cactus/kernel/kernel.h"
 #include <cstdlib>
+#include <cstring>
 #include <random>
 #include <sstream>
 
@@ -96,6 +98,24 @@ TestRunner::TestRunner(const std::string& suite_name)
     std::cout << "\n╔══════════════════════════════════════════════════════════════════════════════════════╗\n"
               << "║ Running " << std::left << std::setw(76) << suite_name_ << " ║\n"
               << "╚══════════════════════════════════════════════════════════════════════════════════════╝\n";
+
+    auto env_enabled = [](const char* name) -> bool {
+        const char* env = std::getenv(name);
+        if (!env || env[0] == '\0') return false;
+        return std::strcmp(env, "1") == 0 ||
+               std::strcmp(env, "true") == 0 ||
+               std::strcmp(env, "TRUE") == 0 ||
+               std::strcmp(env, "yes") == 0 ||
+               std::strcmp(env, "YES") == 0;
+    };
+
+    attention_path_count_logging_enabled_ =
+        env_enabled("CACTUS_ATTENTION_TRACE_PATHS") ||
+        env_enabled("CACTUS_ATTENTION_TRACE_COUNTS");
+
+    if (attention_path_count_logging_enabled_) {
+        cactus_attention_path_counters_reset();
+    }
 }
 
 void TestRunner::run_test(const std::string& test_name, bool result) {
@@ -106,6 +126,41 @@ void TestRunner::run_test(const std::string& test_name, bool result) {
     } else {
         std::cout << "✗ FAIL │ " << std::left << std::setw(25) << test_name << "\n";
     }
+    maybe_log_attention_path_counts_();
+}
+
+void TestRunner::maybe_log_attention_path_counts_() {
+    if (!attention_path_count_logging_enabled_) return;
+
+    const CactusAttentionPathCounters counters = cactus_attention_path_counters_get();
+    auto delta_or_current = [](uint64_t now, uint64_t last) -> uint64_t {
+        return (now >= last) ? (now - last) : now;
+    };
+
+    const uint64_t h64_accelerate_delta = delta_or_current(counters.h64_accelerate, last_attention_h64_accelerate_);
+    const uint64_t h64_sme2_delta = delta_or_current(counters.h64_sme2, last_attention_h64_sme2_);
+    const uint64_t h64_neon_delta = delta_or_current(counters.h64_neon, last_attention_h64_neon_);
+    const uint64_t generic_neon_delta = delta_or_current(counters.generic_neon, last_attention_generic_neon_);
+    const uint64_t generic_sme2_dispatch_delta =
+        delta_or_current(counters.generic_sme2_dispatch, last_attention_generic_sme2_dispatch_);
+
+    last_attention_h64_accelerate_ = counters.h64_accelerate;
+    last_attention_h64_sme2_ = counters.h64_sme2;
+    last_attention_h64_neon_ = counters.h64_neon;
+    last_attention_generic_neon_ = counters.generic_neon;
+    last_attention_generic_sme2_dispatch_ = counters.generic_sme2_dispatch;
+
+    const uint64_t total_delta = h64_accelerate_delta + h64_sme2_delta + h64_neon_delta +
+                                 generic_neon_delta + generic_sme2_dispatch_delta;
+    if (total_delta == 0) return;
+
+    std::cout << "  [attention paths] "
+              << "h64_accelerate=" << h64_accelerate_delta << " "
+              << "h64_sme2=" << h64_sme2_delta << " "
+              << "h64_neon=" << h64_neon_delta << " "
+              << "generic_neon=" << generic_neon_delta << " "
+              << "generic_sme2_dispatch=" << generic_sme2_dispatch_delta
+              << "\n";
 }
 
 void TestRunner::log_performance(const std::string& test_name, const std::string& details) {

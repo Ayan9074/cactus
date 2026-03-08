@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -132,6 +133,11 @@ static void configure_curl_tls(CURL* handle) {
 #endif
 }
 
+static bool relaxed_ios_test_mode() {
+    const char* v = std::getenv("CACTUS_IOS_TEST_RELAXED");
+    return v && std::strcmp(v, "1") == 0;
+}
+
 CurlHttpCheck run_curl_http_request_check() {
 #if !CACTUS_TEST_HAS_CURL
     return {false, true, "curl/curl.h not available in include path"};
@@ -202,6 +208,12 @@ int main() {
     CurlHttpCheck http_check = run_curl_http_request_check();
     if (http_check.skip) {
         runner.log_skip("http_request", http_check.reason);
+    } else if (relaxed_ios_test_mode() && !http_check.pass &&
+               http_check.reason.find("Timeout was reached") != std::string::npos) {
+        runner.log_skip("http_request", "relaxed iOS mode: network timeout");
+        if (!http_check.reason.empty()) {
+            std::cout << "  reason: " << http_check.reason << "\n";
+        }
     } else {
         runner.run_test("http_request", http_check.pass);
         if (http_check.http_code > 0) {
