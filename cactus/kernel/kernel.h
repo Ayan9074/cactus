@@ -74,6 +74,23 @@ void cactus_matmul_integer(Precision precision,
 void cactus_matmul_f16(const __fp16* a, const __fp16* b_transposed, __fp16* c,
                        size_t M, size_t K, size_t N);
 
+#if defined(CACTUS_COMPILE_SME2)
+void cactus_attention_f16_h64_prefill_sme2_caller(
+    const __fp16* queries,
+    const __fp16* keys,
+    const __fp16* values,
+    __fp16* output,
+    size_t batch_size,
+    size_t seq_len,
+    size_t kv_seq_len,
+    size_t num_q_heads,
+    size_t num_kv_heads,
+    float scale,
+    size_t position_offset,
+    bool is_causal
+);
+#endif
+
 void cactus_transpose_2d_f16(const __fp16* source, __fp16* destination,
                              size_t num_rows, size_t num_cols, size_t start_row, size_t end_row);
 void cactus_transpose_f16(const __fp16* source, __fp16* destination, const size_t* shape,

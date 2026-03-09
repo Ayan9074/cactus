@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <limits>
 #include <cstring>
+#include <cstdlib>
 #include <vector>
 
 #ifdef __APPLE__
@@ -208,7 +209,49 @@ static void cactus_attention_f16_h64_accelerate(
 }
 #endif
 
-static inline void cactus_attention_f16_h64(
+namespace {
+enum class CactusAttentionH64Path {
+    AUTO,
+    DECODE_NEON,
+    PREFILL_NEON,
+    PREFILL_SME2,
+    ACCELERATE
+};
+
+static inline bool cactus_env_truthy(const char* value) {
+    if (!value || value[0] == '\0') return false;
+    return std::strcmp(value, "1") == 0 ||
+           std::strcmp(value, "true") == 0 ||
+           std::strcmp(value, "TRUE") == 0 ||
+           std::strcmp(value, "yes") == 0 ||
+           std::strcmp(value, "YES") == 0;
+}
+
+static CactusAttentionH64Path cactus_attention_h64_force_path() {
+    const char* env = std::getenv("CACTUS_ATTENTION_H64_FORCE_PATH");
+    if (!env || env[0] == '\0') return CactusAttentionH64Path::AUTO;
+    if (std::strcmp(env, "decode_neon") == 0) return CactusAttentionH64Path::DECODE_NEON;
+    if (std::strcmp(env, "prefill_neon") == 0) return CactusAttentionH64Path::PREFILL_NEON;
+    if (std::strcmp(env, "prefill_sme2") == 0) return CactusAttentionH64Path::PREFILL_SME2;
+    if (std::strcmp(env, "accelerate") == 0) return CactusAttentionH64Path::ACCELERATE;
+    return CactusAttentionH64Path::AUTO;
+}
+
+static size_t cactus_attention_h64_sme2_min_seq() {
+    const char* env = std::getenv("CACTUS_ATTENTION_H64_SME2_MIN_SEQ");
+    if (!env || env[0] == '\0') return 32;
+    char* end = nullptr;
+    const long parsed = std::strtol(env, &end, 10);
+    if (end == env || (end && *end != '\0') || parsed <= 0) return 32;
+    return static_cast<size_t>(parsed);
+}
+
+static bool cactus_attention_h64_disable_sme2() {
+    return cactus_env_truthy(std::getenv("CACTUS_ATTENTION_H64_DISABLE_SME2"));
+}
+} // namespace
+
+static inline void cactus_attention_f16_h64_decode_neon(
     const __fp16* queries,
     const __fp16* keys,
     const __fp16* values,
@@ -226,17 +269,146 @@ static inline void cactus_attention_f16_h64(
     constexpr size_t BLOCK_SIZE = 32;
     constexpr float NEG_INF = -INFINITY;
 
-#ifdef __APPLE__
-    if (seq_len >= 64) {
-        cactus_attention_f16_h64_accelerate(
-            queries, keys, values, output,
-            batch_size, seq_len, kv_seq_len,
-            num_q_heads, num_kv_heads,
-            scale, position_offset, is_causal
-        );
-        return;
-    }
-#endif
+    if (seq_len != 1) return;
+    const size_t group_size = num_q_heads / num_kv_heads;
+    const size_t q_batch_stride = seq_len * num_q_heads * HEAD_DIM;
+    const size_t kv_batch_stride = kv_seq_len * num_kv_heads * HEAD_DIM;
+    const size_t o_batch_stride = q_batch_stride;
+    const size_t q_seq_stride = num_q_heads * HEAD_DIM;
+    const size_t kv_seq_stride = num_kv_heads * HEAD_DIM;
+    const size_t o_seq_stride = q_seq_stride;
+
+    CactusThreading::parallel_for(batch_size * num_q_heads, CactusThreading::Thresholds::ATTENTION,
+        [&](size_t start, size_t end) {
+
+        float block_scores[BLOCK_SIZE];
+
+        for (size_t work = start; work < end; ++work) {
+            const size_t batch = work / num_q_heads;
+            const size_t q_head = work % num_q_heads;
+            const size_t kv_head = q_head / group_size;
+
+            const __fp16* q = queries + batch * q_batch_stride + q_head * HEAD_DIM;
+            __fp16* o = output + batch * o_batch_stride + q_head * HEAD_DIM;
+
+            float32x4_t acc_lo[8], acc_hi[8];
+            #pragma unroll
+            for (int i = 0; i < 8; i++) {
+                acc_lo[i] = vdupq_n_f32(0.f);
+                acc_hi[i] = vdupq_n_f32(0.f);
+            }
+
+            float running_max = NEG_INF;
+            float running_sum = 0.f;
+
+            const size_t abs_q = position_offset;
+            size_t kv_end = is_causal ? std::min(kv_seq_len, abs_q + 1) : kv_seq_len;
+
+            for (size_t kv0 = 0; kv0 < kv_end; kv0 += BLOCK_SIZE) {
+                const size_t kv1 = std::min(kv0 + BLOCK_SIZE, kv_end);
+                float block_max = NEG_INF;
+
+                for (size_t i = kv0; i < kv1; i++) {
+                    float32x4_t s0 = vdupq_n_f32(0.f);
+                    float32x4_t s1 = vdupq_n_f32(0.f);
+
+                    const __fp16* k = keys + batch*kv_batch_stride + i*kv_seq_stride + kv_head*HEAD_DIM;
+
+                    #pragma unroll
+                    for (int d = 0; d < 8; d++) {
+                        float16x8_t qv = vld1q_f16(q + d*8);
+                        float16x8_t kv = vld1q_f16(k + d*8);
+
+                        float32x4_t ql = vcvt_f32_f16(vget_low_f16(qv));
+                        float32x4_t qh = vcvt_f32_f16(vget_high_f16(qv));
+                        float32x4_t kl = vcvt_f32_f16(vget_low_f16(kv));
+                        float32x4_t kh = vcvt_f32_f16(vget_high_f16(kv));
+
+                        s0 = vfmaq_f32(s0, ql, kl);
+                        s1 = vfmaq_f32(s1, qh, kh);
+                    }
+
+                    float score = vaddvq_f32(vaddq_f32(s0, s1)) * scale;
+                    block_scores[i - kv0] = score;
+                    block_max = std::max(block_max, score);
+                }
+
+                float current_block_scale = 1.0f;
+                if (block_max > running_max) {
+                    float scale_correction = expf(running_max - block_max);
+                    running_sum *= scale_correction;
+
+                    #pragma unroll
+                    for (int d = 0; d < 8; d++) {
+                        acc_lo[d] = vmulq_n_f32(acc_lo[d], scale_correction);
+                        acc_hi[d] = vmulq_n_f32(acc_hi[d], scale_correction);
+                    }
+                    running_max = block_max;
+                } else {
+                    current_block_scale = expf(block_max - running_max);
+                }
+
+                float block_sum = 0.f;
+                for (size_t i = 0; i < kv1 - kv0; i++) {
+                    block_scores[i] = expf(block_scores[i] - block_max);
+                    block_sum += block_scores[i];
+                }
+
+                for (size_t i = 0; i < kv1 - kv0; i++) {
+                    const float attn_weight = block_scores[i] * current_block_scale;
+                    if (attn_weight == 0.f) continue;
+
+                    const __fp16* v = values + batch*kv_batch_stride + (kv0+i)*kv_seq_stride + kv_head*HEAD_DIM;
+                    float32x4_t wv = vdupq_n_f32(attn_weight);
+
+                    #pragma unroll
+                    for (int d = 0; d < 8; d++) {
+                        float16x8_t vv = vld1q_f16(v + d*8);
+                        acc_lo[d] = vfmaq_f32(acc_lo[d], vcvt_f32_f16(vget_low_f16(vv)), wv);
+                        acc_hi[d] = vfmaq_f32(acc_hi[d], vcvt_f32_f16(vget_high_f16(vv)), wv);
+                    }
+                }
+
+                running_sum += block_sum * current_block_scale;
+            }
+
+            if (running_sum == 0.f) {
+                memset(o, 0, HEAD_DIM * sizeof(__fp16));
+                continue;
+            }
+
+            float inv = 1.f / running_sum;
+            float32x4_t invv = vdupq_n_f32(inv);
+
+            #pragma unroll
+            for (int d = 0; d < 8; d++) {
+                        float16x8_t out = vcombine_f16(
+                            vcvt_f16_f32(vmulq_f32(acc_lo[d], invv)),
+                            vcvt_f16_f32(vmulq_f32(acc_hi[d], invv))
+                        );
+                        vst1q_f16(o + d * 8, out);
+            }
+        }
+    });
+}
+
+static inline void cactus_attention_f16_h64_prefill_neon(
+    const __fp16* queries,
+    const __fp16* keys,
+    const __fp16* values,
+    __fp16* output,
+    size_t batch_size,
+    size_t seq_len,
+    size_t kv_seq_len,
+    size_t num_q_heads,
+    size_t num_kv_heads,
+    float scale,
+    size_t position_offset,
+    bool is_causal
+) {
+    constexpr size_t HEAD_DIM = 64;
+    constexpr size_t BLOCK_SIZE = 32;
+    constexpr float NEG_INF = -INFINITY;
 
     const size_t group_size = num_q_heads / num_kv_heads;
     const size_t q_batch_stride = seq_len * num_q_heads * HEAD_DIM;
@@ -362,6 +534,106 @@ static inline void cactus_attention_f16_h64(
     });
 }
 
+static inline void cactus_attention_f16_h64_dispatch(
+    const __fp16* queries,
+    const __fp16* keys,
+    const __fp16* values,
+    __fp16* output,
+    size_t batch_size,
+    size_t seq_len,
+    size_t kv_seq_len,
+    size_t num_q_heads,
+    size_t num_kv_heads,
+    float scale,
+    size_t position_offset,
+    bool is_causal
+) {
+    const CactusAttentionH64Path forced = cactus_attention_h64_force_path();
+    if (forced == CactusAttentionH64Path::DECODE_NEON && seq_len == 1) {
+        cactus_attention_f16_h64_decode_neon(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+    if (forced == CactusAttentionH64Path::PREFILL_NEON || forced == CactusAttentionH64Path::DECODE_NEON) {
+        cactus_attention_f16_h64_prefill_neon(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+#if defined(CACTUS_COMPILE_SME2)
+    if (forced == CactusAttentionH64Path::PREFILL_SME2 && cpu_has_sme2()) {
+        cactus_attention_f16_h64_prefill_sme2_caller(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+#endif
+#ifdef __APPLE__
+    if (forced == CactusAttentionH64Path::ACCELERATE) {
+        cactus_attention_f16_h64_accelerate(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+#endif
+
+    if (seq_len == 1) {
+        cactus_attention_f16_h64_decode_neon(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+
+#if defined(CACTUS_COMPILE_SME2)
+    if (cpu_has_sme2() &&
+        !cactus_attention_h64_disable_sme2() &&
+        seq_len >= cactus_attention_h64_sme2_min_seq()) {
+        cactus_attention_f16_h64_prefill_sme2_caller(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+#endif
+
+#ifdef __APPLE__
+    if (seq_len >= 64) {
+        cactus_attention_f16_h64_accelerate(
+            queries, keys, values, output,
+            batch_size, seq_len, kv_seq_len,
+            num_q_heads, num_kv_heads,
+            scale, position_offset, is_causal
+        );
+        return;
+    }
+#endif
+
+    cactus_attention_f16_h64_prefill_neon(
+        queries, keys, values, output,
+        batch_size, seq_len, kv_seq_len,
+        num_q_heads, num_kv_heads,
+        scale, position_offset, is_causal
+    );
+}
+
 void cactus_attention_f16(
     const __fp16* queries,
     const __fp16* keys,
@@ -386,7 +658,7 @@ void cactus_attention_f16(
     }
     
     if (head_dim == 64 && mask == nullptr && window_size == 0) {
-        cactus_attention_f16_h64(
+        cactus_attention_f16_h64_dispatch(
             queries, keys, values, output,
             batch_size, seq_len, kv_seq_len,
             num_q_heads, num_kv_heads,
