@@ -689,6 +689,81 @@ static inline void cactus_attention_pack_a_pairs_row_major(
     }
 }
 
+static inline void cactus_attention_pack_b_for_worker_layout(
+    const __fp16* bt,
+    __fp16* b_packed,
+    size_t cols,
+    size_t tile_rows,
+    size_t tile_pairs
+) {
+    const size_t k_pairs = (CACTUS_ATTN_H64_HEAD_DIM + 1) / 2;
+    const size_t col_blocks = cactus_div_up_size(cols, tile_rows);
+    const size_t full_col_blocks = cols / tile_rows;
+    const size_t cb4_tiles = (full_col_blocks / 4) * 4;
+    const size_t cb2_tiles = ((full_col_blocks - cb4_tiles) / 2) * 2;
+    const size_t cb1_tiles = col_blocks - cb4_tiles - cb2_tiles;
+    const size_t cb4_groups = cb4_tiles / 4;
+    const size_t cb2_groups = cb2_tiles / 2;
+
+    const size_t off_cb4 = 0;
+    const size_t off_cb2 = off_cb4 + cb4_groups * k_pairs * 4 * tile_pairs;
+    const size_t off_cb1 = off_cb2 + cb2_groups * k_pairs * 2 * tile_pairs;
+
+    for (size_t g4 = 0; g4 < cb4_groups; ++g4) {
+        const size_t col0 = g4 * 4 * tile_rows;
+        for (size_t kp = 0; kp < k_pairs; ++kp) {
+            const size_t k0 = kp * 2;
+            __fp16* dst = b_packed + off_cb4 + (g4 * k_pairs + kp) * (4 * tile_pairs);
+            for (size_t t = 0; t < 4; ++t) {
+                __fp16* dst_t = dst + t * tile_pairs;
+                const __fp16* src_col = bt + (col0 + t * tile_rows) * CACTUS_ATTN_H64_HEAD_DIM + k0;
+                for (size_t c = 0; c < tile_rows; ++c) {
+                    dst_t[2 * c] = src_col[0];
+                    dst_t[2 * c + 1] = src_col[1];
+                    src_col += CACTUS_ATTN_H64_HEAD_DIM;
+                }
+            }
+        }
+    }
+
+    for (size_t g2 = 0; g2 < cb2_groups; ++g2) {
+        const size_t col0 = cb4_tiles * tile_rows + g2 * 2 * tile_rows;
+        for (size_t kp = 0; kp < k_pairs; ++kp) {
+            const size_t k0 = kp * 2;
+            __fp16* dst = b_packed + off_cb2 + (g2 * k_pairs + kp) * (2 * tile_pairs);
+            for (size_t t = 0; t < 2; ++t) {
+                __fp16* dst_t = dst + t * tile_pairs;
+                const __fp16* src_col = bt + (col0 + t * tile_rows) * CACTUS_ATTN_H64_HEAD_DIM + k0;
+                for (size_t c = 0; c < tile_rows; ++c) {
+                    dst_t[2 * c] = src_col[0];
+                    dst_t[2 * c + 1] = src_col[1];
+                    src_col += CACTUS_ATTN_H64_HEAD_DIM;
+                }
+            }
+        }
+    }
+
+    for (size_t g1 = 0; g1 < cb1_tiles; ++g1) {
+        const size_t cb = cb4_tiles + cb2_tiles + g1;
+        const size_t col0 = cb * tile_rows;
+        const size_t active_c = (col0 < cols) ? std::min(tile_rows, cols - col0) : 0;
+        for (size_t kp = 0; kp < k_pairs; ++kp) {
+            const size_t k0 = kp * 2;
+            __fp16* dst = b_packed + off_cb1 + (g1 * k_pairs + kp) * tile_pairs;
+            const __fp16* src_col = bt + col0 * CACTUS_ATTN_H64_HEAD_DIM + k0;
+            for (size_t c = 0; c < active_c; ++c) {
+                dst[2 * c] = src_col[0];
+                dst[2 * c + 1] = src_col[1];
+                src_col += CACTUS_ATTN_H64_HEAD_DIM;
+            }
+            for (size_t c = active_c; c < tile_rows; ++c) {
+                dst[2 * c] = static_cast<__fp16>(0);
+                dst[2 * c + 1] = static_cast<__fp16>(0);
+            }
+        }
+    }
+}
+
 __arm_new("za") __arm_locally_streaming
 static void cactus_attention_score_tile_sme2_fp16(
     CactusAttentionH64Sme2Workspace& ws,
@@ -704,11 +779,10 @@ static void cactus_attention_score_tile_sme2_fp16(
         tile_rows,
         tile_pairs
     );
-    // Use the same packed-B layout as the shared SME2 matmul worker.
-    cactus_pack_b_f16_from_bt(
+    // Match worker layout without nested parallelism (avoid pool deadlock in nested calls).
+    cactus_attention_pack_b_for_worker_layout(
         ws.k_tile,
         ws.b_packed.data(),
-        CACTUS_ATTN_H64_HEAD_DIM,
         cols,
         tile_rows,
         tile_pairs

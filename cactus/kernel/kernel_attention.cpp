@@ -274,9 +274,7 @@ static inline void cactus_attention_f16_h64_decode_neon(
     const size_t q_batch_stride = seq_len * num_q_heads * HEAD_DIM;
     const size_t kv_batch_stride = kv_seq_len * num_kv_heads * HEAD_DIM;
     const size_t o_batch_stride = q_batch_stride;
-    const size_t q_seq_stride = num_q_heads * HEAD_DIM;
     const size_t kv_seq_stride = num_kv_heads * HEAD_DIM;
-    const size_t o_seq_stride = q_seq_stride;
 
     CactusThreading::parallel_for(batch_size * num_q_heads, CactusThreading::Thresholds::ATTENTION,
         [&](size_t start, size_t end) {
@@ -569,12 +567,29 @@ static inline void cactus_attention_f16_h64_dispatch(
     }
 #if defined(CACTUS_COMPILE_SME2)
     if (forced == CactusAttentionH64Path::PREFILL_SME2 && cpu_has_sme2()) {
-        cactus_attention_f16_h64_prefill_sme2_caller(
-            queries, keys, values, output,
-            batch_size, seq_len, kv_seq_len,
-            num_q_heads, num_kv_heads,
-            scale, position_offset, is_causal
-        );
+        if (seq_len == 1) {
+            cactus_attention_f16_h64_decode_neon(
+                queries, keys, values, output,
+                batch_size, seq_len, kv_seq_len,
+                num_q_heads, num_kv_heads,
+                scale, position_offset, is_causal
+            );
+        } else if (is_causal) {
+            // Temporary safety gate: current SME2 prefill path is non-causal-stable only.
+            cactus_attention_f16_h64_prefill_neon(
+                queries, keys, values, output,
+                batch_size, seq_len, kv_seq_len,
+                num_q_heads, num_kv_heads,
+                scale, position_offset, is_causal
+            );
+        } else {
+            cactus_attention_f16_h64_prefill_sme2_caller(
+                queries, keys, values, output,
+                batch_size, seq_len, kv_seq_len,
+                num_q_heads, num_kv_heads,
+                scale, position_offset, is_causal
+            );
+        }
         return;
     }
 #endif
@@ -603,6 +618,7 @@ static inline void cactus_attention_f16_h64_dispatch(
 #if defined(CACTUS_COMPILE_SME2)
     if (cpu_has_sme2() &&
         !cactus_attention_h64_disable_sme2() &&
+        !is_causal &&
         seq_len >= cactus_attention_h64_sme2_min_seq()) {
         cactus_attention_f16_h64_prefill_sme2_caller(
             queries, keys, values, output,

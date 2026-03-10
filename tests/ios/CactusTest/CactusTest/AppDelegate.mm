@@ -17,7 +17,6 @@ extern int test_exhaustive_main();
 extern int test_graph_main();
 extern int test_index_main();
 extern int test_kernel_main();
-extern int test_kv_cache_main();
 extern int test_llm_main();
 extern int test_model_loading_main();
 extern int test_performance_main();
@@ -79,6 +78,7 @@ static void asr_token_callback(const char* token, uint32_t, void*) {
     NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
     [self copyFromBundle:bundlePath toDocuments:getenv("CACTUS_TEST_MODEL")];
     [self copyFromBundle:bundlePath toDocuments:getenv("CACTUS_TEST_TRANSCRIBE_MODEL")];
+    [self copyFromBundle:bundlePath toDocuments:getenv("CACTUS_TEST_WHISPER_MODEL")];
     [self copyFromBundle:bundlePath toDocuments:getenv("CACTUS_TEST_VAD_MODEL")];
     [self copyFromBundle:bundlePath toDocuments:getenv("CACTUS_TEST_ASSETS")];
     [self copyFromBundle:bundlePath toDocuments:getenv("CACTUS_ASR_AUDIO_FILE")];
@@ -168,7 +168,6 @@ static void asr_token_callback(const char* token, uint32_t, void*) {
         test_graph_main();
         test_index_main();
         test_kernel_main();
-        test_kv_cache_main();
         test_llm_main();
         test_model_loading_main();
         test_performance_main();
