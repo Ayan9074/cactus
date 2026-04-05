@@ -252,7 +252,7 @@ struct TokenizerRuntimeConfig {
 
 TokenizerRuntimeConfig load_tokenizer_runtime_config(const std::string& config_file);
 void load_special_tokens_map(const std::string& config_file, std::unordered_map<std::string, uint32_t>& special_tokens);
-
+std::vector<std::string> split_with_special_tokens(const std::string& text, const std::unordered_map<std::string, uint32_t>& special_tokens);
 
 class Tokenizer {
 public:
@@ -297,6 +297,7 @@ protected:
     TokenizerRuntimeConfig runtime_config_;
 
     void detect_model_type(const std::string& config_path);
+    void load_chat_template(const std::string& template_file);
     std::string format_qwen_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json, bool enable_thinking_if_supported = true) const;
     std::string format_gemma_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
     std::string format_gemma4_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json, bool enable_thinking_if_supported = true) const;
@@ -356,10 +357,6 @@ private:
     std::unordered_map<std::string, uint32_t> special_tokens_;
     std::vector<std::string> split_with_special_tokens(const std::string& text) const;
     void load_special_tokens(const std::string& config_file);
-
-    void load_chat_template(const std::string& template_file);
-
-    std::unordered_map<std::string, uint32_t> tool_tokens_;
 };
 
 class SPTokenizer : public Tokenizer {
@@ -409,8 +406,6 @@ private:
     std::unordered_map<std::string, uint32_t> special_tokens_;
     std::vector<std::string> split_with_special_tokens(const std::string& text) const;
     void load_special_tokens(const std::string& config_file);
-
-    void load_chat_template(const std::string& template_file);
 };
 
 class ConvCache {
