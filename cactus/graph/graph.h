@@ -96,6 +96,7 @@ private:
 
 namespace GraphFile {
     class MappedFile;
+    struct SerializedGraph;
 }
 
 enum class Precision {
@@ -441,6 +442,8 @@ public:
 
     BufferPool(const BufferPool&) = delete;
     BufferPool& operator=(const BufferPool&) = delete;
+    BufferPool(BufferPool&&) noexcept = default;
+    BufferPool& operator=(BufferPool&&) noexcept = default;
 
     char* acquire(size_t byte_size);
     void release(char* ptr, size_t byte_size);
@@ -469,12 +472,21 @@ namespace ValidationUtils {
 class CactusGraph {
 public:
     CactusGraph();
+    ~CactusGraph() = default;
+
+    CactusGraph(const CactusGraph&) = delete;
+    CactusGraph& operator=(const CactusGraph&) = delete;
+    CactusGraph(CactusGraph&&) noexcept = default;
+    CactusGraph& operator=(CactusGraph&&) noexcept = default;
 
     struct DebugNodeEntry {
         uint32_t layer_idx;
         std::string name;
         size_t node_id;
     };
+
+    void save(const std::string& path);
+    static CactusGraph load(const std::string& path);
     
     size_t input(const std::vector<size_t>& shape, Precision precision = Precision::INT8);
     size_t precision_cast(size_t input, Precision target_precision);
@@ -656,7 +668,7 @@ public:
     std::unordered_map<size_t, size_t> node_index_map_;
 
 private:
-    // Starts at 1 so that 0 can be used as a "no node" sentinel by callers.
+    static CactusGraph from_serialized(const GraphFile::SerializedGraph& serialized);
     size_t next_node_id_;
     std::vector<std::unique_ptr<GraphFile::MappedFile>> mapped_files_;
     std::unordered_map<std::string, size_t> weight_cache_;
@@ -677,6 +689,32 @@ namespace GraphFile {
         Precision precision;
         size_t byte_size;
     };
+
+    struct GraphHeader {
+        uint32_t magic;
+        uint32_t version;
+        uint32_t node_count;
+        uint32_t flags = 0;
+    };
+
+    struct NodeEntry {
+        uint32_t index; // serialized node index 0..n-1
+        OpType op_type;
+        std::vector<uint32_t> inputs;
+        std::vector<size_t> output_shape;
+        Precision precision;
+        OpParams params;
+    };
+
+    struct SerializedGraph {
+        GraphHeader header;
+        std::vector<NodeEntry> nodes;
+        std::vector <uint32_t> graph_inputs; // IDs of serialized inputs
+        std::vector<uint32_t> graph_outputs; // IDs of serialized outputs
+    };
+
+    SerializedGraph load_graph(const std::string& filename);
+    void save_graph(const CactusGraph& graph, const std::string& filename);
     
     void save_node(CactusGraph& graph, size_t node_id, const std::string& filename);
     
