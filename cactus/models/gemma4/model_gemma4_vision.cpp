@@ -1,6 +1,8 @@
 #include "model_gemma4.h"
 #include "../../graph/graph.h"
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <stdexcept>
