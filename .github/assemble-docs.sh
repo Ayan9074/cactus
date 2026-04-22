@@ -19,8 +19,9 @@ cp -r assets/* site_docs/assets/
 
 echo "docs.cactuscompute.com" > site_docs/CNAME
 
-mkdir -p site_docs/stylesheets
+mkdir -p site_docs/stylesheets site_docs/javascripts
 cp .github/docs-overrides/stylesheets/custom.css site_docs/stylesheets/custom.css
+cp .github/docs-overrides/javascripts/mathjax.js site_docs/javascripts/mathjax.js
 
 [ -f CONTRIBUTING.md ] && cp CONTRIBUTING.md site_docs/CONTRIBUTING.md
 [ -f DCO.md ] && cp DCO.md site_docs/DCO.md

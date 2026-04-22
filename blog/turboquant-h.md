@@ -43,7 +43,7 @@ The per-layer embedding table is 2.5 GB. More than half the model. This is not u
 
 ## 3. TurboQuant-H
 
-TurboQuant-H shares the core insight from TurboQuant; rotation concentrates coordinates into a well-behaved distribution, enabling aggressive scalar quantization — but simplifies the pipeline for offline weight quantization.
+TurboQuant-H shares the core insight from TurboQuant; rotation concentrates coordinates into a well-behaved distribution, enabling aggressive scalar quantization, but simplifies the pipeline for offline weight quantization.
 
 ### 3.1 Comparison with TurboQuant
 
@@ -278,8 +278,8 @@ If you use TurboQuant-H in your research, please cite:
                Quantization in Embedding-Dominated Models},
   author    = {Mosoyan, Karen and Ndubuaku, Henry},
   year      = {2026},
-  url       = {https://github.com/cactus-compute/cactus},
-  note      = {Cactus Compute Technical Report}
+  url       = {https://docs.cactuscompute.com/latest/blog/turboquant-h/},
+  note      = {Cactus Compute Research Preview}
 }
 ```
 

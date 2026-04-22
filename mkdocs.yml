@@ -57,6 +57,8 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets:
       base_path: [site_docs]
+  - pymdownx.arithmatex:
+      generic: true
 
 plugins:
   - search
@@ -70,6 +72,10 @@ extra:
       link: https://github.com/cactus-compute/cactus
     - icon: fontawesome/brands/reddit
       link: https://www.reddit.com/r/cactuscompute/
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 extra_css:
   - stylesheets/custom.css
