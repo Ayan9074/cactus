@@ -2,7 +2,7 @@ import ctypes
 from os import wait
 import numpy as np
 
-from .cactus import _lib, cactus_node_t, cactus_tensor_info_t
+from .cactus import _lib, cactus_node_t, cactus_tensor_info_t, cactus_get_last_error
 
 
 class Graph:
@@ -23,6 +23,7 @@ class Graph:
         self.h = _lib.cactus_graph_create()
         if not self.h:
             raise RuntimeError("cactus_graph_create failed")
+        self._owned_buffers = []
     
     def save(self, filename):
         rc = _lib.cactus_graph_save(self.h, str(filename).encode())
@@ -36,6 +37,7 @@ class Graph:
             raise RuntimeError("cactus_graph_load failed")
         obj = cls.__new__(cls)
         obj.h = h
+        obj._owned_buffers = []
         return obj
 
     def __del__(self):
@@ -89,11 +91,16 @@ class Graph:
         rc = _lib.cactus_graph_hard_reset(self.h)
         if rc != 0:
             raise RuntimeError("graph_hard_reset failed")
+        self._owned_buffers.clear()
 
     def execute(self):
         rc = _lib.cactus_graph_execute(self.h)
         if rc != 0:
+            err = cactus_get_last_error()
+            if err:
+                raise RuntimeError(f"graph_execute failed: {err}")
             raise RuntimeError("graph_execute failed")
+        self._owned_buffers.clear()
 
     def add(self, a, b):
         return self._binary("cactus_graph_add", a, b)
@@ -614,6 +621,10 @@ class Graph:
         cv = np.ascontiguousarray(cached_values, dtype=np.int8)
         ks = np.ascontiguousarray(k_scales, dtype=np.float32)
         vs = np.ascontiguousarray(v_scales, dtype=np.float32)
+        # Keep buffers alive through execute; C++ stores raw pointers.
+        if not hasattr(self, "_owned_buffers"):
+            self._owned_buffers = []
+        self._owned_buffers.extend([ck, cv, ks, vs])
         out = cactus_node_t()
         rc = _lib.cactus_graph_attention_int8_hybrid(
             self.h,
