@@ -60,8 +60,19 @@ def extract_constant(line):
         if s.startswith("0x"):
             val = int(s, 16)
 
+            # Interpret hex literals as IEEE bit-patterns for floating tensors.
             if "tensor<f16>" in line:
                 arr = np.array([val], dtype=np.uint16).view(np.float16)
+                return float(arr[0])
+            if "tensor<bf16>" in line:
+                # bf16 -> float32 by placing bits in the upper 16 of f32.
+                bits = (np.array([val], dtype=np.uint16).astype(np.uint32) << 16)
+                return float(bits.view(np.float32)[0])
+            if "tensor<f32>" in line:
+                arr = np.array([val], dtype=np.uint32).view(np.float32)
+                return float(arr[0])
+            if "tensor<f64>" in line:
+                arr = np.array([val], dtype=np.uint64).view(np.float64)
                 return float(arr[0])
 
             return float(val)

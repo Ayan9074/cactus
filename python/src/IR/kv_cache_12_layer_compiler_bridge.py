@@ -1,6 +1,7 @@
 compiled_graph = None
 compiled_env = None
 USE_CACTUS_SAMPLING = True
+
 import re
 import time
 import os
@@ -83,7 +84,7 @@ def extract_return_name(ir):
     raise RuntimeError("No return found")
 
 
-hf_model = GPT2LMHeadModel.from_pretrained("gpt2-large")
+hf_model = GPT2LMHeadModel.from_pretrained("GPT2-large")
 hf_model.eval()
 config = hf_model.config
 
@@ -91,7 +92,7 @@ NUM_LAYERS = config.n_layer
 NUM_HEADS  = config.n_head
 HEAD_DIM   = config.n_embd // config.n_head
 MAX_SEQ_LEN = int(os.getenv("MAX_SEQ_LEN", "0"))
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2-large")
+tokenizer = GPT2Tokenizer.from_pretrained("GPT2-large")
 state = hf_model.state_dict()
 
 wte = state["transformer.wte.weight"].cpu().numpy().astype(np.float32)

@@ -2,6 +2,19 @@ import numpy as np
 from .stablehlo_ir import extract_constant
 import re
 
+def _extract_convert_target_dtype(raw):
+    m = re.search(r"->\s*tensor<[^>]*x([a-z0-9]+)>", raw)
+    if not m:
+        return None
+    return m.group(1).lower()
+
+
+def _extract_tensor_element_dtype(raw):
+    matches = re.findall(r"tensor<[^>]*x([a-z0-9]+)>", raw)
+    if not matches:
+        return None
+    return matches[-1].lower()
+
 
 def repeat_axis(g, x, axis, times):
     if times == 1:
@@ -52,6 +65,27 @@ def ensure_binary_fp16(g, a, b):
     return a, b
 
 
+def ensure_binary_fp32(g, a, b):
+    if getattr(a, "dtype", None) != g.FP32:
+        a = g.precision_cast(a, g.FP32)
+    if getattr(b, "dtype", None) != g.FP32:
+        b = g.precision_cast(b, g.FP32)
+    return a, b
+
+
+def clamp_tensor_fp16(g, x, limit=60000.0):
+    if getattr(x, "dtype", None) != g.FP16:
+        return x
+    hi = g.input((1,), g.FP16)
+    lo = g.input((1,), g.FP16)
+    g.set_input(hi, np.array([limit], dtype=np.float16))
+    g.set_input(lo, np.array([-limit], dtype=np.float16))
+    # min(x, hi)
+    min_x = g.subtract(hi, g.relu(g.subtract(hi, x)))
+    # max(min_x, lo)
+    return g.add(lo, g.relu(g.subtract(min_x, lo)))
+
+
 def numel(shape):
     n = 1
     for s in shape:
@@ -61,10 +95,15 @@ def numel(shape):
 
 
 def find_attention_blocks(nodes, verbose=False):
-    blocks = []
+    candidates = []
 
     for t_idx, n in enumerate(nodes):
         if n.op != "transpose":
+            continue
+
+        # Skip transposes that are directly on graph input/weight args; these are
+        # typically projection-weight transposes, not K^T in attention score.
+        if n.inputs and n.inputs[0].startswith("%arg"):
             continue
 
         if verbose:
@@ -107,10 +146,10 @@ def find_attention_blocks(nodes, verbose=False):
 
         if tril_idx is None:
             if verbose:
-                print("no tril after score matmul (decode path candidate)")
-            softmax_start = score_idx + 1
-        else:
-            softmax_start = tril_idx + 1
+                print("no tril after score matmul")
+            # Be strict: require explicit causal tril to avoid false attention matches.
+            continue
+        softmax_start = tril_idx + 1
 
         # Find softmax divide after score/tril:
         # reduce_maximum -> exp -> reduce_add -> divide
@@ -147,7 +186,7 @@ def find_attention_blocks(nodes, verbose=False):
 
         if verbose:
             print(f"🔥 Found attention block: transpose={t_idx}, score={score_idx}, tril={tril_idx}, softmax={softmax_div_idx}, out={out_idx}")
-        blocks.append({
+        candidates.append({
             "transpose": t_idx,
             "score": score_idx,
             "tril": tril_idx,
@@ -155,6 +194,16 @@ def find_attention_blocks(nodes, verbose=False):
             "out": out_idx,
         })
 
+    # Deduplicate: a single attention out node can be reachable from multiple
+    # transpose candidates in the same local window. Keep the closest transpose
+    # (highest index) to the score/out path.
+    by_out = {}
+    for c in candidates:
+        prev = by_out.get(c["out"])
+        if prev is None or c["transpose"] > prev["transpose"]:
+            by_out[c["out"]] = c
+
+    blocks = sorted(by_out.values(), key=lambda b: b["transpose"])
     return blocks
 
 
@@ -323,6 +372,165 @@ def find_layernorm_blocks(nodes, verbose=False):
     return dedup
 
 
+def find_rmsnorm_blocks(nodes, verbose=False):
+    nodes_by_name = {n.name: n for n in nodes}
+    idx_by_name = {n.name: i for i, n in enumerate(nodes)}
+    blocks = []
+
+    def _strip_convert_and_broadcast(name):
+        cur = name
+        while True:
+            n = nodes_by_name.get(cur)
+            if n is None or not n.inputs:
+                return cur
+            if n.op in ("convert", "broadcast_in_dim"):
+                cur = n.inputs[0]
+                continue
+            return cur
+
+    def _strip_convert(name):
+        cur = name
+        while True:
+            n = nodes_by_name.get(cur)
+            if n is None or n.op != "convert" or not n.inputs:
+                return cur
+            cur = n.inputs[0]
+
+    def _parse_var_chain(var_name, x_name):
+        # Expect var path equivalent to mean(x*x) with optional convert wrappers.
+        cur = _strip_convert(var_name)
+        v_n = nodes_by_name.get(cur)
+        if v_n is None:
+            return None
+
+        start_candidates = [idx_by_name.get(cur, 10**9)]
+
+        # Usually divide(sum(x*x), hidden_dim)
+        if v_n.op == "divide" and len(v_n.inputs) == 2:
+            num_name = _strip_convert(v_n.inputs[0])
+        # Occasionally multiply(sum(x*x), reciprocal_hidden_dim)
+        elif v_n.op == "multiply" and len(v_n.inputs) == 2:
+            a, b = v_n.inputs
+            if _maybe_scalar_from_node(nodes_by_name, a) is not None:
+                num_name = _strip_convert(b)
+            elif _maybe_scalar_from_node(nodes_by_name, b) is not None:
+                num_name = _strip_convert(a)
+            else:
+                return None
+        else:
+            return None
+
+        num_n = nodes_by_name.get(num_name)
+        if num_n is None:
+            return None
+        start_candidates.append(idx_by_name.get(num_name, 10**9))
+
+        if num_n.op == "broadcast_in_dim" and num_n.inputs:
+            red_name = _strip_convert(num_n.inputs[0])
+        elif num_n.op == "reduce_add":
+            red_name = num_name
+        else:
+            return None
+
+        red_n = nodes_by_name.get(red_name)
+        if red_n is None or red_n.op != "reduce_add" or not red_n.inputs:
+            return None
+        start_candidates.append(idx_by_name.get(red_name, 10**9))
+
+        sq_name = _strip_convert(red_n.inputs[0])
+        sq_n = nodes_by_name.get(sq_name)
+        if sq_n is None or sq_n.op != "multiply" or len(sq_n.inputs) != 2:
+            return None
+        if not (
+            (sq_n.inputs[0] == x_name and sq_n.inputs[1] == x_name)
+            or (sq_n.inputs[1] == x_name and sq_n.inputs[0] == x_name)
+        ):
+            return None
+        start_candidates.append(idx_by_name.get(sq_name, 10**9))
+
+        return min(start_candidates)
+
+    by_out = {}
+    for out in nodes:
+        if out.op != "multiply" or len(out.inputs) != 2:
+            continue
+
+        for norm_name, weight_name in ((out.inputs[0], out.inputs[1]), (out.inputs[1], out.inputs[0])):
+            norm_n = nodes_by_name.get(norm_name)
+            if norm_n is None or norm_n.op != "multiply" or len(norm_n.inputs) != 2:
+                continue
+
+            x_name = None
+            rsqrt_name = None
+            for a, b in ((norm_n.inputs[0], norm_n.inputs[1]), (norm_n.inputs[1], norm_n.inputs[0])):
+                b_n = nodes_by_name.get(b)
+                if b_n is None or b_n.op != "broadcast_in_dim" or not b_n.inputs:
+                    continue
+                cand = _strip_convert(b_n.inputs[0])
+                cand_n = nodes_by_name.get(cand)
+                if cand_n is not None and cand_n.op == "rsqrt" and cand_n.inputs:
+                    x_name = a
+                    rsqrt_name = cand
+                    break
+
+            if x_name is None or rsqrt_name is None:
+                continue
+
+            rsqrt_n = nodes_by_name.get(rsqrt_name)
+            add_name = _strip_convert(rsqrt_n.inputs[0]) if rsqrt_n and rsqrt_n.inputs else None
+            add_n = nodes_by_name.get(add_name) if add_name else None
+            if add_n is None or add_n.op != "add" or len(add_n.inputs) != 2:
+                continue
+
+            eps = None
+            var_name = None
+            for inp in add_n.inputs:
+                s = _maybe_scalar_from_node(nodes_by_name, inp)
+                if s is not None and eps is None:
+                    eps = float(s)
+                else:
+                    var_name = inp
+            if var_name is None:
+                continue
+            if eps is None:
+                eps = 1e-6
+
+            var_start = _parse_var_chain(var_name, x_name)
+            if var_start is None:
+                continue
+
+            weight_src = _strip_convert_and_broadcast(weight_name)
+
+            start = min(
+                var_start,
+                idx_by_name.get(norm_name, 10**9),
+                idx_by_name.get(add_name, 10**9),
+                idx_by_name.get(rsqrt_name, 10**9),
+            )
+
+            out_idx = idx_by_name.get(out.name)
+            if out_idx is None:
+                continue
+
+            b = {
+                "start": int(start),
+                "end": int(out_idx),
+                "x": x_name,
+                "weight": weight_src,
+                "out": out.name,
+                "eps": float(eps),
+            }
+            prev = by_out.get(out.name)
+            if prev is None or b["start"] < prev["start"]:
+                by_out[out.name] = b
+            break
+
+    dedup = sorted(by_out.values(), key=lambda b: (b["start"], b["end"]))
+    if verbose:
+        print("RMSNorm blocks:", len(dedup))
+    return dedup
+
+
 def find_gelu_blocks(nodes, verbose=False):
     nodes_by_name = {n.name: n for n in nodes}
     idx_by_name = {n.name: i for i, n in enumerate(nodes)}
@@ -396,6 +604,7 @@ def lower_to_cactus(
     input_shapes,
     raw_inputs=None,
     enable_attention_fusion=True,
+    enable_rmsnorm_fusion=True,
     use_kv_cache=False,
     kv_cache_provider=None,
     position_offset=0,
@@ -403,16 +612,25 @@ def lower_to_cactus(
     debug_taps=None,
     fp32_layernorm=False,
     fp32_qkv_matmul=False,
+    post_matmul_fp32=False,
+    attention_scale=None,
+    arg_specs=None,
     kv_cache_tensors=None,
     kv_cache_len=0,
     kv_num_heads=None,
     kv_head_dim=None,
     kv_cache_additive_mask=None,
+    fused_attn_out_names=None,
 ):
+    if arg_specs is None:
+        arg_specs = {}
+
     attn_blocks = find_attention_blocks(nodes, verbose=False) if enable_attention_fusion else []
+    rms_blocks = find_rmsnorm_blocks(nodes, verbose=False) if enable_rmsnorm_fusion else []
     ln_blocks = find_layernorm_blocks(nodes, verbose=False)
     gelu_blocks = find_gelu_blocks(nodes, verbose=False)
     nodes_by_name = {n.name: n for n in nodes}
+    idx_by_name = {n.name: i for i, n in enumerate(nodes)}
     env = {}
     shapes = dict(input_shapes)
     attn_blocks = find_attention_blocks(nodes, verbose=False) if enable_attention_fusion else []
@@ -426,6 +644,8 @@ def lower_to_cactus(
         attn_qkv_names.add(q_name)
         attn_qkv_names.add(k_name)
         attn_qkv_names.add(v_name)
+    rms_by_start = {b["start"]: b for b in rms_blocks}
+    rms_input_names = {b["x"] for b in rms_blocks}
     ln_by_start = {b["start"]: b for b in ln_blocks}
     gelu_by_start = {b["start"]: b for b in gelu_blocks}
     if raw_inputs is None:
@@ -440,14 +660,87 @@ def lower_to_cactus(
     for k, v in input_map.items():
         env[k] = v
 
+    if debug_taps is not None and rms_blocks:
+        for bi, b in enumerate(rms_blocks[:12]):
+            xn = nodes_by_name.get(b["x"])
+            wn = nodes_by_name.get(b["weight"])
+            print(
+                f"[rms_block {bi}] start={b['start']} end={b['end']} "
+                f"x={b['x']}({xn.op if xn else 'missing'}@{idx_by_name.get(b['x'], -1)}) "
+                f"w={b['weight']}({wn.op if wn else 'missing'}@{idx_by_name.get(b['weight'], -1)}) "
+                f"out={b['out']} eps={b['eps']}"
+            )
+        if len(rms_blocks) > 3:
+            x_name = rms_blocks[3]["x"]
+            x_idx = idx_by_name.get(x_name, -1)
+            if x_idx >= 0:
+                lo = max(0, x_idx - 25)
+                hi = min(len(nodes), x_idx + 10)
+                print(f"[rms_block 3 context] idx={x_idx} x={x_name}")
+                for j in range(lo, hi):
+                    n = nodes[j]
+                    extra = ""
+                    if n.op == "constant":
+                        try:
+                            extra = f" val={extract_constant(n.raw)} raw={n.raw}"
+                        except Exception:
+                            extra = f" raw={n.raw}"
+                    print(f"  {j:04d} {n.name} {n.op} inputs={n.inputs} shape={n.shape}{extra}")
+
     skip_until_idx = -1
     attn_layer_idx = 0
+    rms_block_idx = 0
     ln_block_idx = 0
     gelu_block_idx = 0
 
     for i, node in enumerate(nodes):
 
         if i <= skip_until_idx:
+            continue
+
+        rms_b = rms_by_start.get(i)
+        if rms_b is not None and rms_b["x"] in env and rms_b["weight"] in env:
+            x = env[rms_b["x"]]
+            weight = env[rms_b["weight"]]
+
+            orig_shape = tuple(shapes[rms_b["x"]])
+            out_shape = tuple(nodes_by_name[rms_b["out"]].shape)
+
+            x16 = ensure_fp16(g, x)
+            w16 = ensure_fp16(g, weight)
+
+            if debug_taps is not None:
+                debug_taps[f"rms_in_{rms_block_idx}"] = x16
+                debug_taps[f"rms_w_{rms_block_idx}"] = w16
+
+            # Cactus rms_norm only supports 2D [rows, dim],
+            # so flatten [..., dim] -> [prod(...), dim], then reshape back.
+            if len(orig_shape) == 1:
+                x2 = g.reshape(x16, (1, int(orig_shape[0])))
+                y2 = g.rms_norm(x2, w16, eps=float(rms_b["eps"]))
+                y = g.reshape(y2, orig_shape)
+
+            elif len(orig_shape) == 2:
+                y = g.rms_norm(x16, w16, eps=float(rms_b["eps"]))
+
+            else:
+                rows = 1
+                for d in orig_shape[:-1]:
+                    rows *= int(d)
+
+                dim = int(orig_shape[-1])
+                x2 = g.reshape(x16, (rows, dim))
+                y2 = g.rms_norm(x2, w16, eps=float(rms_b["eps"]))
+                y = g.reshape(y2, orig_shape)
+
+            env[rms_b["out"]] = y
+            shapes[rms_b["out"]] = out_shape
+
+            if debug_taps is not None:
+                debug_taps[f"rms_out_{rms_block_idx}"] = y
+
+            rms_block_idx += 1
+            skip_until_idx = rms_b["end"]
             continue
 
         ln_b = ln_by_start.get(i)
@@ -485,23 +778,62 @@ def lower_to_cactus(
         fused = False
 
         for b in attn_blocks:
-            if i == b["transpose"]:
-                layer_idx = attn_layer_idx
-                attn_layer_idx += 1
-
+            if i == b["out"]:
                 score_node = nodes[b["score"]]
                 q_name = score_node.inputs[0]
 
                 k_name = nodes[b["transpose"]].inputs[0]
 
                 out_node = nodes[b["out"]]
-                v_name = out_node.inputs[1]
+                softmax_name = nodes[b["softmax"]].name
+                if len(out_node.inputs) < 2:
+                    continue
+                if out_node.inputs[0] == softmax_name:
+                    v_name = out_node.inputs[1]
+                elif out_node.inputs[1] == softmax_name:
+                    v_name = out_node.inputs[0]
+                else:
+                    # Fallback to previous behavior if parser pattern shifts.
+                    v_name = out_node.inputs[1]
+
+                # Gemma decode graphs can contain dot/softmax/tril subgraphs that
+                # resemble attention but do not expose GPT-2-style q/k/v names at
+                # this exact point in topological order. If any input is missing,
+                # skip fusion and let generic lowering handle this block.
+                if q_name not in env or k_name not in env or v_name not in env:
+                    if debug_taps is not None:
+                        print(
+                            "[attn_fuse_skip_missing]",
+                            f"i={i}",
+                            f"q={q_name in env}:{q_name}",
+                            f"k={k_name in env}:{k_name}",
+                            f"v={v_name in env}:{v_name}",
+                            f"softmax={softmax_name}",
+                            f"out_inputs={out_node.inputs}",
+                        )
+                    continue
 
                 q = env[q_name]
                 k = env[k_name]
                 v = env[v_name]
 
-                T, D_MODEL = shapes[q_name]
+                q_shape = shapes.get(q_name)
+                k_shape = shapes.get(k_name)
+                v_shape = shapes.get(v_name)
+                if q_shape is None or k_shape is None or v_shape is None:
+                    if debug_taps is not None:
+                        print(
+                            "[attn_fuse_skip_shape]",
+                            f"i={i}",
+                            f"q_shape={q_shape}",
+                            f"k_shape={k_shape}",
+                            f"v_shape={v_shape}",
+                        )
+                    continue
+
+                layer_idx = attn_layer_idx
+                attn_layer_idx += 1
+                D_MODEL = None
 
                 if use_kv_cache and kv_num_heads is not None and kv_head_dim is not None:
                     NUM_HEADS = int(kv_num_heads)
@@ -513,22 +845,64 @@ def lower_to_cactus(
                 else:
                     # fallback (prefill or no cache)
                     NUM_HEADS = 12
-                    HEAD_DIM = D_MODEL // NUM_HEADS
+                    if len(q_shape) == 2:
+                        D_MODEL = int(q_shape[1])
+                        HEAD_DIM = D_MODEL // NUM_HEADS
+                    else:
+                        HEAD_DIM = int(q_shape[-1])
+                        D_MODEL = NUM_HEADS * HEAD_DIM
 
-                # (T, 768) -> (1, T, 12, 64)
-                # Match the validated manual path: keep general graph math in FP32,
-                # but run fused attention kernels with FP16 Q/K/V.
-                # keep precision until attention kernel
-                q4 = g.reshape(q, (1, T, NUM_HEADS, HEAD_DIM))
-                k4 = g.reshape(k, (1, T, NUM_HEADS, HEAD_DIM))
-                v4 = g.reshape(v, (1, T, NUM_HEADS, HEAD_DIM))
+                def _to_1thd(x_t, x_shape_t, tag):
+                    if len(x_shape_t) == 2:
+                        t_len, d = int(x_shape_t[0]), int(x_shape_t[1])
+                        if d != NUM_HEADS * HEAD_DIM:
+                            return None, None, None
+                        x4_t = g.reshape(x_t, (1, t_len, NUM_HEADS, HEAD_DIM))
+                        x2_t = x_t
+                        return x4_t, t_len, x2_t
+                    if len(x_shape_t) == 3:
+                        a, bsz, c = int(x_shape_t[0]), int(x_shape_t[1]), int(x_shape_t[2])
+                        if c != HEAD_DIM:
+                            return None, None, None
+                        if a == NUM_HEADS:
+                            # (H, T, D) -> (T, H, D)
+                            x_thd = g.permute(x_t, [1, 0, 2])
+                            t_len = bsz
+                        elif bsz == NUM_HEADS:
+                            # (T, H, D)
+                            x_thd = x_t
+                            t_len = a
+                        else:
+                            return None, None, None
+                        x4_t = g.reshape(x_thd, (1, t_len, NUM_HEADS, HEAD_DIM))
+                        x2_t = g.reshape(x_thd, (t_len, NUM_HEADS * HEAD_DIM))
+                        return x4_t, t_len, x2_t
+                    return None, None, None
 
-                                # 🔥 ADD THIS
+                q4, Tq, q2 = _to_1thd(q, q_shape, "q")
+                k4, Tk, k2 = _to_1thd(k, k_shape, "k")
+                v4, Tv, v2 = _to_1thd(v, v_shape, "v")
+                if q4 is None or k4 is None or v4 is None or Tq != Tk or Tq != Tv:
+                    if debug_taps is not None:
+                        print(
+                            "[attn_fuse_skip_shape]",
+                            f"i={i}",
+                            f"q_shape={q_shape}",
+                            f"k_shape={k_shape}",
+                            f"v_shape={v_shape}",
+                            f"heads={NUM_HEADS}",
+                            f"head_dim={HEAD_DIM}",
+                        )
+                    continue
+                T = int(Tq)
+                if D_MODEL is None:
+                    D_MODEL = NUM_HEADS * HEAD_DIM
+
                 q4 = ensure_fp16(g, q4)
                 k4 = ensure_fp16(g, k4)
                 v4 = ensure_fp16(g, v4)
 
-                scale = np.float32(1.0 / np.sqrt(HEAD_DIM))
+                scale = np.float32(attention_scale if attention_scale is not None else (1.0 / np.sqrt(HEAD_DIM)))
                 if use_kv_cache:
                     if T != 1:
                         raise Exception(f"KV-cache decode path expects T=1, got T={T}")
@@ -626,16 +1000,51 @@ def lower_to_cactus(
                 else:
                     attn4 = g.attention(q4, k4, v4, scale, is_causal=True)
 
-                # (1, T, 12, 64) -> (T, 768)
-                out = g.reshape(attn4, (T, D_MODEL))
+                out_shape = tuple(nodes[b["out"]].shape) if nodes[b["out"]].shape is not None else None
+                if out_shape is None:
+                    continue
+                if len(out_shape) == 2:
+                    out = g.reshape(attn4, out_shape)
+                elif len(out_shape) == 3:
+                    out_thd = g.reshape(attn4, (T, NUM_HEADS, HEAD_DIM))
+                    if out_shape == (T, NUM_HEADS, HEAD_DIM):
+                        out = out_thd
+                    elif out_shape == (NUM_HEADS, T, HEAD_DIM):
+                        out = g.permute(out_thd, [1, 0, 2])
+                    else:
+                        if debug_taps is not None:
+                            print(
+                                "[attn_fuse_skip_outshape]",
+                                f"i={i}",
+                                f"out_shape={out_shape}",
+                                f"T={T}",
+                                f"heads={NUM_HEADS}",
+                                f"head_dim={HEAD_DIM}",
+                            )
+                        continue
+                else:
+                    continue
                 if debug_taps is not None:
                     debug_taps[f"attn_raw_{layer_idx}"] = out
+                    print(
+                        "[attn_fused]",
+                        f"layer={layer_idx}",
+                        f"q={q_name} shape={q_shape}",
+                        f"k={k_name} shape={k_shape}",
+                        f"v={v_name} shape={v_shape}",
+                        f"T={T}",
+                        f"heads={NUM_HEADS}",
+                        f"head_dim={HEAD_DIM}",
+                        f"out={out_node.name} shape={out_shape}",
+                    )
 
                 env[out_node.name] = out
                 # Expose per-layer K/V for cache append from the pre-reshape path.
                 # This avoids an extra cast/reshape round-trip before int8 quantization.
-                env[out_node.name + "_k"] = k
-                env[out_node.name + "_v"] = v
+                env[out_node.name + "_k"] = k2
+                env[out_node.name + "_v"] = v2
+                if fused_attn_out_names is not None:
+                    fused_attn_out_names.append(out_node.name)
                 shapes[out_node.name] = nodes[b["out"]].shape
 
                 skip_until_idx = b["out"]
@@ -649,9 +1058,38 @@ def lower_to_cactus(
             a = env[node.inputs[0]]
             b = env[node.inputs[1]]
 
-            a_shape = shapes[node.inputs[0]]
-            b_shape = shapes[node.inputs[1]]
+            # Prefer runtime tensor shapes (authoritative) over tracked IR shapes.
+            # The tracked map can drift in some Gemma graphs after aggressive rewrites.
+            a_shape = tuple(getattr(a, "shape", ())) or tuple(shapes.get(node.inputs[0], ()))
+            b_shape = tuple(getattr(b, "shape", ())) or tuple(shapes.get(node.inputs[1], ()))
             out_shape = node.shape
+            b_name = node.inputs[1]
+            pretransposed_rhs = False
+
+            # Cactus-aware matmul lowering:
+            # dot_general(lhs, transpose(weight_arg)) -> matmul(lhs, weight_arg, pretransposed_rhs=True)
+            b_node = nodes_by_name.get(b_name)
+            if b_node is not None and b_node.op == "transpose" and b_node.inputs:
+                src_name = b_node.inputs[0]
+                spec = arg_specs.get(src_name)
+                src_t = env.get(src_name)
+                src_shape = tuple(getattr(src_t, "shape", ())) if src_t is not None else None
+                if not src_shape:
+                    src_shape = tuple(shapes.get(src_name, ()))
+                if (
+                    spec is not None
+                    and spec.get("matmul_weight", False)
+                    and src_shape is not None
+                    and len(src_shape) == 2
+                    and len(b_shape) == 2
+                ):
+                    b = env[src_name]
+                    b_shape = src_shape
+                    pretransposed_rhs = bool(spec.get("pretransposed_rhs", True))
+            else:
+                spec = arg_specs.get(b_name)
+                if spec is not None and spec.get("matmul_weight", False):
+                    pretransposed_rhs = bool(spec.get("pretransposed_rhs", False))
 
             if len(a_shape) == 2 and len(b_shape) == 2:
                 if fp32_qkv_matmul and node.name in attn_qkv_names:
@@ -659,7 +1097,7 @@ def lower_to_cactus(
                     b32 = g.precision_cast(b, g.FP32)
                     env[node.name] = g.matmul(a32, b32)
                 else:
-                    env[node.name] = g.matmul(a, b)
+                    env[node.name] = g.matmul(a, b, pretransposed_rhs=pretransposed_rhs)
 
             elif len(a_shape) == 3 and len(b_shape) == 2:
                 B, T, K = a_shape
@@ -694,9 +1132,23 @@ def lower_to_cactus(
                 )
 
             else:
+                a_name = node.inputs[0]
+                b_name_dbg = node.inputs[1]
+                a_node_dbg = nodes_by_name.get(a_name)
+                b_node_dbg = nodes_by_name.get(b_name_dbg)
                 raise Exception(
-                    f"Unsupported dot_general shapes: {a_shape} @ {b_shape}, raw={node.raw}"
+                    "Unsupported dot_general shapes: "
+                    f"{a_shape} @ {b_shape}, "
+                    f"a_name={a_name}, b_name={b_name_dbg}, "
+                    f"a_tracked={shapes.get(a_name)}, b_tracked={shapes.get(b_name_dbg)}, "
+                    f"a_runtime={tuple(getattr(a, 'shape', ()))}, b_runtime={tuple(getattr(b, 'shape', ()))}, "
+                    f"a_node_op={getattr(a_node_dbg, 'op', None)}, b_node_op={getattr(b_node_dbg, 'op', None)}, "
+                    f"a_node_shape={getattr(a_node_dbg, 'shape', None)}, b_node_shape={getattr(b_node_dbg, 'shape', None)}, "
+                    f"raw={node.raw}"
                 )
+
+            if post_matmul_fp32 and getattr(env[node.name], "dtype", None) != g.FP32:
+                env[node.name] = g.precision_cast(env[node.name], g.FP32)
 
             shapes[node.name] = out_shape
 
@@ -734,25 +1186,68 @@ def lower_to_cactus(
         
         elif op == "transpose":
             x = env[node.inputs[0]]
+            input_shape = tuple(shapes[node.inputs[0]])
+            rank = len(input_shape)
 
-            # IMPORTANT: stablehlo transpose usually permutes last dims
-            # for attention, it's typically (..., K, D) → (..., D, K)
+            # Scalar/vector transpose is identity in StableHLO practice.
+            if rank <= 1:
+                env[node.name] = x
+                shapes[node.name] = input_shape
+                continue
 
-            rank = len(shapes[node.inputs[0]])
+            try:
+                perm = extract_permutation(node.raw)
+            except Exception:
+                perm = None
 
-            if rank >= 2:
-                perm = list(range(rank))
-                perm[-1], perm[-2] = perm[-2], perm[-1]  # swap last two dims
-                t = g.permute(x, perm)
-            else:
-                t = x
+            def _default_last2_swap(r):
+                p = list(range(r))
+                if r >= 2:
+                    p[-1], p[-2] = p[-2], p[-1]
+                return p
+
+            def _is_valid_perm(p, r):
+                if p is None or len(p) != r:
+                    return False
+                try:
+                    return sorted(int(v) for v in p) == list(range(r))
+                except Exception:
+                    return False
+
+            if not _is_valid_perm(perm, rank):
+                perm = _default_last2_swap(rank)
+
+            # Transpose kernel currently supports FP16 only.
+            x_t = ensure_fp16(g, x)
+
+            try:
+                if perm == list(range(rank)):
+                    t = x_t
+                elif rank == 2 and perm == [1, 0]:
+                    t = g.transpose(x_t)
+                else:
+                    t = g.permute(x_t, perm)
+            except Exception as e:
+                raise RuntimeError(
+                    f"transpose lowering failed for {node.name}: "
+                    f"input_shape={input_shape}, perm={perm}, raw={node.raw}"
+                ) from e
 
             env[node.name] = t
-            shapes[node.name] = tuple([shapes[node.inputs[0]][i] for i in perm])
+            shapes[node.name] = tuple(input_shape[j] for j in perm)
         
         elif op == "reshape":
             x = env[node.inputs[0]]
             env[node.name] = g.reshape(x, node.shape)
+            shapes[node.name] = node.shape
+
+        elif op == "concatenate":
+            xs = [env[inp] for inp in node.inputs]
+            m = re.search(r"dim\s*=\s*(\d+)", node.raw)
+            if not m:
+                raise Exception(f"Could not parse concatenate dim: {node.raw}")
+            axis = int(m.group(1))
+            env[node.name] = g.cat(xs, axis=axis)
             shapes[node.name] = node.shape
         
         elif op == "call":
@@ -773,21 +1268,17 @@ def lower_to_cactus(
         elif op == "reduce_maximum":
             x = env[node.inputs[0]]
             axis = extract_reduce_axis(node.raw)
-
-            x32 = g.precision_cast(x, g.FP32)
-            out32 = g.max(x32, axis)
-
-            env[node.name] = out32   # KEEP FP32
+            # Backend reduction kernels currently support FP16 only.
+            x16 = ensure_fp16(g, x)
+            env[node.name] = g.max(x16, axis)
             shapes[node.name] = node.shape
 
         elif op == "reduce_add":
             x = env[node.inputs[0]]
             axis = extract_reduce_axis(node.raw)
-
-            x32 = g.precision_cast(x, g.FP32)
-            out32 = g.sum(x32, axis)
-
-            env[node.name] = out32   # keep FP32
+            # Backend reduction kernels currently support FP16 only.
+            x16 = ensure_fp16(g, x)
+            env[node.name] = g.sum(x16, axis)
             shapes[node.name] = node.shape
         
         # no negate in cactus graph???
@@ -822,33 +1313,50 @@ def lower_to_cactus(
                 shapes[node.inputs[0]],
                 shapes[node.inputs[1]]
             )
-            a, b = ensure_binary_fp16(g, a, b)
+            if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
+                a, b = ensure_binary_fp32(g, a, b)
+            else:
+                a, b = ensure_binary_fp16(g, a, b)
 
             env[node.name] = g.add(g.relu(g.subtract(a, b)), b)
             shapes[node.name] = out_shape
         
         elif op == "exponential":
             x = env[node.inputs[0]]
-            x32 = g.precision_cast(x, g.FP32)
-            env[node.name] = g.scalar_exp(x32)   # 🔥 NO CAST BACK HERE
+            x16 = ensure_fp16(g, x)
+            env[node.name] = g.scalar_exp(x16)
+            shapes[node.name] = node.shape   # 🔥 NO CAST BACK HERE
 
 
         elif op == "add":
             a = env[node.inputs[0]]
             b = env[node.inputs[1]]
 
+            a_shape0 = tuple(shapes[node.inputs[0]])
+            b_shape0 = tuple(shapes[node.inputs[1]])
+
             a, b, out_shape = align_shapes(
                 g, a, b,
-                shapes[node.inputs[0]],
-                shapes[node.inputs[1]]
+                a_shape0,
+                b_shape0
             )
+
+            # Cactus binary ops are FP16-only in current backend.
             a, b = ensure_binary_fp16(g, a, b)
 
-            if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
-                env[node.name] = g.add(a, b)
+            # Residual adds are usually direct inputs into RMSNorm.
+            # These can overflow in FP16, so use native clipped add ONLY there.
+            is_same_shape_add = (
+                tuple(a_shape0) == tuple(out_shape)
+                and tuple(b_shape0) == tuple(out_shape)
+            )
+            is_rms_input_add = node.name in rms_input_names
+
+            if is_same_shape_add and is_rms_input_add:
+                env[node.name] = g.add_clipped(a, b)
             else:
-                a, b = ensure_binary_fp16(g, a, b)
                 env[node.name] = g.add(a, b)
+
             shapes[node.name] = out_shape
         
         elif op == "subtract":
@@ -857,6 +1365,7 @@ def lower_to_cactus(
 
             # 🔥 preserve FP32 if present
             if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
+                a, b = ensure_binary_fp32(g, a, b)
                 env[node.name] = g.subtract(a, b)
             else:
                 a, b = ensure_binary_fp16(g, a, b)
@@ -870,6 +1379,7 @@ def lower_to_cactus(
 
                 # 🔥 if either is FP32 → keep FP32
                 if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
+                    a, b = ensure_binary_fp32(g, a, b)
                     env[node.name] = g.divide(a, b)
                 else:
                     a, b = ensure_binary_fp16(g, a, b)
@@ -889,6 +1399,7 @@ def lower_to_cactus(
 
             # 🔥 preserve FP32 if present
             if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
+                a, b = ensure_binary_fp32(g, a, b)
                 env[node.name] = g.multiply(a, b)
             else:
                 a, b = ensure_binary_fp16(g, a, b)
@@ -1166,9 +1677,14 @@ def lower_to_cactus(
             if shape is None or len(shape) != 1:
                 raise Exception(f"Unsupported iota shape: {shape}")
 
-            arr = np.arange(shape[0], dtype=np.float16)
+            elem_dtype = _extract_tensor_element_dtype(node.raw)
+            use_fp32 = elem_dtype == "f32"
+            np_dtype = np.float32 if use_fp32 else np.float16
+            g_dtype = g.FP32 if use_fp32 else g.FP16
 
-            t = g.input(shape, g.FP16)
+            arr = np.arange(shape[0], dtype=np_dtype)
+
+            t = g.input(shape, g_dtype)
             g.set_input(t, arr)
 
             env[node.name] = t
@@ -1183,13 +1699,27 @@ def lower_to_cactus(
 
 
         elif op == "convert":
-            env[node.name] = env[node.inputs[0]]
+            x = env[node.inputs[0]]
+            target = _extract_convert_target_dtype(node.raw)
+            if target in ("f16", "bf16"):
+                env[node.name] = ensure_fp16(g, x)
+            elif target == "f32":
+                if getattr(x, "dtype", None) == g.FP32:
+                    env[node.name] = x
+                else:
+                    env[node.name] = g.precision_cast(x, g.FP32)
+            else:
+                env[node.name] = x
             shapes[node.name] = node.shape
 
         elif op == "constant":
             constant_stats["total"] += 1
             shape = node.shape
             val = extract_constant(node.raw)
+            elem_dtype = _extract_tensor_element_dtype(node.raw)
+            use_fp32 = elem_dtype == "f32"
+            np_dtype = np.float32 if use_fp32 else np.float16
+            g_dtype = g.FP32 if use_fp32 else g.FP16
 
             if shape is None:
                 raise Exception(f"Constant has no shape: {node.raw}")
@@ -1199,10 +1729,11 @@ def lower_to_cactus(
                 constant_stats["scalars"] += 1
                 if val is None:
                     val = 0.0
-                val = max(min(float(val), 65504.0), -65504.0)
+                if not use_fp32:
+                    val = max(min(float(val), 65504.0), -65504.0)
 
-                arr = np.array([val], dtype=np.float16)
-                t = g.input((1,), g.FP16)
+                arr = np.array([val], dtype=np_dtype)
+                t = g.input((1,), g_dtype)
                 g.set_input(t, arr)
 
                 env[node.name] = t
@@ -1211,11 +1742,11 @@ def lower_to_cactus(
 
             constant_stats["fallback"] += 1
             if val is None:
-                arr = np.zeros(shape, dtype=np.float16)
+                arr = np.zeros(shape, dtype=np_dtype)
             else:
-                arr = np.full(shape, val, dtype=np.float16)
+                arr = np.full(shape, val, dtype=np_dtype)
 
-            t = g.input(shape, g.FP16)
+            t = g.input(shape, g_dtype)
             g.set_input(t, arr)
 
             env[node.name] = t
@@ -1292,11 +1823,20 @@ def lower_batched_matmul(g, a, b, a_shape, b_shape, out_shape):
 import re
 
 def extract_permutation(raw):
-    m = re.search(r"dims\s*=\s*\[([0-9,\s]+)\]", raw)
+    # Common StableHLO text forms:
+    # dims = [0, 2, 1, 3]
+    # permutation = [0, 2, 1, 3]
+    # permutation = array<i64: 0, 2, 1, 3>
+
+    m = re.search(r"dims\s*=\s*\[([0-9,\s]*)\]", raw)
     if m:
         return [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
 
-    m = re.search(r"permutation\s*=\s*\[([0-9,\s]+)\]", raw)
+    m = re.search(r"permutation\s*=\s*\[([0-9,\s]*)\]", raw)
+    if m:
+        return [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
+
+    m = re.search(r"permutation\s*=\s*array<[^:>]+:\s*([^>]+)>", raw)
     if m:
         return [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
 
