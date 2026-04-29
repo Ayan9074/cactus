@@ -11,10 +11,16 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from src.graph import Graph
 from src.tensor_io import save_tensor_with_header
 from src.IR.stablehlo_ir import parse_stablehlo_ops
-from src.IR.lower_to_cactus_rewrite import (
-    lower_to_cactus as lower_to_cactus_rewrite,
-    find_attention_blocks as find_attention_blocks_rewrite,
-)
+try:
+    from src.IR.lower_to_cactus_rewrite import (
+        lower_to_cactus as lower_to_cactus_rewrite,
+        find_attention_blocks as find_attention_blocks_rewrite,
+    )
+except ModuleNotFoundError:
+    from src.IR._archive_legacy.lower_to_cactus_rewrite import (
+        lower_to_cactus as lower_to_cactus_rewrite,
+        find_attention_blocks as find_attention_blocks_rewrite,
+    )
 from src.IR.lower_to_cactus import (
     lower_to_cactus as lower_to_cactus_legacy,
     find_attention_blocks as find_attention_blocks_legacy,
@@ -46,6 +52,7 @@ RECOMPILE_PER_TOKEN = os.getenv("RECOMPILE_PER_TOKEN", "0") == "1"
 USE_ADDITIVE_KV_MASK = os.getenv("USE_ADDITIVE_KV_MASK", "1") == "1"
 WEIGHT_CACHE_ROOT = Path(os.getenv("WEIGHT_CACHE_ROOT", "/tmp/cactus_ir_mmap_weights"))
 FORCE_REBUILD_WEIGHT_FILES = os.getenv("FORCE_REBUILD_WEIGHT_FILES", "0") == "1"
+WEIGHTS_FP16 = os.getenv("WEIGHTS_FP16", "1") == "1"
 LOWERER_MODE = os.getenv("LOWERER", "auto").strip().lower()  # auto|rewrite|legacy
 NORM_WEIGHT_OFFSET_MODE = os.getenv("NORM_WEIGHT_OFFSET", "auto").strip().lower()  # auto|on|off
 
@@ -184,9 +191,10 @@ def gelu_tanh_jnp(x):
 
 
 print("Loading Gemma model...")
+_torch_dtype = torch.float16 if WEIGHTS_FP16 else torch.float32
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_NAME,
-    torch_dtype=torch.float32,
+    torch_dtype=_torch_dtype,
     local_files_only=False,
 )
 model.eval()
@@ -236,14 +244,19 @@ HAS_POST_FFN_NORM = f"model.layers.0.post_feedforward_layernorm.weight" in state
 
 
 def to_np(name):
-    return state[name].detach().float().cpu().numpy()
+    t = state[name].detach()
+    if WEIGHTS_FP16:
+        t = t.to(dtype=torch.float16)
+    else:
+        t = t.to(dtype=torch.float32)
+    return t.cpu().numpy()
 
 
 def one_plus_or_ones(name, shape):
     if name in state:
         w = to_np(name)
         return (1.0 + w) if USE_NORM_WEIGHT_OFFSET else w
-    return np.ones(shape, dtype=np.float32)
+    return np.ones(shape, dtype=np.float16 if WEIGHTS_FP16 else np.float32)
 
 
 embed = to_np("model.embed_tokens.weight")
@@ -500,6 +513,27 @@ sample_jax = [jnp.array(x, dtype=jnp.float32) for x in sample]
 lowered = jit_decode.lower(*sample_jax)
 ir = str(lowered.compiler_ir(dialect="stablehlo"))
 return_name = extract_return_name(ir)
+
+
+def _resolve_return_tensor(env, target_name: str):
+    t = env.get(target_name)
+    if t is not None:
+        return t
+    # Some lowerers rewrite SSA names (e.g. alias inlining) into %main_* keys.
+    # Fall back to matching the numeric id suffix from `%1234`.
+    m = re.match(r"^%(\d+)$", target_name or "")
+    if m:
+        needle = f"_{m.group(1)}"
+        for k, v in env.items():
+            if k.endswith(needle) or needle in k:
+                return v
+    # Last resort: match by raw suffix token after '%'
+    raw = (target_name or "").lstrip("%")
+    if raw:
+        for k, v in env.items():
+            if raw in k:
+                return v
+    raise KeyError(target_name)
 nodes = parse_stablehlo_ops(ir)
 compile_args = getattr(getattr(lowered, "_lowering", None), "compile_args", {}) or {}
 kept_var_idx = sorted(int(i) for i in compile_args.get("kept_var_idx", set(range(len(sample_jax)))))
@@ -747,7 +781,7 @@ def run_bridge_one_token(token_id, pos):
     t_exec = time.perf_counter() - t0
 
     t_post0 = time.perf_counter()
-    raw_out = env[return_name].numpy().astype(np.float32).reshape(-1)
+    raw_out = _resolve_return_tensor(env, return_name).numpy().astype(np.float32).reshape(-1)
 
     if raw_out.shape[0] == D_MODEL:
         # Graph returned hidden state. Apply final LM projection in FP32 outside Cactus.

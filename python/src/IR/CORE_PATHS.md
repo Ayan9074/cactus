@@ -13,12 +13,22 @@ Use:
 
 Subcommands:
 
-- `path1-python`: Python/JAX callable -> StableHLO -> Cactus
+- `path1-python`: Python/JAX callable -> StableHLO -> Cactus (**primary path**)
 - `path2-jax-graph`: existing StableHLO (`.mlir`) -> Cactus
 - `path3-flax-auto`: `FlaxAutoModelForCausalLM` -> StableHLO -> Cactus
 - `path4-gemma`: Gemma-specific optimized bridge path
 - `run`: run compiled Cactus artifact
 - `profile`: generic JAX path profiling
+
+### Path 1 Factory Mode (Recommended for Gemma-style JAX code)
+
+`compile_jax_to_cgraph` supports `--callable-kind factory`, where
+`--callable module:function` points to a zero-arg builder returning:
+
+- `{"fn": callable, "args": (...)}`
+
+The args may include pytrees (for example Flax params); they are flattened in
+JAX leaf order and exported as `%argN`.
 
 ## Essential IR Wrappers
 

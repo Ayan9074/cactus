@@ -13,6 +13,14 @@ class IRNode:
     raw: str
 
 
+@dataclass
+class IRFunction:
+    name: str
+    args: list[str]
+    nodes: list[IRNode]
+    returns: list[str]
+
+
 # -------------------------
 # Shape parsing
 # -------------------------
@@ -86,32 +94,19 @@ def extract_constant(line):
 # -------------------------
 # MAIN PARSER
 # -------------------------
-def parse_stablehlo_ops(text: str):
+def _parse_function(func_name: str, sig_line: str, func_lines):
+    arg_names = re.findall(r"%arg\d+", sig_line)
     nodes = []
-
-    in_main = False
-
-    for line in text.splitlines():
+    returns = []
+    for line in func_lines:
         line = line.strip()
-
-        # -------------------------
-        # Enter main function
-        # -------------------------
-        if "func.func" in line and "@main" in line:
-            in_main = True
-            continue
-
-        # -------------------------
-        # Exit main
-        # -------------------------
-        if in_main and line == "}":
-            break
-
-        if not in_main:
-            continue
 
         # skip empty
         if not line:
+            continue
+
+        if line.startswith("return "):
+            returns = re.findall(r"%[\w\d_]+", line.split(":", 1)[0])
             continue
 
         # -------------------------
@@ -202,6 +197,105 @@ def parse_stablehlo_ops(text: str):
             shape=shape,
             raw=line[:500],  # 🔥 truncate giant constants
         ))
+
+    return IRFunction(name=func_name, args=arg_names, nodes=nodes, returns=returns)
+
+
+def parse_stablehlo_ops(text: str):
+    # Parse all function bodies first.
+    funcs = {}
+    cur_name = None
+    cur_sig = None
+    cur_lines = []
+    depth = 0
+
+    for raw in text.splitlines():
+        line = raw.strip()
+        # function start
+        m_func = re.match(r"func\.func\s+(?:public|private)?\s*@([\w\d_]+)\(", line)
+        if m_func:
+            cur_name = m_func.group(1)
+            cur_sig = line
+            cur_lines = []
+            depth = line.count("{") - line.count("}")
+            continue
+
+        if cur_name is None:
+            continue
+
+        depth += line.count("{") - line.count("}")
+        # Keep only body lines (skip closing brace).
+        if line != "}":
+            cur_lines.append(line)
+
+        if depth <= 0:
+            funcs[cur_name] = _parse_function(cur_name, cur_sig or "", cur_lines)
+            cur_name = None
+            cur_sig = None
+            cur_lines = []
+            depth = 0
+
+    if "main" not in funcs:
+        raise Exception("❌ Parser failed: no @main function found")
+
+    def _inline_func(func_name: str, arg_bindings: dict[str, str], prefix: str, stack: set[str]) -> tuple[list[IRNode], list[str]]:
+        if func_name in stack:
+            raise Exception(f"Recursive call cycle detected at @{func_name}")
+        stack = set(stack)
+        stack.add(func_name)
+        f = funcs[func_name]
+        out_nodes: list[IRNode] = []
+        local_map: dict[str, str] = {}
+
+        def map_name(n: str) -> str:
+            if n in arg_bindings:
+                return arg_bindings[n]
+            if n in local_map:
+                return local_map[n]
+            return n
+
+        for node in f.nodes:
+            # call to known local function -> inline recursively
+            if node.op in funcs and node.op != func_name:
+                callee = funcs[node.op]
+                callee_inputs = [map_name(x) for x in node.inputs]
+                call_prefix = f"{prefix}{node.name.strip('%')}_"
+                callee_bind = {}
+                for i, an in enumerate(callee.args):
+                    if i < len(callee_inputs):
+                        callee_bind[an] = callee_inputs[i]
+                sub_nodes, sub_returns = _inline_func(node.op, callee_bind, call_prefix, stack)
+                out_nodes.extend(sub_nodes)
+                if sub_returns:
+                    local_map[node.name] = sub_returns[0]
+                    # Preserve call-site SSA name (e.g. %0 from @main return)
+                    # so downstream output selection can still reference it.
+                    out_nodes.append(IRNode(
+                        name=node.name,
+                        op="alias",
+                        inputs=[sub_returns[0]],
+                        shape=node.shape,
+                        raw=f"{node.name} = alias {sub_returns[0]}",
+                    ))
+                continue
+
+            new_name = f"%{prefix}{node.name.strip('%')}"
+            local_map[node.name] = new_name
+            new_inputs = [map_name(x) for x in node.inputs]
+            out_nodes.append(IRNode(
+                name=new_name,
+                op=node.op,
+                inputs=new_inputs,
+                shape=node.shape,
+                raw=node.raw,
+            ))
+
+        return_names = [map_name(r) for r in f.returns]
+        return out_nodes, return_names
+
+    main_func = funcs["main"]
+    main_bind = {arg: arg for arg in main_func.args}
+    nodes, _ = _inline_func("main", main_bind, "main_", set())
 
     print(f"Parsed {len(nodes)} nodes")
 

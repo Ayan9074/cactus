@@ -12,7 +12,7 @@ from pathlib import Path
 import jax
 import jax.numpy as jnp
 import numpy as np
-from transformers import AutoTokenizer, FlaxAutoModelForCausalLM
+from transformers import AutoTokenizer
 
 from src.transpile.stablehlo.compile_mlir_to_cgraph import compile_mlir_to_cgraph
 from src.IR.stablehlo_ir import parse_stablehlo_ops
@@ -22,6 +22,32 @@ def _topk_overlap(a: np.ndarray, b: np.ndarray, k: int = 5) -> int:
     aa = set(np.argpartition(a, -k)[-k:].tolist())
     bb = set(np.argpartition(b, -k)[-k:].tolist())
     return len(aa & bb)
+
+
+def _load_flax_causallm(model_name: str):
+    # Prefer generic auto-loader when available.
+    try:
+        from transformers import FlaxAutoModelForCausalLM  # type: ignore
+        return FlaxAutoModelForCausalLM.from_pretrained(model_name)
+    except Exception as auto_err:
+        # Fallback for older transformers versions where FlaxAutoModelForCausalLM
+        # may be missing: support GPT-2 explicitly (Flax class).
+        try:
+            from transformers import FlaxGPT2LMHeadModel  # type: ignore
+            return FlaxGPT2LMHeadModel.from_pretrained(model_name)
+        except Exception as gpt2_err:
+            try:
+                from transformers.models.gpt2.modeling_flax_gpt2 import FlaxGPT2LMHeadModel  # type: ignore
+                return FlaxGPT2LMHeadModel.from_pretrained(model_name)
+            except Exception as gpt2_mod_err:
+                raise RuntimeError(
+                    "Could not load a Flax causal LM. "
+                    "Tried FlaxAutoModelForCausalLM and FlaxGPT2LMHeadModel.\n"
+                    "Note: GPT2LMHeadModel (without Flax prefix) is a PyTorch class.\n"
+                    f"Auto error: {auto_err}\n"
+                    f"GPT2 fallback error: {gpt2_err}\n"
+                    f"GPT2 module fallback error: {gpt2_mod_err}"
+                ) from gpt2_mod_err
 
 
 def main() -> None:
@@ -44,7 +70,7 @@ def main() -> None:
     tok = AutoTokenizer.from_pretrained(args.model)
     if tok.pad_token_id is None:
         tok.pad_token = tok.eos_token
-    model = FlaxAutoModelForCausalLM.from_pretrained(args.model)
+    model = _load_flax_causallm(args.model)
     t_load_ms = (time.perf_counter() - t_load0) * 1000.0
 
     enc = tok(
@@ -72,13 +98,16 @@ def main() -> None:
             )
             input_ids = np.mod(input_ids, vocab_size).astype(np.int32)
 
-    def forward_fn(ids, mask):
-        out = model(input_ids=ids, attention_mask=mask, params=model.params, train=False)
+    def forward_fn(params, ids, mask):
+        out = model(input_ids=ids, attention_mask=mask, params=params, train=False)
         return out.logits
 
     # 1) export stablehlo
     t0 = time.perf_counter()
-    lowered = jax.jit(forward_fn).lower(jnp.asarray(input_ids), jnp.asarray(attention_mask))
+    params_jax = jax.tree_util.tree_map(jnp.asarray, model.params)
+    ids_jax = jnp.asarray(input_ids)
+    mask_jax = jnp.asarray(attention_mask)
+    lowered = jax.jit(forward_fn).lower(params_jax, ids_jax, mask_jax)
     stablehlo_text = str(lowered.compiler_ir(dialect="stablehlo"))
     t_export_ms = (time.perf_counter() - t0) * 1000.0
 
@@ -97,7 +126,9 @@ def main() -> None:
         stablehlo_path.write_text(stablehlo_text)
 
     npz_path = Path(str(out_path) + ".inputs.npz")
-    np.savez(npz_path, arg0=input_ids, arg1=attention_mask)
+    flat_args, _ = jax.tree.flatten((params_jax, ids_jax, mask_jax))
+    npz_payload = {f"arg{i}": np.asarray(a) for i, a in enumerate(flat_args)}
+    np.savez(npz_path, **npz_payload)
 
     # 3) build+save cgraph
     t2 = time.perf_counter()
@@ -109,6 +140,7 @@ def main() -> None:
         output_name=None,
         weight_policy=args.weight_policy,
         weight_arg_regex=args.weight_arg_regex,
+        cast_non_primary_float_to_fp16=False,
     )
     t_buildsave_ms = (time.perf_counter() - t2) * 1000.0
 
@@ -127,9 +159,9 @@ def main() -> None:
 
     if args.test:
         # JAX reference
-        _ = jax.jit(forward_fn)(jnp.asarray(input_ids), jnp.asarray(attention_mask)).block_until_ready()
+        _ = jax.jit(forward_fn)(params_jax, ids_jax, mask_jax).block_until_ready()
         tj0 = time.perf_counter()
-        jax_logits = jax.jit(forward_fn)(jnp.asarray(input_ids), jnp.asarray(attention_mask)).block_until_ready()
+        jax_logits = jax.jit(forward_fn)(params_jax, ids_jax, mask_jax).block_until_ready()
         jax_ms = (time.perf_counter() - tj0) * 1000.0
         jax_logits = np.asarray(jax_logits, dtype=np.float32)
 

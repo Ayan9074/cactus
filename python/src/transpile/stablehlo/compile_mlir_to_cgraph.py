@@ -79,10 +79,16 @@ def _load_sample_inputs(inputs_path: Path, arg_count: int) -> Dict[str, np.ndarr
     raise RuntimeError("--inputs must be .npz or a directory containing arg0.npy, arg1.npy, ...")
 
 
-def _should_mmap_arg(arg_name: str, arr: np.ndarray, weight_policy: str, weight_arg_regex: str | None) -> bool:
+def _should_mmap_arg(
+    arg_name: str,
+    arr: np.ndarray,
+    weight_policy: str,
+    weight_arg_regex: str | None,
+    primary_runtime_arg: str,
+) -> bool:
     if weight_policy == "inputs":
         return False
-    if arg_name == "%arg0":
+    if arg_name == primary_runtime_arg:
         # Safety default: keep primary activation input runtime.
         # Regex can still force mmap in mixed mode if explicitly requested.
         if weight_policy == "mmap":
@@ -107,6 +113,10 @@ def compile_mlir_to_cgraph(
     output_name: str | None,
     weight_policy: str = "inputs",
     weight_arg_regex: str | None = None,
+    cast_non_primary_float_to_fp16: bool = True,
+    primary_runtime_arg: str = "%arg0",
+    enable_attention_fusion: bool = True,
+    enable_rmsnorm_fusion: bool = True,
 ) -> None:
     text = stablehlo_path.read_text()
     nodes = parse_stablehlo_ops(text)
@@ -138,11 +148,10 @@ def compile_mlir_to_cgraph(
     for i in range(arg_count):
         name = f"%arg{i}"
         arr = np.ascontiguousarray(sample_inputs[name])
-        # Path-1 policy: treat non-primary args as weights/static tensors and
-        # keep them at FP16 for Cactus-friendly memory/perf behavior.
-        if name != "%arg0" and np.issubdtype(arr.dtype, np.floating):
+        # Optional policy: cast non-primary float args to FP16 for memory/perf.
+        if cast_non_primary_float_to_fp16 and name != "%arg0" and np.issubdtype(arr.dtype, np.floating):
             arr = arr.astype(np.float16, copy=False)
-        use_mmap = _should_mmap_arg(name, arr, weight_policy, weight_arg_regex)
+        use_mmap = _should_mmap_arg(name, arr, weight_policy, weight_arg_regex, primary_runtime_arg)
         if use_mmap:
             wpath = weights_dir / f"{name.replace('%', 'arg_')}.weights"
             # Keep generic path simple and stable: FP16 mmap weights for now.
@@ -163,8 +172,8 @@ def compile_mlir_to_cgraph(
         input_map,
         input_shapes,
         raw_inputs=[],
-        enable_attention_fusion=True,
-        enable_rmsnorm_fusion=True,
+        enable_attention_fusion=enable_attention_fusion,
+        enable_rmsnorm_fusion=enable_rmsnorm_fusion,
         arg_specs=None,
     )
 
@@ -234,8 +243,15 @@ def main() -> None:
     ap.add_argument(
         "--weight-arg-regex",
         default=None,
-        help="Regex over arg names (e.g. '%arg[1-9][0-9]*') to force mmap in mixed mode.",
+        help="Regex over arg names (e.g. '%%arg[1-9][0-9]*') to force mmap in mixed mode.",
     )
+    ap.add_argument(
+        "--primary-runtime-arg",
+        default="%arg0",
+        help="Argument name to force as runtime input in mmap mode (default: %%arg0).",
+    )
+    ap.add_argument("--disable-attention-fusion", action="store_true")
+    ap.add_argument("--disable-rmsnorm-fusion", action="store_true")
     args = ap.parse_args()
 
     stablehlo_path = Path(args.stablehlo).resolve()
@@ -251,6 +267,10 @@ def main() -> None:
         output_name=args.output_name,
         weight_policy=args.weight_policy,
         weight_arg_regex=args.weight_arg_regex,
+        cast_non_primary_float_to_fp16=True,
+        primary_runtime_arg=args.primary_runtime_arg,
+        enable_attention_fusion=not args.disable_attention_fusion,
+        enable_rmsnorm_fusion=not args.disable_rmsnorm_fusion,
     )
 
 

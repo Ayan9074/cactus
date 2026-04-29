@@ -1363,10 +1363,12 @@ def lower_to_cactus(
             x = env[node.inputs[0]]
 
             sqrt_x = g.scalar_sqrt(x)
+            sqrt_x = ensure_fp16(g, sqrt_x)
 
             one = g.input((1,), g.FP16)
             g.set_input(one, np.array([1.0], dtype=np.float16))
 
+            one, sqrt_x = ensure_binary_fp16(g, one, sqrt_x)
             inv = g.divide(one, sqrt_x)
 
             env[node.name] = inv
@@ -1384,10 +1386,7 @@ def lower_to_cactus(
                 shapes[node.inputs[0]],
                 shapes[node.inputs[1]]
             )
-            if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
-                a, b = ensure_binary_fp32(g, a, b)
-            else:
-                a, b = ensure_binary_fp16(g, a, b)
+            a, b = ensure_binary_fp16(g, a, b)
 
             env[node.name] = g.add(g.relu(g.subtract(a, b)), b)
             shapes[node.name] = out_shape
@@ -1462,28 +1461,16 @@ def lower_to_cactus(
         elif op == "subtract":
             a = env[node.inputs[0]]
             b = env[node.inputs[1]]
-
-            # 🔥 preserve FP32 if present
-            if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
-                a, b = ensure_binary_fp32(g, a, b)
-                env[node.name] = g.subtract(a, b)
-            else:
-                a, b = ensure_binary_fp16(g, a, b)
-                env[node.name] = g.subtract(a, b)
+            a, b = ensure_binary_fp16(g, a, b)
+            env[node.name] = g.subtract(a, b)
 
             shapes[node.name] = node.shape
 
         elif op == "divide":
                 a = env[node.inputs[0]]
                 b = env[node.inputs[1]]
-
-                # 🔥 if either is FP32 → keep FP32
-                if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
-                    a, b = ensure_binary_fp32(g, a, b)
-                    env[node.name] = g.divide(a, b)
-                else:
-                    a, b = ensure_binary_fp16(g, a, b)
-                    env[node.name] = g.divide(a, b)
+                a, b = ensure_binary_fp16(g, a, b)
+                env[node.name] = g.divide(a, b)
 
                 shapes[node.name] = node.shape
 
@@ -1497,13 +1484,8 @@ def lower_to_cactus(
                 shapes[node.inputs[1]]
             )
 
-            # 🔥 preserve FP32 if present
-            if getattr(a, "dtype", None) == g.FP32 or getattr(b, "dtype", None) == g.FP32:
-                a, b = ensure_binary_fp32(g, a, b)
-                env[node.name] = g.multiply(a, b)
-            else:
-                a, b = ensure_binary_fp16(g, a, b)
-                env[node.name] = g.multiply(a, b)
+            a, b = ensure_binary_fp16(g, a, b)
+            env[node.name] = g.multiply(a, b)
 
             shapes[node.name] = out_shape
         
@@ -1630,6 +1612,16 @@ def lower_to_cactus(
             x = env[node.inputs[0]]
             env[node.name] = g.tanh(x)
             shapes[node.name] = node.shape
+
+        elif op == "sine":
+            x = ensure_fp16(g, env[node.inputs[0]])
+            env[node.name] = g.scalar_sin(x)
+            shapes[node.name] = node.shape
+
+        elif op == "cosine":
+            x = ensure_fp16(g, env[node.inputs[0]])
+            env[node.name] = g.scalar_cos(x)
+            shapes[node.name] = node.shape
         
 
 
@@ -1675,36 +1667,38 @@ def lower_to_cactus(
             input_shape = shapes[node.inputs[0]]
             target_shape = node.shape
 
-            # Step 1: right-align via reshape
-            if len(input_shape) != len(target_shape):
+            # StableHLO semantics:
+            #   dims=[d0,d1,...] maps input axis i -> output axis d_i.
+            # Reorder input axes if needed, then reshape to output-rank with 1s.
+            dims_m = re.search(r"dims\s*=\s*\[([0-9,\s]*)\]", node.raw)
+            dims = []
+            if dims_m:
+                dims = [int(v.strip()) for v in dims_m.group(1).split(",") if v.strip()]
+
+            if dims and len(dims) == len(input_shape):
+                # If mapped output dims are out-of-order, permute input so mapped
+                # dims are monotonic before reshape placement.
+                order = sorted(range(len(dims)), key=lambda i: dims[i])
+                if order != list(range(len(order))):
+                    x = g.permute(ensure_fp16(g, x), order)
+                    input_shape = tuple(input_shape[i] for i in order)
+                    dims = [dims[i] for i in order]
+
+                reshaped = [1] * len(target_shape)
+                for i, out_axis in enumerate(dims):
+                    if out_axis < 0 or out_axis >= len(target_shape):
+                        raise Exception(f"broadcast_in_dim invalid out axis {out_axis} for {target_shape}")
+                    reshaped[out_axis] = input_shape[i]
+                x = g.reshape(x, tuple(reshaped))
+                input_shape = tuple(reshaped)
+            elif len(input_shape) != len(target_shape):
+                # Fallback: right-align when dims are unavailable.
                 new_shape = [1] * len(target_shape)
                 offset = len(target_shape) - len(input_shape)
-
                 for i, d in enumerate(input_shape):
                     new_shape[offset + i] = d
-
                 x = g.reshape(x, tuple(new_shape))
                 input_shape = tuple(new_shape)
-            
-
-
-
-            # 🔥 FIX: handle permuted broadcast (like (1,1,8) -> (1,8,1))
-            if sorted(input_shape) == sorted(target_shape):
-                # find permutation that maps input -> target
-                perm = []
-                used = [False] * len(input_shape)
-
-                for t in target_shape:
-                    for i, s in enumerate(input_shape):
-                        if not used[i] and s == t:
-                            perm.append(i)
-                            used[i] = True
-                            break
-
-                if len(perm) == len(input_shape):
-                    x = g.permute(ensure_fp16(g, x), perm)
-                    input_shape = tuple(input_shape[i] for i in perm)
             
             # Step 2: ACTUAL broadcast via tile
             reps = []
@@ -1774,7 +1768,7 @@ def lower_to_cactus(
         elif op == "iota":
             shape = node.shape
 
-            if shape is None or len(shape) != 1:
+            if shape is None or len(shape) < 1:
                 raise Exception(f"Unsupported iota shape: {shape}")
 
             elem_dtype = _extract_tensor_element_dtype(node.raw)
@@ -1782,7 +1776,14 @@ def lower_to_cactus(
             np_dtype = np.float32 if use_fp32 else np.float16
             g_dtype = g.FP32 if use_fp32 else g.FP16
 
-            arr = np.arange(shape[0], dtype=np_dtype)
+            # StableHLO iota is often rank-1, but some exports materialize small
+            # rank-N iotas that are immediately consumed by broadcast/take helpers.
+            # For rank>1, emit an iota over the last axis and broadcast to shape.
+            if len(shape) == 1:
+                arr = np.arange(shape[0], dtype=np_dtype)
+            else:
+                base = np.arange(shape[-1], dtype=np_dtype)
+                arr = np.broadcast_to(base, shape).copy()
 
             t = g.input(shape, g_dtype)
             g.set_input(t, arr)
@@ -1848,6 +1849,21 @@ def lower_to_cactus(
             else:
                 env[node.name] = x
             shapes[node.name] = node.shape
+
+        elif op == "alias":
+            x = env[node.inputs[0]]
+            env[node.name] = x
+            shapes[node.name] = node.shape if node.shape is not None else shapes.get(node.inputs[0])
+
+        elif op == "power":
+            # Elementwise tensor power.
+            a = ensure_fp16(g, env[node.inputs[0]])
+            b = ensure_fp16(g, env[node.inputs[1]])
+            a, b, out_shape = align_shapes(
+                g, a, b, shapes[node.inputs[0]], shapes[node.inputs[1]]
+            )
+            env[node.name] = g.scalar_exp(g.multiply(g.scalar_log(a), b))
+            shapes[node.name] = out_shape
 
         elif op == "constant":
             constant_stats["total"] += 1
@@ -1995,22 +2011,60 @@ def lower_dot_general_by_dims(g, a, b, a_shape, b_shape, out_shape, dg_dims):
     lhs_contract = list(dg_dims.get("lhs_contract", []))
     rhs_contract = list(dg_dims.get("rhs_contract", []))
 
-    if (
-        not lhs_batch
-        or len(lhs_batch) != len(rhs_batch)
-        or len(lhs_contract) != 1
-        or len(rhs_contract) != 1
-    ):
+    if len(lhs_contract) != len(rhs_contract) or len(lhs_contract) == 0:
+        return None
+
+    # Case A: no batch dims, generic 1-axis contraction:
+    # [lhs_other..., K] x [K, rhs_other...] -> [lhs_other..., rhs_other...]
+    if not lhs_batch and not rhs_batch:
+        la = len(a_shape)
+        lb = len(b_shape)
+        lhs_other = [i for i in range(la) if i not in lhs_contract]
+        rhs_other = [i for i in range(lb) if i not in rhs_contract]
+        if not lhs_other or not rhs_other:
+            return None
+
+        a_perm = lhs_other + lhs_contract
+        b_perm = rhs_contract + rhs_other
+        a_t = ensure_fp16(g, a)
+        b_t = ensure_fp16(g, b)
+        if a_perm != list(range(la)):
+            a_t = g.permute(a_t, a_perm)
+        if b_perm != list(range(lb)):
+            b_t = g.permute(b_t, b_perm)
+
+        a_t_shape = tuple(a_shape[i] for i in a_perm)
+        b_t_shape = tuple(b_shape[i] for i in b_perm)
+        K_a = numel(a_t_shape[-len(lhs_contract):])
+        K_b = numel(b_t_shape[:len(rhs_contract)])
+        if K_a != K_b:
+            return None
+
+        K = K_a
+        M = numel(a_t_shape[:-len(lhs_contract)])
+        N = numel(b_t_shape[len(rhs_contract):])
+        a2d = g.reshape(a_t, (M, K))
+        b2d = g.reshape(b_t, (K, N))
+        y2d = g.matmul(a2d, b2d)
+        y = g.reshape(y2d, tuple(a_t_shape[:-len(lhs_contract)]) + tuple(b_t_shape[len(rhs_contract):]))
+
+        if out_shape is not None and tuple(out_shape) != tuple(a_t_shape[:-len(lhs_contract)]) + tuple(b_t_shape[len(rhs_contract):]):
+            if numel(out_shape) != numel(tuple(a_t_shape[:-len(lhs_contract)]) + tuple(b_t_shape[len(rhs_contract):])):
+                return None
+            y = g.reshape(y, out_shape)
+        return y
+
+    if len(lhs_batch) != len(rhs_batch):
         return None
 
     la = len(a_shape)
     lb = len(b_shape)
     lhs_other = [i for i in range(la) if i not in lhs_batch and i not in lhs_contract]
     rhs_other = [i for i in range(lb) if i not in rhs_batch and i not in rhs_contract]
-    if len(lhs_other) != 1 or len(rhs_other) != 1:
+    if not lhs_other or not rhs_other:
         return None
 
-    # Build [batch..., M, K] and [batch..., K, N]
+    # Build [batch..., lhs_other..., K] and [batch..., K, rhs_other...]
     a_perm = lhs_batch + lhs_other + lhs_contract
     b_perm = rhs_batch + rhs_contract + rhs_other
 
@@ -2024,19 +2078,36 @@ def lower_dot_general_by_dims(g, a, b, a_shape, b_shape, out_shape, dg_dims):
     a_t_shape = tuple(a_shape[i] for i in a_perm)
     b_t_shape = tuple(b_shape[i] for i in b_perm)
 
-    if a_t_shape[-1] != b_t_shape[-2]:
+    batch_rank = len(lhs_batch)
+    if tuple(a_t_shape[:batch_rank]) != tuple(b_t_shape[:batch_rank]):
         return None
 
-    computed_shape = tuple(a_t_shape[:-1]) + (b_t_shape[-1],)
-    if out_shape is not None and numel(out_shape) != numel(computed_shape):
+    if a_t_shape[-1] != b_t_shape[batch_rank]:
         return None
 
-    if out_shape is None:
-        out_shape = computed_shape
-
-    return lower_batched_matmul(
-        g, a_t, b_t, a_t_shape, b_t_shape, out_shape, rhs_transposed=False
+    canonical_out_shape = (
+        tuple(a_t_shape[:batch_rank])
+        + tuple(a_t_shape[batch_rank:-1])
+        + tuple(b_t_shape[batch_rank + 1 :])
     )
+    if out_shape is not None and numel(out_shape) != numel(canonical_out_shape):
+        return None
+
+    M = numel(a_t_shape[batch_rank:-1])
+    K = a_t_shape[-1]
+    N = numel(b_t_shape[batch_rank + 1 :])
+
+    a_mm_shape = tuple(a_t_shape[:batch_rank]) + (M, K)
+    b_mm_shape = tuple(b_t_shape[:batch_rank]) + (K, N)
+    a_mm = g.reshape(a_t, a_mm_shape)
+    b_mm = g.reshape(b_t, b_mm_shape)
+    y_mm = lower_batched_matmul(
+        g, a_mm, b_mm, a_mm_shape, b_mm_shape, a_mm_shape[:-1] + (N,), rhs_transposed=False
+    )
+    y = g.reshape(y_mm, canonical_out_shape)
+    if out_shape is not None and tuple(out_shape) != tuple(canonical_out_shape):
+        y = g.reshape(y, out_shape)
+    return y
 
 
 
