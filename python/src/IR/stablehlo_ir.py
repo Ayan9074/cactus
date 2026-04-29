@@ -120,7 +120,7 @@ def parse_stablehlo_ops(text: str):
         if "=" not in line:
             continue
 
-        if "stablehlo." not in line and "call" not in line:
+        if "stablehlo." not in line and "chlo." not in line and "call" not in line:
             continue
 
         # -------------------------
@@ -152,7 +152,7 @@ def parse_stablehlo_ops(text: str):
         # NORMAL OPS
         # -------------------------
         m = re.match(
-            r"(%[\w\d_]+)\s*=\s*(?:stablehlo\.([\w_]+)|call\s+@([\w_]+))\s*(.*)",
+            r"(%[\w\d_]+)\s*=\s*(?:stablehlo\.([\w_]+)|chlo\.([\w_]+)|call\s+@([\w_]+))\s*(.*)",
             line
         )
         if not m:
@@ -182,13 +182,15 @@ def parse_stablehlo_ops(text: str):
         name = m.group(1)
 
         if m.group(2):
-            op = m.group(2)
+            op = m.group(2)  # stablehlo op
         elif m.group(3):
-            op = m.group(3)  # use function name directly (e.g. relu)
+            op = m.group(3)  # chlo op
+        elif m.group(4):
+            op = m.group(4)  # call target
         else:
             continue
 
-        rest = m.group(4)
+        rest = m.group(5)
 
         inputs = re.findall(r"%[\w\d_]+", rest)
         shape = extract_shape(line)

@@ -2,6 +2,43 @@ import numpy as np
 from .stablehlo_ir import extract_constant
 import re
 
+def _parse_int_list(raw, key):
+    m = re.search(rf"{key}\s*=\s*\[([0-9,\s]*)\]", raw)
+    if not m:
+        return []
+    s = m.group(1).strip()
+    if not s:
+        return []
+    return [int(x.strip()) for x in s.split(",") if x.strip()]
+
+
+def extract_dot_general_dims(raw):
+    lhs_batch = _parse_int_list(raw, "lhs_batching_dimensions")
+    rhs_batch = _parse_int_list(raw, "rhs_batching_dimensions")
+    lhs_contract = _parse_int_list(raw, "lhs_contracting_dimensions")
+    rhs_contract = _parse_int_list(raw, "rhs_contracting_dimensions")
+
+    # StableHLO text frequently uses compact form:
+    # batching_dims = [..] x [..], contracting_dims = [..] x [..]
+    if not lhs_batch and not rhs_batch:
+        m = re.search(r"batching_dims\s*=\s*\[([0-9,\s]*)\]\s*x\s*\[([0-9,\s]*)\]", raw)
+        if m:
+            lhs_batch = [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
+            rhs_batch = [int(x.strip()) for x in m.group(2).split(",") if x.strip()]
+    if not lhs_contract and not rhs_contract:
+        m = re.search(r"contracting_dims\s*=\s*\[([0-9,\s]*)\]\s*x\s*\[([0-9,\s]*)\]", raw)
+        if m:
+            lhs_contract = [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
+            rhs_contract = [int(x.strip()) for x in m.group(2).split(",") if x.strip()]
+
+    return {
+        "lhs_batch": lhs_batch,
+        "rhs_batch": rhs_batch,
+        "lhs_contract": lhs_contract,
+        "rhs_contract": rhs_contract,
+    }
+
+
 def _extract_convert_target_dtype(raw):
     m = re.search(r"->\s*tensor<[^>]*x([a-z0-9]+)>", raw)
     if not m:
@@ -19,6 +56,7 @@ def _extract_tensor_element_dtype(raw):
 def repeat_axis(g, x, axis, times):
     if times == 1:
         return x
+    x = ensure_fp16(g, x)
     return g.cat([x for _ in range(times)], axis=axis)
 
     
@@ -55,6 +93,9 @@ def ensure_fp16(g, x):
     if getattr(x, "dtype", None) == g.FP16:
         return x
     return g.precision_cast(x, g.FP16)
+
+def int32_dtype_code(g):
+    return getattr(g, "INT32", 2)
 
 
 def ensure_binary_fp16(g, a, b):
@@ -866,7 +907,7 @@ def lower_to_cactus(
                             return None, None, None
                         if a == NUM_HEADS:
                             # (H, T, D) -> (T, H, D)
-                            x_thd = g.permute(x_t, [1, 0, 2])
+                            x_thd = g.permute(ensure_fp16(g, x_t), [1, 0, 2])
                             t_len = bsz
                         elif bsz == NUM_HEADS:
                             # (T, H, D)
@@ -1010,7 +1051,7 @@ def lower_to_cactus(
                     if out_shape == (T, NUM_HEADS, HEAD_DIM):
                         out = out_thd
                     elif out_shape == (NUM_HEADS, T, HEAD_DIM):
-                        out = g.permute(out_thd, [1, 0, 2])
+                        out = g.permute(ensure_fp16(g, out_thd), [1, 0, 2])
                     else:
                         if debug_taps is not None:
                             print(
@@ -1097,6 +1138,8 @@ def lower_to_cactus(
                     b32 = g.precision_cast(b, g.FP32)
                     env[node.name] = g.matmul(a32, b32)
                 else:
+                    a = ensure_fp16(g, a)
+                    b = ensure_fp16(g, b)
                     env[node.name] = g.matmul(a, b, pretransposed_rhs=pretransposed_rhs)
 
             elif len(a_shape) == 3 and len(b_shape) == 2:
@@ -1105,6 +1148,9 @@ def lower_to_cactus(
 
                 if K != Kb:
                     raise Exception(f"Bad final matmul: {a_shape} @ {b_shape}")
+
+                a = ensure_fp16(g, a)
+                b = ensure_fp16(g, b)
 
                 # pad N to multiple of 8 for backend matmul
                 N_pad = ((N + 7) // 8) * 8
@@ -1127,8 +1173,26 @@ def lower_to_cactus(
                 env[node.name] = y
 
             elif len(a_shape) >= 3 and len(b_shape) >= 3:
+                dg_dims = extract_dot_general_dims(node.raw or "")
+                y_by_dims = lower_dot_general_by_dims(
+                    g, a, b, a_shape, b_shape, out_shape, dg_dims
+                )
+                if y_by_dims is not None:
+                    env[node.name] = y_by_dims
+                    shapes[node.name] = out_shape
+                    continue
+                rhs_transposed = False
+                if dg_dims["lhs_contract"] and dg_dims["rhs_contract"]:
+                    lhs_c = dg_dims["lhs_contract"][0]
+                    rhs_c = dg_dims["rhs_contract"][0]
+                    # Common attention score pattern:
+                    # lhs [..., M, K], rhs [..., N, K] with contracting on K (rhs last dim)
+                    rhs_transposed = (
+                        lhs_c == (len(a_shape) - 1)
+                        and rhs_c == (len(b_shape) - 1)
+                    )
                 env[node.name] = lower_batched_matmul(
-                    g, a, b, a_shape, b_shape, out_shape
+                    g, a, b, a_shape, b_shape, out_shape, rhs_transposed=rhs_transposed
                 )
 
             else:
@@ -1180,8 +1244,15 @@ def lower_to_cactus(
 
             if src_name not in env or idx_name not in env:
                 raise Exception(f"gather inputs missing: {src_name}, {idx_name}")
+            src_t = env[src_name]
+            idx_t = env[idx_name]
+            if getattr(src_t, "dtype", None) != g.FP16:
+                src_t = g.precision_cast(src_t, g.FP16)
+            i32 = int32_dtype_code(g)
+            if getattr(idx_t, "dtype", None) != i32:
+                idx_t = g.precision_cast(idx_t, i32)
 
-            env[node.name] = g.gather(env[src_name], env[idx_name])
+            env[node.name] = g.gather(src_t, idx_t)
             shapes[node.name] = node.shape
         
         elif op == "transpose":
@@ -1242,7 +1313,7 @@ def lower_to_cactus(
             shapes[node.name] = node.shape
 
         elif op == "concatenate":
-            xs = [env[inp] for inp in node.inputs]
+            xs = [ensure_fp16(g, env[inp]) for inp in node.inputs]
             m = re.search(r"dim\s*=\s*(\d+)", node.raw)
             if not m:
                 raise Exception(f"Could not parse concatenate dim: {node.raw}")
@@ -1327,19 +1398,32 @@ def lower_to_cactus(
             env[node.name] = g.scalar_exp(x16)
             shapes[node.name] = node.shape   # 🔥 NO CAST BACK HERE
 
+        elif op == "square":
+            x = env[node.inputs[0]]
+            x16 = ensure_fp16(g, x)
+            env[node.name] = g.multiply(x16, x16)
+            shapes[node.name] = node.shape
+
 
         elif op == "add":
             a = env[node.inputs[0]]
             b = env[node.inputs[1]]
 
-            a_shape0 = tuple(shapes[node.inputs[0]])
-            b_shape0 = tuple(shapes[node.inputs[1]])
+            a_shape0 = tuple(getattr(a, "shape", ())) or tuple(shapes[node.inputs[0]])
+            b_shape0 = tuple(getattr(b, "shape", ())) or tuple(shapes[node.inputs[1]])
 
-            a, b, out_shape = align_shapes(
-                g, a, b,
-                a_shape0,
-                b_shape0
-            )
+            try:
+                a, b, out_shape = align_shapes(
+                    g, a, b,
+                    a_shape0,
+                    b_shape0
+                )
+            except Exception as e:
+                raise RuntimeError(
+                    f"align_shapes failed at add {node.name}: "
+                    f"in0={node.inputs[0]} shape={a_shape0}, "
+                    f"in1={node.inputs[1]} shape={b_shape0}, raw={node.raw}"
+                ) from e
 
             # Cactus binary ops are FP16-only in current backend.
             a, b = ensure_binary_fp16(g, a, b)
@@ -1355,7 +1439,23 @@ def lower_to_cactus(
             if is_same_shape_add and is_rms_input_add:
                 env[node.name] = g.add_clipped(a, b)
             else:
-                env[node.name] = g.add(a, b)
+                try:
+                    if len(out_shape) > 3:
+                        flat_m = int(numel(out_shape[:-1]))
+                        flat_n = int(out_shape[-1])
+                        a2 = g.reshape(a, (flat_m, flat_n))
+                        b2 = g.reshape(b, (flat_m, flat_n))
+                        y2 = g.add(a2, b2)
+                        env[node.name] = g.reshape(y2, out_shape)
+                    else:
+                        env[node.name] = g.add(a, b)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"add failed at {node.name}: "
+                        f"in0={node.inputs[0]} shape={a_shape0}, "
+                        f"in1={node.inputs[1]} shape={b_shape0}, "
+                        f"aligned={out_shape}, raw={node.raw}"
+                    ) from e
 
             shapes[node.name] = out_shape
         
@@ -1603,7 +1703,7 @@ def lower_to_cactus(
                             break
 
                 if len(perm) == len(input_shape):
-                    x = g.permute(x, perm)
+                    x = g.permute(ensure_fp16(g, x), perm)
                     input_shape = tuple(input_shape[i] for i in perm)
             
             # Step 2: ACTUAL broadcast via tile
@@ -1693,7 +1793,44 @@ def lower_to_cactus(
 
 
         elif op.startswith("_take"):
-            raise Exception(f"Unsupported op for clean baseline path: {op}")
+            # StableHLO helper call commonly used by Flax export for embedding take.
+            # Lower to gather when signature matches (source, indices).
+            if len(node.inputs) >= 2 and node.inputs[0] in env and node.inputs[1] in env:
+                src_name = node.inputs[0]
+                idx_name = node.inputs[1]
+                src = env[src_name]
+                idx = env[idx_name]
+
+                # Some Flax exports use @_take_6(pos_embed, iota_broadcast).
+                # Detect that form and materialize canonical [0..T-1] indices
+                # directly to avoid backend gather OOB from upstream rewrites.
+                idx_node = nodes_by_name.get(idx_name)
+                if (
+                    idx_node is not None
+                    and idx_node.op == "broadcast_in_dim"
+                    and idx_node.inputs
+                ):
+                    base = nodes_by_name.get(idx_node.inputs[0])
+                    if base is not None and base.op == "iota" and node.shape is not None and len(node.shape) >= 2:
+                        bsz = int(node.shape[0])
+                        tlen = int(node.shape[1])
+                        canon = np.arange(tlen, dtype=np.int32).reshape(1, tlen)
+                        if bsz > 1:
+                            canon = np.repeat(canon, bsz, axis=0)
+                        i32 = int32_dtype_code(g)
+                        idx = g.input(canon.shape, i32)
+                        g.set_input(idx, np.ascontiguousarray(canon.astype(np.int32)))
+
+                if getattr(src, "dtype", None) != g.FP16:
+                    src = g.precision_cast(src, g.FP16)
+                i32 = int32_dtype_code(g)
+                if getattr(idx, "dtype", None) != i32:
+                    idx = g.precision_cast(idx, i32)
+
+                env[node.name] = g.embedding_from_tensor(src, idx)
+                shapes[node.name] = node.shape
+            else:
+                raise Exception(f"Unsupported op for clean baseline path: {op}")
 
         
 
@@ -1775,12 +1912,29 @@ def restore_leading_after_matmul(g, y, out_shape):
 
 
 #generic version>?
-def lower_batched_matmul(g, a, b, a_shape, b_shape, out_shape):
+def lower_batched_matmul(g, a, b, a_shape, b_shape, out_shape, rhs_transposed=False):
     # Supports:
     # a: batch_shape + (M, K)
     # b: batch_shape + (K, N)
     # out: batch_shape + (M, N)
 
+
+    # Normalize common attention layouts where batch/head axes are ordered
+    # differently across operands, e.g.:
+    # a: [B, T, H, D], b: [B, H, S, D]
+    # -> use batch [B, H], matmul [T, D] @ [S, D]^T
+    if (
+        len(a_shape) == 4
+        and len(b_shape) == 4
+        and a_shape[0] == b_shape[0]
+        and a_shape[-1] == b_shape[-1]
+        and a_shape[2] == b_shape[1]
+        and a_shape[:-2] != b_shape[:-2]
+    ):
+        a = ensure_fp16(g, a)
+        a = g.permute(a, [0, 2, 1, 3])
+        a_shape = (a_shape[0], a_shape[2], a_shape[1], a_shape[3])
+        rhs_transposed = True
 
     batch_shape = a_shape[:-2]
     b_batch_shape = b_shape[:-2]
@@ -1790,7 +1944,10 @@ def lower_batched_matmul(g, a, b, a_shape, b_shape, out_shape):
 
 
     M, K = a_shape[-2], a_shape[-1]
-    Kb, N = b_shape[-2], b_shape[-1]
+    if rhs_transposed:
+        N, Kb = b_shape[-2], b_shape[-1]
+    else:
+        Kb, N = b_shape[-2], b_shape[-1]
 
     if K != Kb:
         raise Exception(f"Bad matmul K dims: {a_shape} @ {b_shape}")
@@ -1798,7 +1955,10 @@ def lower_batched_matmul(g, a, b, a_shape, b_shape, out_shape):
     B = numel(batch_shape)
 
     a_flat = g.reshape(a, (B, M, K))
-    b_flat = g.reshape(b, (B, K, N))
+    if rhs_transposed:
+        b_flat = g.reshape(b, (B, N, K))
+    else:
+        b_flat = g.reshape(b, (B, K, N))
 
     parts = []
 
@@ -1807,14 +1967,76 @@ def lower_batched_matmul(g, a, b, a_shape, b_shape, out_shape):
         b_i = g.slice(b_flat, 0, i, 1)
 
         a_i = g.reshape(a_i, (M, K))
-        b_i = g.reshape(b_i, (K, N))
+        a_i = ensure_fp16(g, a_i)
+        if rhs_transposed:
+            b_i = g.reshape(b_i, (N, K))
+            b_i = ensure_fp16(g, b_i)
+            b_i = g.permute(b_i, [1, 0])
+        else:
+            b_i = g.reshape(b_i, (K, N))
+            b_i = ensure_fp16(g, b_i)
 
         y_i = g.matmul(a_i, b_i)
         y_i = g.reshape(y_i, (1, M, N))
         parts.append(y_i)
 
     y = parts[0] if len(parts) == 1 else g.cat(parts, axis=0)
-    return g.reshape(y, out_shape)
+    computed_shape = tuple(batch_shape) + (M, N)
+    target_shape = out_shape
+    if target_shape is None or numel(target_shape) != numel(computed_shape):
+        target_shape = computed_shape
+    y = g.reshape(y, target_shape)
+    return y
+
+
+def lower_dot_general_by_dims(g, a, b, a_shape, b_shape, out_shape, dg_dims):
+    lhs_batch = list(dg_dims.get("lhs_batch", []))
+    rhs_batch = list(dg_dims.get("rhs_batch", []))
+    lhs_contract = list(dg_dims.get("lhs_contract", []))
+    rhs_contract = list(dg_dims.get("rhs_contract", []))
+
+    if (
+        not lhs_batch
+        or len(lhs_batch) != len(rhs_batch)
+        or len(lhs_contract) != 1
+        or len(rhs_contract) != 1
+    ):
+        return None
+
+    la = len(a_shape)
+    lb = len(b_shape)
+    lhs_other = [i for i in range(la) if i not in lhs_batch and i not in lhs_contract]
+    rhs_other = [i for i in range(lb) if i not in rhs_batch and i not in rhs_contract]
+    if len(lhs_other) != 1 or len(rhs_other) != 1:
+        return None
+
+    # Build [batch..., M, K] and [batch..., K, N]
+    a_perm = lhs_batch + lhs_other + lhs_contract
+    b_perm = rhs_batch + rhs_contract + rhs_other
+
+    a_t = ensure_fp16(g, a)
+    b_t = ensure_fp16(g, b)
+    if a_perm != list(range(la)):
+        a_t = g.permute(a_t, a_perm)
+    if b_perm != list(range(lb)):
+        b_t = g.permute(b_t, b_perm)
+
+    a_t_shape = tuple(a_shape[i] for i in a_perm)
+    b_t_shape = tuple(b_shape[i] for i in b_perm)
+
+    if a_t_shape[-1] != b_t_shape[-2]:
+        return None
+
+    computed_shape = tuple(a_t_shape[:-1]) + (b_t_shape[-1],)
+    if out_shape is not None and numel(out_shape) != numel(computed_shape):
+        return None
+
+    if out_shape is None:
+        out_shape = computed_shape
+
+    return lower_batched_matmul(
+        g, a_t, b_t, a_t_shape, b_t_shape, out_shape, rhs_transposed=False
+    )
 
 
 
