@@ -1,0 +1,92 @@
+Reading: small_qwen2_france.stablehlo.mlir
+
+IR summary:
+  inputs: 37
+  outputs: ['%320']
+  nodes: 337
+  constants: 47
+
+Op counts:
+  stablehlo.add                        34
+  stablehlo.broadcast_in_dim           119
+  stablehlo.compare                    3
+  stablehlo.concatenate                10
+  stablehlo.convert                    20
+  stablehlo.cosine                     2
+  stablehlo.divide                     13
+  stablehlo.dot_general                19
+  stablehlo.exponential                4
+  stablehlo.gather                     1
+  stablehlo.iota                       6
+  stablehlo.maximum                    2
+  stablehlo.multiply                   33
+  stablehlo.negate                     6
+  stablehlo.power                      2
+  stablehlo.reduce                     9
+  stablehlo.reshape                    8
+  stablehlo.rsqrt                      5
+  stablehlo.select                     5
+  stablehlo.sine                       2
+  stablehlo.slice                      24
+  stablehlo.subtract                   2
+  stablehlo.transpose                  8
+
+Lowering with wrapped DEFAULT_PATTERNS...
+CANONICALIZED reduce_sum/divide/multiply -> mean_keepdims: 5
+[RMSDBG idx=8] candidate square node_8 inputs=['%7', '%7'] outputs=['%8']
+[RMSDBG idx=8] x_f32 producer: node_7 stablehlo.convert inputs=['%6'] outputs=['%7']
+[RMSDBG idx=8] x_ssa=%6 in_env=True
+[RMSDBG idx=8] red=node_9 inputs=['%8', '%cst'] outputs=['%9'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+[RMSDBG idx=8] axis=2 x_shape=(1, 5, 128)
+[RMSDBG idx=8] bsum=node_10 inputs=['%9'] outputs=['%10']
+[RMSDBG idx=8] div candidates from bsum=[]
+[RMSDBG idx=8] FAIL no divide with bsum as lhs, consumers=[]
+FUSED softmax          idx=107   consumed=13  lead=node_107     op=stablehlo.reduce               outputs=['%99']
+[RMSDBG idx=129] candidate square node_129 inputs=['%120', '%120'] outputs=['%121']
+[RMSDBG idx=129] x_f32 producer: node_128 stablehlo.convert inputs=['%119'] outputs=['%120']
+[RMSDBG idx=129] x_ssa=%119 in_env=True
+[RMSDBG idx=129] red=node_130 inputs=['%121', '%cst_14'] outputs=['%122'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+[RMSDBG idx=129] axis=2 x_shape=(1, 5, 128)
+[RMSDBG idx=129] bsum=node_131 inputs=['%122'] outputs=['%123']
+[RMSDBG idx=129] div candidates from bsum=[]
+[RMSDBG idx=129] FAIL no divide with bsum as lhs, consumers=[]
+FUSED silu             idx=151   consumed=7   lead=node_151     op=stablehlo.negate               outputs=['%143']
+[RMSDBG idx=165] candidate square node_165 inputs=['%156', '%156'] outputs=['%157']
+[RMSDBG idx=165] x_f32 producer: node_164 stablehlo.convert inputs=['%155'] outputs=['%156']
+[RMSDBG idx=165] x_ssa=%155 in_env=True
+[RMSDBG idx=165] red=node_166 inputs=['%157', '%cst_19'] outputs=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+[RMSDBG idx=165] axis=2 x_shape=(1, 5, 128)
+[RMSDBG idx=165] bsum=node_167 inputs=['%158'] outputs=['%159']
+[RMSDBG idx=165] div candidates from bsum=[]
+[RMSDBG idx=165] FAIL no divide with bsum as lhs, consumers=[]
+FUSED softmax          idx=264   consumed=13  lead=node_264     op=stablehlo.reduce               outputs=['%248']
+[RMSDBG idx=286] candidate square node_286 inputs=['%269', '%269'] outputs=['%270']
+[RMSDBG idx=286] x_f32 producer: node_285 stablehlo.convert inputs=['%268'] outputs=['%269']
+[RMSDBG idx=286] x_ssa=%268 in_env=True
+[RMSDBG idx=286] red=node_287 inputs=['%270', '%cst_33'] outputs=['%271'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+[RMSDBG idx=286] axis=2 x_shape=(1, 5, 128)
+[RMSDBG idx=286] bsum=node_288 inputs=['%271'] outputs=['%272']
+[RMSDBG idx=286] div candidates from bsum=[]
+[RMSDBG idx=286] FAIL no divide with bsum as lhs, consumers=[]
+FUSED silu             idx=308   consumed=7   lead=node_308     op=stablehlo.negate               outputs=['%292']
+[RMSDBG idx=322] candidate square node_322 inputs=['%305', '%305'] outputs=['%306']
+[RMSDBG idx=322] x_f32 producer: node_321 stablehlo.convert inputs=['%304'] outputs=['%305']
+[RMSDBG idx=322] x_ssa=%304 in_env=True
+[RMSDBG idx=322] red=node_323 inputs=['%306', '%cst_38'] outputs=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+[RMSDBG idx=322] axis=2 x_shape=(1, 5, 128)
+[RMSDBG idx=322] bsum=node_324 inputs=['%307'] outputs=['%308']
+[RMSDBG idx=322] div candidates from bsum=[]
+[RMSDBG idx=322] FAIL no divide with bsum as lhs, consumers=[]
+
+================ FUSION SUMMARY ================
+  softmax          2
+  silu             2
+  TOTAL            4
+
+Pattern opportunities rough check:
+  stablehlo.maximum: 2 possible ReLU-ish but may be masks/clamps
+  stablehlo.reduce: 9 possible softmax/RMSNorm reductions
+  stablehlo.exponential: 4 softmax usually has exp
+  stablehlo.divide: 13 softmax/RMSNorm/etc
+
+Done.

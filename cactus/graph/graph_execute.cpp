@@ -71,11 +71,14 @@ DECLARE_COMPUTE(compute_moe_layer_node);
 DECLARE_COMPUTE(compute_dense_mlp_int4_fused_node);
 DECLARE_COMPUTE(compute_persistent_node);
 DECLARE_COMPUTE(compute_quantize_activations_node);
+DECLARE_COMPUTE(compute_select_node);
+
 extern void shrink_thread_local_buffers();
 #undef DECLARE_COMPUTE
 
 static const std::unordered_map<OpType, ComputeFn> dispatch_table = {
     {OpType::ADD, compute_binary_op_node},
+    {OpType::COMPARE, compute_binary_op_node},
     {OpType::ADD_CLIPPED, compute_binary_op_node},
     {OpType::SUBTRACT, compute_binary_op_node},
     {OpType::MULTIPLY, compute_binary_op_node},
@@ -155,6 +158,7 @@ static const std::unordered_map<OpType, ComputeFn> dispatch_table = {
     {OpType::BILSTM_SEQUENCE, compute_bilstm_sequence_node},
     {OpType::STATS_POOL, compute_stats_pool_node},
     {OpType::WEIGHTED_STATS_POOL, compute_weighted_stats_pool_node},
+    {OpType::SELECT, compute_select_node},
 };
 
 static const char* op_type_names[] = {
@@ -188,7 +192,10 @@ static const char* op_type_names[] = {
     "CONV2D_K3S1P1",
     "STATS_POOL",
     "WEIGHTED_STATS_POOL",
-    "DENSE_MLP_INT4_FUSED"
+    "DENSE_MLP_INT4_FUSED",
+
+    "COMPARE",
+    "SELECT"
 };
 
 static const char* get_op_name(OpType op) {

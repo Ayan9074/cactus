@@ -1,8 +1,7 @@
 import ctypes
 import numpy as np
 
-from .cactus import _lib, cactus_node_t, cactus_tensor_info_t
-
+from .cactus import _lib, cactus_node_t, cactus_tensor_info_t, cactus_get_last_error
 
 class Graph:
     INT8 = 0
@@ -17,6 +16,12 @@ class Graph:
     ACT_RELU = 3
     ACT_SIGMOID = 4
     ACT_TANH = 5
+    CMP_EQ = 0
+    CMP_NE = 1
+    CMP_LT = 2
+    CMP_LE = 3
+    CMP_GT = 4
+    CMP_GE = 5
 
     def __init__(self):
         self.h = _lib.cactus_graph_create()
@@ -92,10 +97,66 @@ class Graph:
     def execute(self):
         rc = _lib.cactus_graph_execute(self.h)
         if rc != 0:
-            raise RuntimeError("graph_execute failed")
+            msg = None
+            try:
+                msg = cactus_get_last_error()
+            except Exception:
+                pass
+            raise RuntimeError(f"graph_execute failed: {msg or 'no Cactus error message'}")
 
     def add(self, a, b):
         return self._binary("cactus_graph_add", a, b)
+    
+    def compare(self, a, b, direction):
+        a = self._ensure_tensor(a)
+        b = self._ensure_tensor(b)
+
+        if isinstance(direction, str):
+            d = direction.upper()
+            mapping = {
+                "EQ": self.CMP_EQ,
+                "NE": self.CMP_NE,
+                "LT": self.CMP_LT,
+                "LE": self.CMP_LE,
+                "GT": self.CMP_GT,
+                "GE": self.CMP_GE,
+            }
+            if d not in mapping:
+                raise ValueError(f"unknown compare direction: {direction}")
+            direction = mapping[d]
+
+        out = cactus_node_t()
+        rc = _lib.cactus_graph_compare(
+            self.h,
+            cactus_node_t(a.id),
+            cactus_node_t(b.id),
+            ctypes.c_int32(int(direction)),
+            ctypes.byref(out),
+        )
+        if rc != 0:
+            raise RuntimeError("graph_compare failed")
+
+        return self._tensor_from_node(out.value)
+    
+    def select(self, mask, true_value, false_value):
+        mask = self._ensure_tensor(mask)
+        true_value = self._ensure_tensor(true_value)
+        false_value = self._ensure_tensor(false_value)
+
+        out = cactus_node_t()
+
+        rc = _lib.cactus_graph_select(
+            self.h,
+            cactus_node_t(mask.id),
+            cactus_node_t(true_value.id),
+            cactus_node_t(false_value.id),
+            ctypes.byref(out),
+        )
+
+        if rc != 0:
+            raise RuntimeError("graph_select failed")
+
+        return self._tensor_from_node(out.value)
 
     def add_clipped(self, a, b):
         return self._binary("cactus_graph_add_clipped", a, b)

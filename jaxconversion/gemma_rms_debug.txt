@@ -1,0 +1,915 @@
+MLIR: gemma_real_prefill.stablehlo.mlir
+nodes: 5391
+square-like multiply candidates: [189, 388, 601, 800, 1013, 1212, 1425, 1624, 1837, 2036, 2249, 2448, 2661, 2860, 3073, 3272, 3485, 3684, 3897, 4096, 4309, 4508, 4721, 4920, 5133, 5332]
+
+====================================================================================================
+CANDIDATE idx=189 id=node_189 op=stablehlo.multiply
+square input: %188___call__80
+producer of square input: idx=188 id=node_188 op=stablehlo.reshape inputs=['%187___call__80'] outputs=['%188___call__80']
+
+Window:
+   [0184] node_184     stablehlo.broadcast_in_dim       in=['%183___call__80'] out=['%184___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [0185] node_185     stablehlo.multiply               in=['%180___call__80', '%184___call__80'] out=['%185___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0186] node_186     stablehlo.dot_general            in=['%185___call__80', '%arg5'] out=['%186___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [0187] node_187     stablehlo.slice                  in=['%186___call__80'] out=['%187___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0188] node_188     stablehlo.reshape                in=['%187___call__80'] out=['%188___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [0189] node_189     stablehlo.multiply               in=['%188___call__80', '%188___call__80'] out=['%189___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0190] node_190     stablehlo.multiply               in=['%189___call__80', '%188___call__80'] out=['%190___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0191] node_191     stablehlo.broadcast_in_dim       in=['%cst_28___call__80'] out=['%191___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0192] node_192     stablehlo.multiply               in=['%191___call__80', '%190___call__80'] out=['%192___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0193] node_193     stablehlo.add                    in=['%188___call__80', '%192___call__80'] out=['%193___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0194] node_194     stablehlo.broadcast_in_dim       in=['%cst_29___call__80'] out=['%194___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0195] node_195     stablehlo.multiply               in=['%194___call__80', '%193___call__80'] out=['%195___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0196] node_196     stablehlo.tanh                   in=['%195___call__80'] out=['%196___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0197] node_197     stablehlo.broadcast_in_dim       in=['%cst_30___call__80'] out=['%197___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0198] node_198     stablehlo.add                    in=['%197___call__80', '%196___call__80'] out=['%198___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0199] node_199     stablehlo.broadcast_in_dim       in=['%cst_31___call__80'] out=['%199___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0200] node_200     stablehlo.multiply               in=['%199___call__80', '%198___call__80'] out=['%200___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0201] node_201     stablehlo.multiply               in=['%188___call__80', '%200___call__80'] out=['%201___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0202] node_202     stablehlo.slice                  in=['%186___call__80'] out=['%202___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0203] node_203     stablehlo.reshape                in=['%202___call__80'] out=['%203___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0204] node_204     stablehlo.multiply               in=['%201___call__80', '%203___call__80'] out=['%204___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0205] node_205     stablehlo.dot_general            in=['%204___call__80', '%arg6'] out=['%205___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [0206] node_206     chlo.square                      in=['%205___call__80'] out=['%206___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0207] node_207     stablehlo.convert                in=['%206___call__80'] out=['%207___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [0208] node_208     stablehlo.reduce                 in=['%207___call__80', '%cst_32___call__80'] out=['%208___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %189___call__80 -> idx=190 id=node_190 op=stablehlo.multiply inputs=['%189___call__80', '%188___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=388 id=node_388 op=stablehlo.multiply
+square input: %386___call__80
+producer of square input: idx=387 id=node_387 op=stablehlo.reshape inputs=['%385___call__80'] outputs=['%386___call__80']
+
+Window:
+   [0383] node_383     stablehlo.broadcast_in_dim       in=['%381___call__80'] out=['%382___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [0384] node_384     stablehlo.multiply               in=['%378___call__80', '%382___call__80'] out=['%383___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0385] node_385     stablehlo.dot_general            in=['%383___call__80', '%arg14'] out=['%384___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [0386] node_386     stablehlo.slice                  in=['%384___call__80'] out=['%385___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0387] node_387     stablehlo.reshape                in=['%385___call__80'] out=['%386___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [0388] node_388     stablehlo.multiply               in=['%386___call__80', '%386___call__80'] out=['%387___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0389] node_389     stablehlo.multiply               in=['%387___call__80', '%386___call__80'] out=['%388___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0390] node_390     stablehlo.broadcast_in_dim       in=['%cst_61___call__80'] out=['%389___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0391] node_391     stablehlo.multiply               in=['%389___call__80', '%388___call__80'] out=['%390___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0392] node_392     stablehlo.add                    in=['%386___call__80', '%390___call__80'] out=['%391___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0393] node_393     stablehlo.broadcast_in_dim       in=['%cst_62___call__80'] out=['%392___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0394] node_394     stablehlo.multiply               in=['%392___call__80', '%391___call__80'] out=['%393___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0395] node_395     stablehlo.tanh                   in=['%393___call__80'] out=['%394___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0396] node_396     stablehlo.broadcast_in_dim       in=['%cst_63___call__80'] out=['%395___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0397] node_397     stablehlo.add                    in=['%395___call__80', '%394___call__80'] out=['%396___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0398] node_398     stablehlo.broadcast_in_dim       in=['%cst_64___call__80'] out=['%397___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0399] node_399     stablehlo.multiply               in=['%397___call__80', '%396___call__80'] out=['%398___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0400] node_400     stablehlo.multiply               in=['%386___call__80', '%398___call__80'] out=['%399___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0401] node_401     stablehlo.slice                  in=['%384___call__80'] out=['%400___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0402] node_402     stablehlo.reshape                in=['%400___call__80'] out=['%401___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0403] node_403     stablehlo.multiply               in=['%399___call__80', '%401___call__80'] out=['%402___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0404] node_404     stablehlo.dot_general            in=['%402___call__80', '%arg15'] out=['%403___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [0405] node_405     chlo.square                      in=['%403___call__80'] out=['%404___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0406] node_406     stablehlo.convert                in=['%404___call__80'] out=['%405___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [0407] node_407     stablehlo.reduce                 in=['%405___call__80', '%cst_65___call__80'] out=['%406___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %387___call__80 -> idx=389 id=node_389 op=stablehlo.multiply inputs=['%387___call__80', '%386___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=601 id=node_601 op=stablehlo.multiply
+square input: %598___call__80
+producer of square input: idx=600 id=node_600 op=stablehlo.reshape inputs=['%597___call__80'] outputs=['%598___call__80']
+
+Window:
+   [0596] node_596     stablehlo.broadcast_in_dim       in=['%593___call__80'] out=['%594___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [0597] node_597     stablehlo.multiply               in=['%590___call__80', '%594___call__80'] out=['%595___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0598] node_598     stablehlo.dot_general            in=['%595___call__80', '%arg113'] out=['%596___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [0599] node_599     stablehlo.slice                  in=['%596___call__80'] out=['%597___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0600] node_600     stablehlo.reshape                in=['%597___call__80'] out=['%598___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [0601] node_601     stablehlo.multiply               in=['%598___call__80', '%598___call__80'] out=['%599___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0602] node_602     stablehlo.multiply               in=['%599___call__80', '%598___call__80'] out=['%600___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0603] node_603     stablehlo.broadcast_in_dim       in=['%cst_96___call__80'] out=['%601___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0604] node_604     stablehlo.multiply               in=['%601___call__80', '%600___call__80'] out=['%602___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0605] node_605     stablehlo.add                    in=['%598___call__80', '%602___call__80'] out=['%603___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0606] node_606     stablehlo.broadcast_in_dim       in=['%cst_97___call__80'] out=['%604___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0607] node_607     stablehlo.multiply               in=['%604___call__80', '%603___call__80'] out=['%605___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0608] node_608     stablehlo.tanh                   in=['%605___call__80'] out=['%606___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0609] node_609     stablehlo.broadcast_in_dim       in=['%cst_98___call__80'] out=['%607___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0610] node_610     stablehlo.add                    in=['%607___call__80', '%606___call__80'] out=['%608___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0611] node_611     stablehlo.broadcast_in_dim       in=['%cst_99___call__80'] out=['%609___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0612] node_612     stablehlo.multiply               in=['%609___call__80', '%608___call__80'] out=['%610___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0613] node_613     stablehlo.multiply               in=['%598___call__80', '%610___call__80'] out=['%611___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0614] node_614     stablehlo.slice                  in=['%596___call__80'] out=['%612___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0615] node_615     stablehlo.reshape                in=['%612___call__80'] out=['%613___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0616] node_616     stablehlo.multiply               in=['%611___call__80', '%613___call__80'] out=['%614___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0617] node_617     stablehlo.dot_general            in=['%614___call__80', '%arg114'] out=['%615___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [0618] node_618     chlo.square                      in=['%615___call__80'] out=['%616___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0619] node_619     stablehlo.convert                in=['%616___call__80'] out=['%617___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [0620] node_620     stablehlo.reduce                 in=['%617___call__80', '%cst_100___call__80'] out=['%618___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %599___call__80 -> idx=602 id=node_602 op=stablehlo.multiply inputs=['%599___call__80', '%598___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=800 id=node_800 op=stablehlo.multiply
+square input: %796___call__80
+producer of square input: idx=799 id=node_799 op=stablehlo.reshape inputs=['%795___call__80'] outputs=['%796___call__80']
+
+Window:
+   [0795] node_795     stablehlo.broadcast_in_dim       in=['%791___call__80'] out=['%792___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [0796] node_796     stablehlo.multiply               in=['%788___call__80', '%792___call__80'] out=['%793___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0797] node_797     stablehlo.dot_general            in=['%793___call__80', '%arg176'] out=['%794___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [0798] node_798     stablehlo.slice                  in=['%794___call__80'] out=['%795___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0799] node_799     stablehlo.reshape                in=['%795___call__80'] out=['%796___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [0800] node_800     stablehlo.multiply               in=['%796___call__80', '%796___call__80'] out=['%797___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0801] node_801     stablehlo.multiply               in=['%797___call__80', '%796___call__80'] out=['%798___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0802] node_802     stablehlo.broadcast_in_dim       in=['%cst_129___call__80'] out=['%799___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0803] node_803     stablehlo.multiply               in=['%799___call__80', '%798___call__80'] out=['%800___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0804] node_804     stablehlo.add                    in=['%796___call__80', '%800___call__80'] out=['%801___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0805] node_805     stablehlo.broadcast_in_dim       in=['%cst_130___call__80'] out=['%802___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0806] node_806     stablehlo.multiply               in=['%802___call__80', '%801___call__80'] out=['%803___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0807] node_807     stablehlo.tanh                   in=['%803___call__80'] out=['%804___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0808] node_808     stablehlo.broadcast_in_dim       in=['%cst_131___call__80'] out=['%805___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0809] node_809     stablehlo.add                    in=['%805___call__80', '%804___call__80'] out=['%806___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0810] node_810     stablehlo.broadcast_in_dim       in=['%cst_132___call__80'] out=['%807___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [0811] node_811     stablehlo.multiply               in=['%807___call__80', '%806___call__80'] out=['%808___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0812] node_812     stablehlo.multiply               in=['%796___call__80', '%808___call__80'] out=['%809___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0813] node_813     stablehlo.slice                  in=['%794___call__80'] out=['%810___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [0814] node_814     stablehlo.reshape                in=['%810___call__80'] out=['%811___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0815] node_815     stablehlo.multiply               in=['%809___call__80', '%811___call__80'] out=['%812___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [0816] node_816     stablehlo.dot_general            in=['%812___call__80', '%arg177'] out=['%813___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [0817] node_817     chlo.square                      in=['%813___call__80'] out=['%814___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [0818] node_818     stablehlo.convert                in=['%814___call__80'] out=['%815___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [0819] node_819     stablehlo.reduce                 in=['%815___call__80', '%cst_133___call__80'] out=['%816___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %797___call__80 -> idx=801 id=node_801 op=stablehlo.multiply inputs=['%797___call__80', '%796___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=1013 id=node_1013 op=stablehlo.multiply
+square input: %1008___call__80
+producer of square input: idx=1012 id=node_1012 op=stablehlo.reshape inputs=['%1007___call__80'] outputs=['%1008___call__80']
+
+Window:
+   [1008] node_1008    stablehlo.broadcast_in_dim       in=['%1003___call__80'] out=['%1004___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [1009] node_1009    stablehlo.multiply               in=['%1000___call__80', '%1004___call__80'] out=['%1005___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1010] node_1010    stablehlo.dot_general            in=['%1005___call__80', '%arg185'] out=['%1006___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [1011] node_1011    stablehlo.slice                  in=['%1006___call__80'] out=['%1007___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1012] node_1012    stablehlo.reshape                in=['%1007___call__80'] out=['%1008___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [1013] node_1013    stablehlo.multiply               in=['%1008___call__80', '%1008___call__80'] out=['%1009___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1014] node_1014    stablehlo.multiply               in=['%1009___call__80', '%1008___call__80'] out=['%1010___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1015] node_1015    stablehlo.broadcast_in_dim       in=['%cst_164___call__80'] out=['%1011___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1016] node_1016    stablehlo.multiply               in=['%1011___call__80', '%1010___call__80'] out=['%1012___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1017] node_1017    stablehlo.add                    in=['%1008___call__80', '%1012___call__80'] out=['%1013___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1018] node_1018    stablehlo.broadcast_in_dim       in=['%cst_165___call__80'] out=['%1014___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1019] node_1019    stablehlo.multiply               in=['%1014___call__80', '%1013___call__80'] out=['%1015___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1020] node_1020    stablehlo.tanh                   in=['%1015___call__80'] out=['%1016___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1021] node_1021    stablehlo.broadcast_in_dim       in=['%cst_166___call__80'] out=['%1017___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1022] node_1022    stablehlo.add                    in=['%1017___call__80', '%1016___call__80'] out=['%1018___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1023] node_1023    stablehlo.broadcast_in_dim       in=['%cst_167___call__80'] out=['%1019___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1024] node_1024    stablehlo.multiply               in=['%1019___call__80', '%1018___call__80'] out=['%1020___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1025] node_1025    stablehlo.multiply               in=['%1008___call__80', '%1020___call__80'] out=['%1021___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1026] node_1026    stablehlo.slice                  in=['%1006___call__80'] out=['%1022___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1027] node_1027    stablehlo.reshape                in=['%1022___call__80'] out=['%1023___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1028] node_1028    stablehlo.multiply               in=['%1021___call__80', '%1023___call__80'] out=['%1024___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1029] node_1029    stablehlo.dot_general            in=['%1024___call__80', '%arg186'] out=['%1025___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [1030] node_1030    chlo.square                      in=['%1025___call__80'] out=['%1026___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1031] node_1031    stablehlo.convert                in=['%1026___call__80'] out=['%1027___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [1032] node_1032    stablehlo.reduce                 in=['%1027___call__80', '%cst_168___call__80'] out=['%1028___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %1009___call__80 -> idx=1014 id=node_1014 op=stablehlo.multiply inputs=['%1009___call__80', '%1008___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=1212 id=node_1212 op=stablehlo.multiply
+square input: %1206___call__80
+producer of square input: idx=1211 id=node_1211 op=stablehlo.reshape inputs=['%1205___call__80'] outputs=['%1206___call__80']
+
+Window:
+   [1207] node_1207    stablehlo.broadcast_in_dim       in=['%1201___call__80'] out=['%1202___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [1208] node_1208    stablehlo.multiply               in=['%1198___call__80', '%1202___call__80'] out=['%1203___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1209] node_1209    stablehlo.dot_general            in=['%1203___call__80', '%arg194'] out=['%1204___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [1210] node_1210    stablehlo.slice                  in=['%1204___call__80'] out=['%1205___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1211] node_1211    stablehlo.reshape                in=['%1205___call__80'] out=['%1206___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [1212] node_1212    stablehlo.multiply               in=['%1206___call__80', '%1206___call__80'] out=['%1207___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1213] node_1213    stablehlo.multiply               in=['%1207___call__80', '%1206___call__80'] out=['%1208___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1214] node_1214    stablehlo.broadcast_in_dim       in=['%cst_197___call__80'] out=['%1209___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1215] node_1215    stablehlo.multiply               in=['%1209___call__80', '%1208___call__80'] out=['%1210___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1216] node_1216    stablehlo.add                    in=['%1206___call__80', '%1210___call__80'] out=['%1211___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1217] node_1217    stablehlo.broadcast_in_dim       in=['%cst_198___call__80'] out=['%1212___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1218] node_1218    stablehlo.multiply               in=['%1212___call__80', '%1211___call__80'] out=['%1213___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1219] node_1219    stablehlo.tanh                   in=['%1213___call__80'] out=['%1214___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1220] node_1220    stablehlo.broadcast_in_dim       in=['%cst_199___call__80'] out=['%1215___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1221] node_1221    stablehlo.add                    in=['%1215___call__80', '%1214___call__80'] out=['%1216___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1222] node_1222    stablehlo.broadcast_in_dim       in=['%cst_200___call__80'] out=['%1217___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1223] node_1223    stablehlo.multiply               in=['%1217___call__80', '%1216___call__80'] out=['%1218___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1224] node_1224    stablehlo.multiply               in=['%1206___call__80', '%1218___call__80'] out=['%1219___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1225] node_1225    stablehlo.slice                  in=['%1204___call__80'] out=['%1220___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1226] node_1226    stablehlo.reshape                in=['%1220___call__80'] out=['%1221___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1227] node_1227    stablehlo.multiply               in=['%1219___call__80', '%1221___call__80'] out=['%1222___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1228] node_1228    stablehlo.dot_general            in=['%1222___call__80', '%arg195'] out=['%1223___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [1229] node_1229    chlo.square                      in=['%1223___call__80'] out=['%1224___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1230] node_1230    stablehlo.convert                in=['%1224___call__80'] out=['%1225___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [1231] node_1231    stablehlo.reduce                 in=['%1225___call__80', '%cst_201___call__80'] out=['%1226___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %1207___call__80 -> idx=1213 id=node_1213 op=stablehlo.multiply inputs=['%1207___call__80', '%1206___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=1425 id=node_1425 op=stablehlo.multiply
+square input: %1418___call__80
+producer of square input: idx=1424 id=node_1424 op=stablehlo.reshape inputs=['%1417___call__80'] outputs=['%1418___call__80']
+
+Window:
+   [1420] node_1420    stablehlo.broadcast_in_dim       in=['%1413___call__80'] out=['%1414___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [1421] node_1421    stablehlo.multiply               in=['%1410___call__80', '%1414___call__80'] out=['%1415___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1422] node_1422    stablehlo.dot_general            in=['%1415___call__80', '%arg203'] out=['%1416___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [1423] node_1423    stablehlo.slice                  in=['%1416___call__80'] out=['%1417___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1424] node_1424    stablehlo.reshape                in=['%1417___call__80'] out=['%1418___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [1425] node_1425    stablehlo.multiply               in=['%1418___call__80', '%1418___call__80'] out=['%1419___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1426] node_1426    stablehlo.multiply               in=['%1419___call__80', '%1418___call__80'] out=['%1420___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1427] node_1427    stablehlo.broadcast_in_dim       in=['%cst_232___call__80'] out=['%1421___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1428] node_1428    stablehlo.multiply               in=['%1421___call__80', '%1420___call__80'] out=['%1422___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1429] node_1429    stablehlo.add                    in=['%1418___call__80', '%1422___call__80'] out=['%1423___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1430] node_1430    stablehlo.broadcast_in_dim       in=['%cst_233___call__80'] out=['%1424___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1431] node_1431    stablehlo.multiply               in=['%1424___call__80', '%1423___call__80'] out=['%1425___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1432] node_1432    stablehlo.tanh                   in=['%1425___call__80'] out=['%1426___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1433] node_1433    stablehlo.broadcast_in_dim       in=['%cst_234___call__80'] out=['%1427___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1434] node_1434    stablehlo.add                    in=['%1427___call__80', '%1426___call__80'] out=['%1428___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1435] node_1435    stablehlo.broadcast_in_dim       in=['%cst_235___call__80'] out=['%1429___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1436] node_1436    stablehlo.multiply               in=['%1429___call__80', '%1428___call__80'] out=['%1430___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1437] node_1437    stablehlo.multiply               in=['%1418___call__80', '%1430___call__80'] out=['%1431___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1438] node_1438    stablehlo.slice                  in=['%1416___call__80'] out=['%1432___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1439] node_1439    stablehlo.reshape                in=['%1432___call__80'] out=['%1433___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1440] node_1440    stablehlo.multiply               in=['%1431___call__80', '%1433___call__80'] out=['%1434___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1441] node_1441    stablehlo.dot_general            in=['%1434___call__80', '%arg204'] out=['%1435___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [1442] node_1442    chlo.square                      in=['%1435___call__80'] out=['%1436___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1443] node_1443    stablehlo.convert                in=['%1436___call__80'] out=['%1437___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [1444] node_1444    stablehlo.reduce                 in=['%1437___call__80', '%cst_236___call__80'] out=['%1438___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %1419___call__80 -> idx=1426 id=node_1426 op=stablehlo.multiply inputs=['%1419___call__80', '%1418___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=1624 id=node_1624 op=stablehlo.multiply
+square input: %1616___call__80
+producer of square input: idx=1623 id=node_1623 op=stablehlo.reshape inputs=['%1615___call__80'] outputs=['%1616___call__80']
+
+Window:
+   [1619] node_1619    stablehlo.broadcast_in_dim       in=['%1611___call__80'] out=['%1612___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [1620] node_1620    stablehlo.multiply               in=['%1608___call__80', '%1612___call__80'] out=['%1613___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1621] node_1621    stablehlo.dot_general            in=['%1613___call__80', '%arg212'] out=['%1614___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [1622] node_1622    stablehlo.slice                  in=['%1614___call__80'] out=['%1615___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1623] node_1623    stablehlo.reshape                in=['%1615___call__80'] out=['%1616___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [1624] node_1624    stablehlo.multiply               in=['%1616___call__80', '%1616___call__80'] out=['%1617___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1625] node_1625    stablehlo.multiply               in=['%1617___call__80', '%1616___call__80'] out=['%1618___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1626] node_1626    stablehlo.broadcast_in_dim       in=['%cst_265___call__80'] out=['%1619___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1627] node_1627    stablehlo.multiply               in=['%1619___call__80', '%1618___call__80'] out=['%1620___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1628] node_1628    stablehlo.add                    in=['%1616___call__80', '%1620___call__80'] out=['%1621___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1629] node_1629    stablehlo.broadcast_in_dim       in=['%cst_266___call__80'] out=['%1622___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1630] node_1630    stablehlo.multiply               in=['%1622___call__80', '%1621___call__80'] out=['%1623___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1631] node_1631    stablehlo.tanh                   in=['%1623___call__80'] out=['%1624___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1632] node_1632    stablehlo.broadcast_in_dim       in=['%cst_267___call__80'] out=['%1625___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1633] node_1633    stablehlo.add                    in=['%1625___call__80', '%1624___call__80'] out=['%1626___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1634] node_1634    stablehlo.broadcast_in_dim       in=['%cst_268___call__80'] out=['%1627___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1635] node_1635    stablehlo.multiply               in=['%1627___call__80', '%1626___call__80'] out=['%1628___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1636] node_1636    stablehlo.multiply               in=['%1616___call__80', '%1628___call__80'] out=['%1629___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1637] node_1637    stablehlo.slice                  in=['%1614___call__80'] out=['%1630___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1638] node_1638    stablehlo.reshape                in=['%1630___call__80'] out=['%1631___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1639] node_1639    stablehlo.multiply               in=['%1629___call__80', '%1631___call__80'] out=['%1632___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1640] node_1640    stablehlo.dot_general            in=['%1632___call__80', '%arg213'] out=['%1633___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [1641] node_1641    chlo.square                      in=['%1633___call__80'] out=['%1634___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1642] node_1642    stablehlo.convert                in=['%1634___call__80'] out=['%1635___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [1643] node_1643    stablehlo.reduce                 in=['%1635___call__80', '%cst_269___call__80'] out=['%1636___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %1617___call__80 -> idx=1625 id=node_1625 op=stablehlo.multiply inputs=['%1617___call__80', '%1616___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=1837 id=node_1837 op=stablehlo.multiply
+square input: %1828___call__80
+producer of square input: idx=1836 id=node_1836 op=stablehlo.reshape inputs=['%1827___call__80'] outputs=['%1828___call__80']
+
+Window:
+   [1832] node_1832    stablehlo.broadcast_in_dim       in=['%1823___call__80'] out=['%1824___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [1833] node_1833    stablehlo.multiply               in=['%1820___call__80', '%1824___call__80'] out=['%1825___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1834] node_1834    stablehlo.dot_general            in=['%1825___call__80', '%arg221'] out=['%1826___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [1835] node_1835    stablehlo.slice                  in=['%1826___call__80'] out=['%1827___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1836] node_1836    stablehlo.reshape                in=['%1827___call__80'] out=['%1828___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [1837] node_1837    stablehlo.multiply               in=['%1828___call__80', '%1828___call__80'] out=['%1829___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1838] node_1838    stablehlo.multiply               in=['%1829___call__80', '%1828___call__80'] out=['%1830___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1839] node_1839    stablehlo.broadcast_in_dim       in=['%cst_300___call__80'] out=['%1831___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1840] node_1840    stablehlo.multiply               in=['%1831___call__80', '%1830___call__80'] out=['%1832___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1841] node_1841    stablehlo.add                    in=['%1828___call__80', '%1832___call__80'] out=['%1833___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1842] node_1842    stablehlo.broadcast_in_dim       in=['%cst_301___call__80'] out=['%1834___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1843] node_1843    stablehlo.multiply               in=['%1834___call__80', '%1833___call__80'] out=['%1835___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1844] node_1844    stablehlo.tanh                   in=['%1835___call__80'] out=['%1836___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1845] node_1845    stablehlo.broadcast_in_dim       in=['%cst_302___call__80'] out=['%1837___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1846] node_1846    stablehlo.add                    in=['%1837___call__80', '%1836___call__80'] out=['%1838___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1847] node_1847    stablehlo.broadcast_in_dim       in=['%cst_303___call__80'] out=['%1839___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [1848] node_1848    stablehlo.multiply               in=['%1839___call__80', '%1838___call__80'] out=['%1840___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1849] node_1849    stablehlo.multiply               in=['%1828___call__80', '%1840___call__80'] out=['%1841___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1850] node_1850    stablehlo.slice                  in=['%1826___call__80'] out=['%1842___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [1851] node_1851    stablehlo.reshape                in=['%1842___call__80'] out=['%1843___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1852] node_1852    stablehlo.multiply               in=['%1841___call__80', '%1843___call__80'] out=['%1844___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [1853] node_1853    stablehlo.dot_general            in=['%1844___call__80', '%arg222'] out=['%1845___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [1854] node_1854    chlo.square                      in=['%1845___call__80'] out=['%1846___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [1855] node_1855    stablehlo.convert                in=['%1846___call__80'] out=['%1847___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [1856] node_1856    stablehlo.reduce                 in=['%1847___call__80', '%cst_304___call__80'] out=['%1848___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %1829___call__80 -> idx=1838 id=node_1838 op=stablehlo.multiply inputs=['%1829___call__80', '%1828___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=2036 id=node_2036 op=stablehlo.multiply
+square input: %2026___call__80
+producer of square input: idx=2035 id=node_2035 op=stablehlo.reshape inputs=['%2025___call__80'] outputs=['%2026___call__80']
+
+Window:
+   [2031] node_2031    stablehlo.broadcast_in_dim       in=['%2021___call__80'] out=['%2022___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [2032] node_2032    stablehlo.multiply               in=['%2018___call__80', '%2022___call__80'] out=['%2023___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2033] node_2033    stablehlo.dot_general            in=['%2023___call__80', '%arg230'] out=['%2024___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [2034] node_2034    stablehlo.slice                  in=['%2024___call__80'] out=['%2025___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2035] node_2035    stablehlo.reshape                in=['%2025___call__80'] out=['%2026___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [2036] node_2036    stablehlo.multiply               in=['%2026___call__80', '%2026___call__80'] out=['%2027___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2037] node_2037    stablehlo.multiply               in=['%2027___call__80', '%2026___call__80'] out=['%2028___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2038] node_2038    stablehlo.broadcast_in_dim       in=['%cst_333___call__80'] out=['%2029___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2039] node_2039    stablehlo.multiply               in=['%2029___call__80', '%2028___call__80'] out=['%2030___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2040] node_2040    stablehlo.add                    in=['%2026___call__80', '%2030___call__80'] out=['%2031___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2041] node_2041    stablehlo.broadcast_in_dim       in=['%cst_334___call__80'] out=['%2032___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2042] node_2042    stablehlo.multiply               in=['%2032___call__80', '%2031___call__80'] out=['%2033___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2043] node_2043    stablehlo.tanh                   in=['%2033___call__80'] out=['%2034___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2044] node_2044    stablehlo.broadcast_in_dim       in=['%cst_335___call__80'] out=['%2035___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2045] node_2045    stablehlo.add                    in=['%2035___call__80', '%2034___call__80'] out=['%2036___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2046] node_2046    stablehlo.broadcast_in_dim       in=['%cst_336___call__80'] out=['%2037___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2047] node_2047    stablehlo.multiply               in=['%2037___call__80', '%2036___call__80'] out=['%2038___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2048] node_2048    stablehlo.multiply               in=['%2026___call__80', '%2038___call__80'] out=['%2039___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2049] node_2049    stablehlo.slice                  in=['%2024___call__80'] out=['%2040___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2050] node_2050    stablehlo.reshape                in=['%2040___call__80'] out=['%2041___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2051] node_2051    stablehlo.multiply               in=['%2039___call__80', '%2041___call__80'] out=['%2042___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2052] node_2052    stablehlo.dot_general            in=['%2042___call__80', '%arg231'] out=['%2043___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [2053] node_2053    chlo.square                      in=['%2043___call__80'] out=['%2044___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2054] node_2054    stablehlo.convert                in=['%2044___call__80'] out=['%2045___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [2055] node_2055    stablehlo.reduce                 in=['%2045___call__80', '%cst_337___call__80'] out=['%2046___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %2027___call__80 -> idx=2037 id=node_2037 op=stablehlo.multiply inputs=['%2027___call__80', '%2026___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=2249 id=node_2249 op=stablehlo.multiply
+square input: %2238___call__80
+producer of square input: idx=2248 id=node_2248 op=stablehlo.reshape inputs=['%2237___call__80'] outputs=['%2238___call__80']
+
+Window:
+   [2244] node_2244    stablehlo.broadcast_in_dim       in=['%2233___call__80'] out=['%2234___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [2245] node_2245    stablehlo.multiply               in=['%2230___call__80', '%2234___call__80'] out=['%2235___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2246] node_2246    stablehlo.dot_general            in=['%2235___call__80', '%arg23'] out=['%2236___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [2247] node_2247    stablehlo.slice                  in=['%2236___call__80'] out=['%2237___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2248] node_2248    stablehlo.reshape                in=['%2237___call__80'] out=['%2238___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [2249] node_2249    stablehlo.multiply               in=['%2238___call__80', '%2238___call__80'] out=['%2239___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2250] node_2250    stablehlo.multiply               in=['%2239___call__80', '%2238___call__80'] out=['%2240___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2251] node_2251    stablehlo.broadcast_in_dim       in=['%cst_368___call__80'] out=['%2241___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2252] node_2252    stablehlo.multiply               in=['%2241___call__80', '%2240___call__80'] out=['%2242___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2253] node_2253    stablehlo.add                    in=['%2238___call__80', '%2242___call__80'] out=['%2243___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2254] node_2254    stablehlo.broadcast_in_dim       in=['%cst_369___call__80'] out=['%2244___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2255] node_2255    stablehlo.multiply               in=['%2244___call__80', '%2243___call__80'] out=['%2245___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2256] node_2256    stablehlo.tanh                   in=['%2245___call__80'] out=['%2246___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2257] node_2257    stablehlo.broadcast_in_dim       in=['%cst_370___call__80'] out=['%2247___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2258] node_2258    stablehlo.add                    in=['%2247___call__80', '%2246___call__80'] out=['%2248___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2259] node_2259    stablehlo.broadcast_in_dim       in=['%cst_371___call__80'] out=['%2249___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2260] node_2260    stablehlo.multiply               in=['%2249___call__80', '%2248___call__80'] out=['%2250___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2261] node_2261    stablehlo.multiply               in=['%2238___call__80', '%2250___call__80'] out=['%2251___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2262] node_2262    stablehlo.slice                  in=['%2236___call__80'] out=['%2252___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2263] node_2263    stablehlo.reshape                in=['%2252___call__80'] out=['%2253___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2264] node_2264    stablehlo.multiply               in=['%2251___call__80', '%2253___call__80'] out=['%2254___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2265] node_2265    stablehlo.dot_general            in=['%2254___call__80', '%arg24'] out=['%2255___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [2266] node_2266    chlo.square                      in=['%2255___call__80'] out=['%2256___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2267] node_2267    stablehlo.convert                in=['%2256___call__80'] out=['%2257___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [2268] node_2268    stablehlo.reduce                 in=['%2257___call__80', '%cst_372___call__80'] out=['%2258___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %2239___call__80 -> idx=2250 id=node_2250 op=stablehlo.multiply inputs=['%2239___call__80', '%2238___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=2448 id=node_2448 op=stablehlo.multiply
+square input: %2436___call__80
+producer of square input: idx=2447 id=node_2447 op=stablehlo.reshape inputs=['%2435___call__80'] outputs=['%2436___call__80']
+
+Window:
+   [2443] node_2443    stablehlo.broadcast_in_dim       in=['%2431___call__80'] out=['%2432___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [2444] node_2444    stablehlo.multiply               in=['%2428___call__80', '%2432___call__80'] out=['%2433___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2445] node_2445    stablehlo.dot_general            in=['%2433___call__80', '%arg32'] out=['%2434___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [2446] node_2446    stablehlo.slice                  in=['%2434___call__80'] out=['%2435___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2447] node_2447    stablehlo.reshape                in=['%2435___call__80'] out=['%2436___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [2448] node_2448    stablehlo.multiply               in=['%2436___call__80', '%2436___call__80'] out=['%2437___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2449] node_2449    stablehlo.multiply               in=['%2437___call__80', '%2436___call__80'] out=['%2438___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2450] node_2450    stablehlo.broadcast_in_dim       in=['%cst_401___call__80'] out=['%2439___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2451] node_2451    stablehlo.multiply               in=['%2439___call__80', '%2438___call__80'] out=['%2440___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2452] node_2452    stablehlo.add                    in=['%2436___call__80', '%2440___call__80'] out=['%2441___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2453] node_2453    stablehlo.broadcast_in_dim       in=['%cst_402___call__80'] out=['%2442___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2454] node_2454    stablehlo.multiply               in=['%2442___call__80', '%2441___call__80'] out=['%2443___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2455] node_2455    stablehlo.tanh                   in=['%2443___call__80'] out=['%2444___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2456] node_2456    stablehlo.broadcast_in_dim       in=['%cst_403___call__80'] out=['%2445___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2457] node_2457    stablehlo.add                    in=['%2445___call__80', '%2444___call__80'] out=['%2446___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2458] node_2458    stablehlo.broadcast_in_dim       in=['%cst_404___call__80'] out=['%2447___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2459] node_2459    stablehlo.multiply               in=['%2447___call__80', '%2446___call__80'] out=['%2448___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2460] node_2460    stablehlo.multiply               in=['%2436___call__80', '%2448___call__80'] out=['%2449___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2461] node_2461    stablehlo.slice                  in=['%2434___call__80'] out=['%2450___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2462] node_2462    stablehlo.reshape                in=['%2450___call__80'] out=['%2451___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2463] node_2463    stablehlo.multiply               in=['%2449___call__80', '%2451___call__80'] out=['%2452___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2464] node_2464    stablehlo.dot_general            in=['%2452___call__80', '%arg33'] out=['%2453___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [2465] node_2465    chlo.square                      in=['%2453___call__80'] out=['%2454___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2466] node_2466    stablehlo.convert                in=['%2454___call__80'] out=['%2455___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [2467] node_2467    stablehlo.reduce                 in=['%2455___call__80', '%cst_405___call__80'] out=['%2456___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %2437___call__80 -> idx=2449 id=node_2449 op=stablehlo.multiply inputs=['%2437___call__80', '%2436___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=2661 id=node_2661 op=stablehlo.multiply
+square input: %2648___call__80
+producer of square input: idx=2660 id=node_2660 op=stablehlo.reshape inputs=['%2647___call__80'] outputs=['%2648___call__80']
+
+Window:
+   [2656] node_2656    stablehlo.broadcast_in_dim       in=['%2643___call__80'] out=['%2644___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [2657] node_2657    stablehlo.multiply               in=['%2640___call__80', '%2644___call__80'] out=['%2645___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2658] node_2658    stablehlo.dot_general            in=['%2645___call__80', '%arg41'] out=['%2646___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [2659] node_2659    stablehlo.slice                  in=['%2646___call__80'] out=['%2647___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2660] node_2660    stablehlo.reshape                in=['%2647___call__80'] out=['%2648___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [2661] node_2661    stablehlo.multiply               in=['%2648___call__80', '%2648___call__80'] out=['%2649___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2662] node_2662    stablehlo.multiply               in=['%2649___call__80', '%2648___call__80'] out=['%2650___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2663] node_2663    stablehlo.broadcast_in_dim       in=['%cst_436___call__80'] out=['%2651___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2664] node_2664    stablehlo.multiply               in=['%2651___call__80', '%2650___call__80'] out=['%2652___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2665] node_2665    stablehlo.add                    in=['%2648___call__80', '%2652___call__80'] out=['%2653___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2666] node_2666    stablehlo.broadcast_in_dim       in=['%cst_437___call__80'] out=['%2654___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2667] node_2667    stablehlo.multiply               in=['%2654___call__80', '%2653___call__80'] out=['%2655___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2668] node_2668    stablehlo.tanh                   in=['%2655___call__80'] out=['%2656___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2669] node_2669    stablehlo.broadcast_in_dim       in=['%cst_438___call__80'] out=['%2657___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2670] node_2670    stablehlo.add                    in=['%2657___call__80', '%2656___call__80'] out=['%2658___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2671] node_2671    stablehlo.broadcast_in_dim       in=['%cst_439___call__80'] out=['%2659___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2672] node_2672    stablehlo.multiply               in=['%2659___call__80', '%2658___call__80'] out=['%2660___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2673] node_2673    stablehlo.multiply               in=['%2648___call__80', '%2660___call__80'] out=['%2661___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2674] node_2674    stablehlo.slice                  in=['%2646___call__80'] out=['%2662___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2675] node_2675    stablehlo.reshape                in=['%2662___call__80'] out=['%2663___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2676] node_2676    stablehlo.multiply               in=['%2661___call__80', '%2663___call__80'] out=['%2664___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2677] node_2677    stablehlo.dot_general            in=['%2664___call__80', '%arg42'] out=['%2665___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [2678] node_2678    chlo.square                      in=['%2665___call__80'] out=['%2666___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2679] node_2679    stablehlo.convert                in=['%2666___call__80'] out=['%2667___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [2680] node_2680    stablehlo.reduce                 in=['%2667___call__80', '%cst_440___call__80'] out=['%2668___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %2649___call__80 -> idx=2662 id=node_2662 op=stablehlo.multiply inputs=['%2649___call__80', '%2648___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=2860 id=node_2860 op=stablehlo.multiply
+square input: %2846___call__80
+producer of square input: idx=2859 id=node_2859 op=stablehlo.reshape inputs=['%2845___call__80'] outputs=['%2846___call__80']
+
+Window:
+   [2855] node_2855    stablehlo.broadcast_in_dim       in=['%2841___call__80'] out=['%2842___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [2856] node_2856    stablehlo.multiply               in=['%2838___call__80', '%2842___call__80'] out=['%2843___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2857] node_2857    stablehlo.dot_general            in=['%2843___call__80', '%arg50'] out=['%2844___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [2858] node_2858    stablehlo.slice                  in=['%2844___call__80'] out=['%2845___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2859] node_2859    stablehlo.reshape                in=['%2845___call__80'] out=['%2846___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [2860] node_2860    stablehlo.multiply               in=['%2846___call__80', '%2846___call__80'] out=['%2847___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2861] node_2861    stablehlo.multiply               in=['%2847___call__80', '%2846___call__80'] out=['%2848___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2862] node_2862    stablehlo.broadcast_in_dim       in=['%cst_469___call__80'] out=['%2849___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2863] node_2863    stablehlo.multiply               in=['%2849___call__80', '%2848___call__80'] out=['%2850___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2864] node_2864    stablehlo.add                    in=['%2846___call__80', '%2850___call__80'] out=['%2851___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2865] node_2865    stablehlo.broadcast_in_dim       in=['%cst_470___call__80'] out=['%2852___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2866] node_2866    stablehlo.multiply               in=['%2852___call__80', '%2851___call__80'] out=['%2853___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2867] node_2867    stablehlo.tanh                   in=['%2853___call__80'] out=['%2854___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2868] node_2868    stablehlo.broadcast_in_dim       in=['%cst_471___call__80'] out=['%2855___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2869] node_2869    stablehlo.add                    in=['%2855___call__80', '%2854___call__80'] out=['%2856___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2870] node_2870    stablehlo.broadcast_in_dim       in=['%cst_472___call__80'] out=['%2857___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [2871] node_2871    stablehlo.multiply               in=['%2857___call__80', '%2856___call__80'] out=['%2858___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2872] node_2872    stablehlo.multiply               in=['%2846___call__80', '%2858___call__80'] out=['%2859___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2873] node_2873    stablehlo.slice                  in=['%2844___call__80'] out=['%2860___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [2874] node_2874    stablehlo.reshape                in=['%2860___call__80'] out=['%2861___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2875] node_2875    stablehlo.multiply               in=['%2859___call__80', '%2861___call__80'] out=['%2862___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [2876] node_2876    stablehlo.dot_general            in=['%2862___call__80', '%arg51'] out=['%2863___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [2877] node_2877    chlo.square                      in=['%2863___call__80'] out=['%2864___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [2878] node_2878    stablehlo.convert                in=['%2864___call__80'] out=['%2865___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [2879] node_2879    stablehlo.reduce                 in=['%2865___call__80', '%cst_473___call__80'] out=['%2866___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %2847___call__80 -> idx=2861 id=node_2861 op=stablehlo.multiply inputs=['%2847___call__80', '%2846___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=3073 id=node_3073 op=stablehlo.multiply
+square input: %3058___call__80
+producer of square input: idx=3072 id=node_3072 op=stablehlo.reshape inputs=['%3057___call__80'] outputs=['%3058___call__80']
+
+Window:
+   [3068] node_3068    stablehlo.broadcast_in_dim       in=['%3053___call__80'] out=['%3054___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [3069] node_3069    stablehlo.multiply               in=['%3050___call__80', '%3054___call__80'] out=['%3055___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3070] node_3070    stablehlo.dot_general            in=['%3055___call__80', '%arg59'] out=['%3056___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [3071] node_3071    stablehlo.slice                  in=['%3056___call__80'] out=['%3057___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3072] node_3072    stablehlo.reshape                in=['%3057___call__80'] out=['%3058___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [3073] node_3073    stablehlo.multiply               in=['%3058___call__80', '%3058___call__80'] out=['%3059___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3074] node_3074    stablehlo.multiply               in=['%3059___call__80', '%3058___call__80'] out=['%3060___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3075] node_3075    stablehlo.broadcast_in_dim       in=['%cst_504___call__80'] out=['%3061___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3076] node_3076    stablehlo.multiply               in=['%3061___call__80', '%3060___call__80'] out=['%3062___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3077] node_3077    stablehlo.add                    in=['%3058___call__80', '%3062___call__80'] out=['%3063___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3078] node_3078    stablehlo.broadcast_in_dim       in=['%cst_505___call__80'] out=['%3064___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3079] node_3079    stablehlo.multiply               in=['%3064___call__80', '%3063___call__80'] out=['%3065___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3080] node_3080    stablehlo.tanh                   in=['%3065___call__80'] out=['%3066___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3081] node_3081    stablehlo.broadcast_in_dim       in=['%cst_506___call__80'] out=['%3067___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3082] node_3082    stablehlo.add                    in=['%3067___call__80', '%3066___call__80'] out=['%3068___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3083] node_3083    stablehlo.broadcast_in_dim       in=['%cst_507___call__80'] out=['%3069___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3084] node_3084    stablehlo.multiply               in=['%3069___call__80', '%3068___call__80'] out=['%3070___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3085] node_3085    stablehlo.multiply               in=['%3058___call__80', '%3070___call__80'] out=['%3071___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3086] node_3086    stablehlo.slice                  in=['%3056___call__80'] out=['%3072___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3087] node_3087    stablehlo.reshape                in=['%3072___call__80'] out=['%3073___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3088] node_3088    stablehlo.multiply               in=['%3071___call__80', '%3073___call__80'] out=['%3074___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3089] node_3089    stablehlo.dot_general            in=['%3074___call__80', '%arg60'] out=['%3075___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [3090] node_3090    chlo.square                      in=['%3075___call__80'] out=['%3076___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3091] node_3091    stablehlo.convert                in=['%3076___call__80'] out=['%3077___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [3092] node_3092    stablehlo.reduce                 in=['%3077___call__80', '%cst_508___call__80'] out=['%3078___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %3059___call__80 -> idx=3074 id=node_3074 op=stablehlo.multiply inputs=['%3059___call__80', '%3058___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=3272 id=node_3272 op=stablehlo.multiply
+square input: %3256___call__80
+producer of square input: idx=3271 id=node_3271 op=stablehlo.reshape inputs=['%3255___call__80'] outputs=['%3256___call__80']
+
+Window:
+   [3267] node_3267    stablehlo.broadcast_in_dim       in=['%3251___call__80'] out=['%3252___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [3268] node_3268    stablehlo.multiply               in=['%3248___call__80', '%3252___call__80'] out=['%3253___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3269] node_3269    stablehlo.dot_general            in=['%3253___call__80', '%arg68'] out=['%3254___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [3270] node_3270    stablehlo.slice                  in=['%3254___call__80'] out=['%3255___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3271] node_3271    stablehlo.reshape                in=['%3255___call__80'] out=['%3256___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [3272] node_3272    stablehlo.multiply               in=['%3256___call__80', '%3256___call__80'] out=['%3257___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3273] node_3273    stablehlo.multiply               in=['%3257___call__80', '%3256___call__80'] out=['%3258___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3274] node_3274    stablehlo.broadcast_in_dim       in=['%cst_537___call__80'] out=['%3259___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3275] node_3275    stablehlo.multiply               in=['%3259___call__80', '%3258___call__80'] out=['%3260___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3276] node_3276    stablehlo.add                    in=['%3256___call__80', '%3260___call__80'] out=['%3261___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3277] node_3277    stablehlo.broadcast_in_dim       in=['%cst_538___call__80'] out=['%3262___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3278] node_3278    stablehlo.multiply               in=['%3262___call__80', '%3261___call__80'] out=['%3263___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3279] node_3279    stablehlo.tanh                   in=['%3263___call__80'] out=['%3264___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3280] node_3280    stablehlo.broadcast_in_dim       in=['%cst_539___call__80'] out=['%3265___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3281] node_3281    stablehlo.add                    in=['%3265___call__80', '%3264___call__80'] out=['%3266___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3282] node_3282    stablehlo.broadcast_in_dim       in=['%cst_540___call__80'] out=['%3267___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3283] node_3283    stablehlo.multiply               in=['%3267___call__80', '%3266___call__80'] out=['%3268___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3284] node_3284    stablehlo.multiply               in=['%3256___call__80', '%3268___call__80'] out=['%3269___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3285] node_3285    stablehlo.slice                  in=['%3254___call__80'] out=['%3270___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3286] node_3286    stablehlo.reshape                in=['%3270___call__80'] out=['%3271___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3287] node_3287    stablehlo.multiply               in=['%3269___call__80', '%3271___call__80'] out=['%3272___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3288] node_3288    stablehlo.dot_general            in=['%3272___call__80', '%arg69'] out=['%3273___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [3289] node_3289    chlo.square                      in=['%3273___call__80'] out=['%3274___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3290] node_3290    stablehlo.convert                in=['%3274___call__80'] out=['%3275___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [3291] node_3291    stablehlo.reduce                 in=['%3275___call__80', '%cst_541___call__80'] out=['%3276___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %3257___call__80 -> idx=3273 id=node_3273 op=stablehlo.multiply inputs=['%3257___call__80', '%3256___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=3485 id=node_3485 op=stablehlo.multiply
+square input: %3468___call__80
+producer of square input: idx=3484 id=node_3484 op=stablehlo.reshape inputs=['%3467___call__80'] outputs=['%3468___call__80']
+
+Window:
+   [3480] node_3480    stablehlo.broadcast_in_dim       in=['%3463___call__80'] out=['%3464___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [3481] node_3481    stablehlo.multiply               in=['%3460___call__80', '%3464___call__80'] out=['%3465___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3482] node_3482    stablehlo.dot_general            in=['%3465___call__80', '%arg77'] out=['%3466___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [3483] node_3483    stablehlo.slice                  in=['%3466___call__80'] out=['%3467___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3484] node_3484    stablehlo.reshape                in=['%3467___call__80'] out=['%3468___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [3485] node_3485    stablehlo.multiply               in=['%3468___call__80', '%3468___call__80'] out=['%3469___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3486] node_3486    stablehlo.multiply               in=['%3469___call__80', '%3468___call__80'] out=['%3470___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3487] node_3487    stablehlo.broadcast_in_dim       in=['%cst_572___call__80'] out=['%3471___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3488] node_3488    stablehlo.multiply               in=['%3471___call__80', '%3470___call__80'] out=['%3472___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3489] node_3489    stablehlo.add                    in=['%3468___call__80', '%3472___call__80'] out=['%3473___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3490] node_3490    stablehlo.broadcast_in_dim       in=['%cst_573___call__80'] out=['%3474___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3491] node_3491    stablehlo.multiply               in=['%3474___call__80', '%3473___call__80'] out=['%3475___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3492] node_3492    stablehlo.tanh                   in=['%3475___call__80'] out=['%3476___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3493] node_3493    stablehlo.broadcast_in_dim       in=['%cst_574___call__80'] out=['%3477___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3494] node_3494    stablehlo.add                    in=['%3477___call__80', '%3476___call__80'] out=['%3478___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3495] node_3495    stablehlo.broadcast_in_dim       in=['%cst_575___call__80'] out=['%3479___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3496] node_3496    stablehlo.multiply               in=['%3479___call__80', '%3478___call__80'] out=['%3480___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3497] node_3497    stablehlo.multiply               in=['%3468___call__80', '%3480___call__80'] out=['%3481___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3498] node_3498    stablehlo.slice                  in=['%3466___call__80'] out=['%3482___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3499] node_3499    stablehlo.reshape                in=['%3482___call__80'] out=['%3483___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3500] node_3500    stablehlo.multiply               in=['%3481___call__80', '%3483___call__80'] out=['%3484___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3501] node_3501    stablehlo.dot_general            in=['%3484___call__80', '%arg78'] out=['%3485___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [3502] node_3502    chlo.square                      in=['%3485___call__80'] out=['%3486___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3503] node_3503    stablehlo.convert                in=['%3486___call__80'] out=['%3487___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [3504] node_3504    stablehlo.reduce                 in=['%3487___call__80', '%cst_576___call__80'] out=['%3488___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %3469___call__80 -> idx=3486 id=node_3486 op=stablehlo.multiply inputs=['%3469___call__80', '%3468___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=3684 id=node_3684 op=stablehlo.multiply
+square input: %3666___call__80
+producer of square input: idx=3683 id=node_3683 op=stablehlo.reshape inputs=['%3665___call__80'] outputs=['%3666___call__80']
+
+Window:
+   [3679] node_3679    stablehlo.broadcast_in_dim       in=['%3661___call__80'] out=['%3662___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [3680] node_3680    stablehlo.multiply               in=['%3658___call__80', '%3662___call__80'] out=['%3663___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3681] node_3681    stablehlo.dot_general            in=['%3663___call__80', '%arg86'] out=['%3664___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [3682] node_3682    stablehlo.slice                  in=['%3664___call__80'] out=['%3665___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3683] node_3683    stablehlo.reshape                in=['%3665___call__80'] out=['%3666___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [3684] node_3684    stablehlo.multiply               in=['%3666___call__80', '%3666___call__80'] out=['%3667___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3685] node_3685    stablehlo.multiply               in=['%3667___call__80', '%3666___call__80'] out=['%3668___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3686] node_3686    stablehlo.broadcast_in_dim       in=['%cst_605___call__80'] out=['%3669___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3687] node_3687    stablehlo.multiply               in=['%3669___call__80', '%3668___call__80'] out=['%3670___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3688] node_3688    stablehlo.add                    in=['%3666___call__80', '%3670___call__80'] out=['%3671___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3689] node_3689    stablehlo.broadcast_in_dim       in=['%cst_606___call__80'] out=['%3672___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3690] node_3690    stablehlo.multiply               in=['%3672___call__80', '%3671___call__80'] out=['%3673___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3691] node_3691    stablehlo.tanh                   in=['%3673___call__80'] out=['%3674___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3692] node_3692    stablehlo.broadcast_in_dim       in=['%cst_607___call__80'] out=['%3675___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3693] node_3693    stablehlo.add                    in=['%3675___call__80', '%3674___call__80'] out=['%3676___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3694] node_3694    stablehlo.broadcast_in_dim       in=['%cst_608___call__80'] out=['%3677___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3695] node_3695    stablehlo.multiply               in=['%3677___call__80', '%3676___call__80'] out=['%3678___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3696] node_3696    stablehlo.multiply               in=['%3666___call__80', '%3678___call__80'] out=['%3679___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3697] node_3697    stablehlo.slice                  in=['%3664___call__80'] out=['%3680___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3698] node_3698    stablehlo.reshape                in=['%3680___call__80'] out=['%3681___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3699] node_3699    stablehlo.multiply               in=['%3679___call__80', '%3681___call__80'] out=['%3682___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3700] node_3700    stablehlo.dot_general            in=['%3682___call__80', '%arg87'] out=['%3683___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [3701] node_3701    chlo.square                      in=['%3683___call__80'] out=['%3684___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3702] node_3702    stablehlo.convert                in=['%3684___call__80'] out=['%3685___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [3703] node_3703    stablehlo.reduce                 in=['%3685___call__80', '%cst_609___call__80'] out=['%3686___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %3667___call__80 -> idx=3685 id=node_3685 op=stablehlo.multiply inputs=['%3667___call__80', '%3666___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=3897 id=node_3897 op=stablehlo.multiply
+square input: %3878___call__80
+producer of square input: idx=3896 id=node_3896 op=stablehlo.reshape inputs=['%3877___call__80'] outputs=['%3878___call__80']
+
+Window:
+   [3892] node_3892    stablehlo.broadcast_in_dim       in=['%3873___call__80'] out=['%3874___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [3893] node_3893    stablehlo.multiply               in=['%3870___call__80', '%3874___call__80'] out=['%3875___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3894] node_3894    stablehlo.dot_general            in=['%3875___call__80', '%arg95'] out=['%3876___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [3895] node_3895    stablehlo.slice                  in=['%3876___call__80'] out=['%3877___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3896] node_3896    stablehlo.reshape                in=['%3877___call__80'] out=['%3878___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [3897] node_3897    stablehlo.multiply               in=['%3878___call__80', '%3878___call__80'] out=['%3879___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3898] node_3898    stablehlo.multiply               in=['%3879___call__80', '%3878___call__80'] out=['%3880___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3899] node_3899    stablehlo.broadcast_in_dim       in=['%cst_640___call__80'] out=['%3881___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3900] node_3900    stablehlo.multiply               in=['%3881___call__80', '%3880___call__80'] out=['%3882___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3901] node_3901    stablehlo.add                    in=['%3878___call__80', '%3882___call__80'] out=['%3883___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3902] node_3902    stablehlo.broadcast_in_dim       in=['%cst_641___call__80'] out=['%3884___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3903] node_3903    stablehlo.multiply               in=['%3884___call__80', '%3883___call__80'] out=['%3885___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3904] node_3904    stablehlo.tanh                   in=['%3885___call__80'] out=['%3886___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3905] node_3905    stablehlo.broadcast_in_dim       in=['%cst_642___call__80'] out=['%3887___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3906] node_3906    stablehlo.add                    in=['%3887___call__80', '%3886___call__80'] out=['%3888___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3907] node_3907    stablehlo.broadcast_in_dim       in=['%cst_643___call__80'] out=['%3889___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [3908] node_3908    stablehlo.multiply               in=['%3889___call__80', '%3888___call__80'] out=['%3890___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3909] node_3909    stablehlo.multiply               in=['%3878___call__80', '%3890___call__80'] out=['%3891___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3910] node_3910    stablehlo.slice                  in=['%3876___call__80'] out=['%3892___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [3911] node_3911    stablehlo.reshape                in=['%3892___call__80'] out=['%3893___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3912] node_3912    stablehlo.multiply               in=['%3891___call__80', '%3893___call__80'] out=['%3894___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [3913] node_3913    stablehlo.dot_general            in=['%3894___call__80', '%arg96'] out=['%3895___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [3914] node_3914    chlo.square                      in=['%3895___call__80'] out=['%3896___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [3915] node_3915    stablehlo.convert                in=['%3896___call__80'] out=['%3897___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [3916] node_3916    stablehlo.reduce                 in=['%3897___call__80', '%cst_644___call__80'] out=['%3898___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %3879___call__80 -> idx=3898 id=node_3898 op=stablehlo.multiply inputs=['%3879___call__80', '%3878___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=4096 id=node_4096 op=stablehlo.multiply
+square input: %4076___call__80
+producer of square input: idx=4095 id=node_4095 op=stablehlo.reshape inputs=['%4075___call__80'] outputs=['%4076___call__80']
+
+Window:
+   [4091] node_4091    stablehlo.broadcast_in_dim       in=['%4071___call__80'] out=['%4072___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [4092] node_4092    stablehlo.multiply               in=['%4068___call__80', '%4072___call__80'] out=['%4073___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4093] node_4093    stablehlo.dot_general            in=['%4073___call__80', '%arg104'] out=['%4074___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [4094] node_4094    stablehlo.slice                  in=['%4074___call__80'] out=['%4075___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4095] node_4095    stablehlo.reshape                in=['%4075___call__80'] out=['%4076___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [4096] node_4096    stablehlo.multiply               in=['%4076___call__80', '%4076___call__80'] out=['%4077___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4097] node_4097    stablehlo.multiply               in=['%4077___call__80', '%4076___call__80'] out=['%4078___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4098] node_4098    stablehlo.broadcast_in_dim       in=['%cst_673___call__80'] out=['%4079___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4099] node_4099    stablehlo.multiply               in=['%4079___call__80', '%4078___call__80'] out=['%4080___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4100] node_4100    stablehlo.add                    in=['%4076___call__80', '%4080___call__80'] out=['%4081___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4101] node_4101    stablehlo.broadcast_in_dim       in=['%cst_674___call__80'] out=['%4082___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4102] node_4102    stablehlo.multiply               in=['%4082___call__80', '%4081___call__80'] out=['%4083___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4103] node_4103    stablehlo.tanh                   in=['%4083___call__80'] out=['%4084___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4104] node_4104    stablehlo.broadcast_in_dim       in=['%cst_675___call__80'] out=['%4085___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4105] node_4105    stablehlo.add                    in=['%4085___call__80', '%4084___call__80'] out=['%4086___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4106] node_4106    stablehlo.broadcast_in_dim       in=['%cst_676___call__80'] out=['%4087___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4107] node_4107    stablehlo.multiply               in=['%4087___call__80', '%4086___call__80'] out=['%4088___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4108] node_4108    stablehlo.multiply               in=['%4076___call__80', '%4088___call__80'] out=['%4089___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4109] node_4109    stablehlo.slice                  in=['%4074___call__80'] out=['%4090___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4110] node_4110    stablehlo.reshape                in=['%4090___call__80'] out=['%4091___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4111] node_4111    stablehlo.multiply               in=['%4089___call__80', '%4091___call__80'] out=['%4092___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4112] node_4112    stablehlo.dot_general            in=['%4092___call__80', '%arg105'] out=['%4093___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [4113] node_4113    chlo.square                      in=['%4093___call__80'] out=['%4094___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4114] node_4114    stablehlo.convert                in=['%4094___call__80'] out=['%4095___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [4115] node_4115    stablehlo.reduce                 in=['%4095___call__80', '%cst_677___call__80'] out=['%4096___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %4077___call__80 -> idx=4097 id=node_4097 op=stablehlo.multiply inputs=['%4077___call__80', '%4076___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=4309 id=node_4309 op=stablehlo.multiply
+square input: %4288___call__80
+producer of square input: idx=4308 id=node_4308 op=stablehlo.reshape inputs=['%4287___call__80'] outputs=['%4288___call__80']
+
+Window:
+   [4304] node_4304    stablehlo.broadcast_in_dim       in=['%4283___call__80'] out=['%4284___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [4305] node_4305    stablehlo.multiply               in=['%4280___call__80', '%4284___call__80'] out=['%4285___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4306] node_4306    stablehlo.dot_general            in=['%4285___call__80', '%arg122'] out=['%4286___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [4307] node_4307    stablehlo.slice                  in=['%4286___call__80'] out=['%4287___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4308] node_4308    stablehlo.reshape                in=['%4287___call__80'] out=['%4288___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [4309] node_4309    stablehlo.multiply               in=['%4288___call__80', '%4288___call__80'] out=['%4289___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4310] node_4310    stablehlo.multiply               in=['%4289___call__80', '%4288___call__80'] out=['%4290___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4311] node_4311    stablehlo.broadcast_in_dim       in=['%cst_708___call__80'] out=['%4291___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4312] node_4312    stablehlo.multiply               in=['%4291___call__80', '%4290___call__80'] out=['%4292___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4313] node_4313    stablehlo.add                    in=['%4288___call__80', '%4292___call__80'] out=['%4293___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4314] node_4314    stablehlo.broadcast_in_dim       in=['%cst_709___call__80'] out=['%4294___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4315] node_4315    stablehlo.multiply               in=['%4294___call__80', '%4293___call__80'] out=['%4295___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4316] node_4316    stablehlo.tanh                   in=['%4295___call__80'] out=['%4296___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4317] node_4317    stablehlo.broadcast_in_dim       in=['%cst_710___call__80'] out=['%4297___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4318] node_4318    stablehlo.add                    in=['%4297___call__80', '%4296___call__80'] out=['%4298___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4319] node_4319    stablehlo.broadcast_in_dim       in=['%cst_711___call__80'] out=['%4299___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4320] node_4320    stablehlo.multiply               in=['%4299___call__80', '%4298___call__80'] out=['%4300___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4321] node_4321    stablehlo.multiply               in=['%4288___call__80', '%4300___call__80'] out=['%4301___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4322] node_4322    stablehlo.slice                  in=['%4286___call__80'] out=['%4302___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4323] node_4323    stablehlo.reshape                in=['%4302___call__80'] out=['%4303___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4324] node_4324    stablehlo.multiply               in=['%4301___call__80', '%4303___call__80'] out=['%4304___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4325] node_4325    stablehlo.dot_general            in=['%4304___call__80', '%arg123'] out=['%4305___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [4326] node_4326    chlo.square                      in=['%4305___call__80'] out=['%4306___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4327] node_4327    stablehlo.convert                in=['%4306___call__80'] out=['%4307___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [4328] node_4328    stablehlo.reduce                 in=['%4307___call__80', '%cst_712___call__80'] out=['%4308___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %4289___call__80 -> idx=4310 id=node_4310 op=stablehlo.multiply inputs=['%4289___call__80', '%4288___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=4508 id=node_4508 op=stablehlo.multiply
+square input: %4486___call__80
+producer of square input: idx=4507 id=node_4507 op=stablehlo.reshape inputs=['%4485___call__80'] outputs=['%4486___call__80']
+
+Window:
+   [4503] node_4503    stablehlo.broadcast_in_dim       in=['%4481___call__80'] out=['%4482___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [4504] node_4504    stablehlo.multiply               in=['%4478___call__80', '%4482___call__80'] out=['%4483___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4505] node_4505    stablehlo.dot_general            in=['%4483___call__80', '%arg131'] out=['%4484___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [4506] node_4506    stablehlo.slice                  in=['%4484___call__80'] out=['%4485___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4507] node_4507    stablehlo.reshape                in=['%4485___call__80'] out=['%4486___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [4508] node_4508    stablehlo.multiply               in=['%4486___call__80', '%4486___call__80'] out=['%4487___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4509] node_4509    stablehlo.multiply               in=['%4487___call__80', '%4486___call__80'] out=['%4488___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4510] node_4510    stablehlo.broadcast_in_dim       in=['%cst_741___call__80'] out=['%4489___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4511] node_4511    stablehlo.multiply               in=['%4489___call__80', '%4488___call__80'] out=['%4490___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4512] node_4512    stablehlo.add                    in=['%4486___call__80', '%4490___call__80'] out=['%4491___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4513] node_4513    stablehlo.broadcast_in_dim       in=['%cst_742___call__80'] out=['%4492___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4514] node_4514    stablehlo.multiply               in=['%4492___call__80', '%4491___call__80'] out=['%4493___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4515] node_4515    stablehlo.tanh                   in=['%4493___call__80'] out=['%4494___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4516] node_4516    stablehlo.broadcast_in_dim       in=['%cst_743___call__80'] out=['%4495___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4517] node_4517    stablehlo.add                    in=['%4495___call__80', '%4494___call__80'] out=['%4496___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4518] node_4518    stablehlo.broadcast_in_dim       in=['%cst_744___call__80'] out=['%4497___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4519] node_4519    stablehlo.multiply               in=['%4497___call__80', '%4496___call__80'] out=['%4498___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4520] node_4520    stablehlo.multiply               in=['%4486___call__80', '%4498___call__80'] out=['%4499___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4521] node_4521    stablehlo.slice                  in=['%4484___call__80'] out=['%4500___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4522] node_4522    stablehlo.reshape                in=['%4500___call__80'] out=['%4501___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4523] node_4523    stablehlo.multiply               in=['%4499___call__80', '%4501___call__80'] out=['%4502___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4524] node_4524    stablehlo.dot_general            in=['%4502___call__80', '%arg132'] out=['%4503___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [4525] node_4525    chlo.square                      in=['%4503___call__80'] out=['%4504___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4526] node_4526    stablehlo.convert                in=['%4504___call__80'] out=['%4505___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [4527] node_4527    stablehlo.reduce                 in=['%4505___call__80', '%cst_745___call__80'] out=['%4506___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %4487___call__80 -> idx=4509 id=node_4509 op=stablehlo.multiply inputs=['%4487___call__80', '%4486___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=4721 id=node_4721 op=stablehlo.multiply
+square input: %4698___call__80
+producer of square input: idx=4720 id=node_4720 op=stablehlo.reshape inputs=['%4697___call__80'] outputs=['%4698___call__80']
+
+Window:
+   [4716] node_4716    stablehlo.broadcast_in_dim       in=['%4693___call__80'] out=['%4694___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [4717] node_4717    stablehlo.multiply               in=['%4690___call__80', '%4694___call__80'] out=['%4695___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4718] node_4718    stablehlo.dot_general            in=['%4695___call__80', '%arg140'] out=['%4696___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [4719] node_4719    stablehlo.slice                  in=['%4696___call__80'] out=['%4697___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4720] node_4720    stablehlo.reshape                in=['%4697___call__80'] out=['%4698___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [4721] node_4721    stablehlo.multiply               in=['%4698___call__80', '%4698___call__80'] out=['%4699___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4722] node_4722    stablehlo.multiply               in=['%4699___call__80', '%4698___call__80'] out=['%4700___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4723] node_4723    stablehlo.broadcast_in_dim       in=['%cst_776___call__80'] out=['%4701___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4724] node_4724    stablehlo.multiply               in=['%4701___call__80', '%4700___call__80'] out=['%4702___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4725] node_4725    stablehlo.add                    in=['%4698___call__80', '%4702___call__80'] out=['%4703___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4726] node_4726    stablehlo.broadcast_in_dim       in=['%cst_777___call__80'] out=['%4704___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4727] node_4727    stablehlo.multiply               in=['%4704___call__80', '%4703___call__80'] out=['%4705___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4728] node_4728    stablehlo.tanh                   in=['%4705___call__80'] out=['%4706___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4729] node_4729    stablehlo.broadcast_in_dim       in=['%cst_778___call__80'] out=['%4707___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4730] node_4730    stablehlo.add                    in=['%4707___call__80', '%4706___call__80'] out=['%4708___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4731] node_4731    stablehlo.broadcast_in_dim       in=['%cst_779___call__80'] out=['%4709___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4732] node_4732    stablehlo.multiply               in=['%4709___call__80', '%4708___call__80'] out=['%4710___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4733] node_4733    stablehlo.multiply               in=['%4698___call__80', '%4710___call__80'] out=['%4711___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4734] node_4734    stablehlo.slice                  in=['%4696___call__80'] out=['%4712___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4735] node_4735    stablehlo.reshape                in=['%4712___call__80'] out=['%4713___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4736] node_4736    stablehlo.multiply               in=['%4711___call__80', '%4713___call__80'] out=['%4714___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4737] node_4737    stablehlo.dot_general            in=['%4714___call__80', '%arg141'] out=['%4715___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [4738] node_4738    chlo.square                      in=['%4715___call__80'] out=['%4716___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4739] node_4739    stablehlo.convert                in=['%4716___call__80'] out=['%4717___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [4740] node_4740    stablehlo.reduce                 in=['%4717___call__80', '%cst_780___call__80'] out=['%4718___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %4699___call__80 -> idx=4722 id=node_4722 op=stablehlo.multiply inputs=['%4699___call__80', '%4698___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=4920 id=node_4920 op=stablehlo.multiply
+square input: %4896___call__80
+producer of square input: idx=4919 id=node_4919 op=stablehlo.reshape inputs=['%4895___call__80'] outputs=['%4896___call__80']
+
+Window:
+   [4915] node_4915    stablehlo.broadcast_in_dim       in=['%4891___call__80'] out=['%4892___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [4916] node_4916    stablehlo.multiply               in=['%4888___call__80', '%4892___call__80'] out=['%4893___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4917] node_4917    stablehlo.dot_general            in=['%4893___call__80', '%arg149'] out=['%4894___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [4918] node_4918    stablehlo.slice                  in=['%4894___call__80'] out=['%4895___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4919] node_4919    stablehlo.reshape                in=['%4895___call__80'] out=['%4896___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [4920] node_4920    stablehlo.multiply               in=['%4896___call__80', '%4896___call__80'] out=['%4897___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4921] node_4921    stablehlo.multiply               in=['%4897___call__80', '%4896___call__80'] out=['%4898___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4922] node_4922    stablehlo.broadcast_in_dim       in=['%cst_809___call__80'] out=['%4899___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4923] node_4923    stablehlo.multiply               in=['%4899___call__80', '%4898___call__80'] out=['%4900___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4924] node_4924    stablehlo.add                    in=['%4896___call__80', '%4900___call__80'] out=['%4901___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4925] node_4925    stablehlo.broadcast_in_dim       in=['%cst_810___call__80'] out=['%4902___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4926] node_4926    stablehlo.multiply               in=['%4902___call__80', '%4901___call__80'] out=['%4903___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4927] node_4927    stablehlo.tanh                   in=['%4903___call__80'] out=['%4904___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4928] node_4928    stablehlo.broadcast_in_dim       in=['%cst_811___call__80'] out=['%4905___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4929] node_4929    stablehlo.add                    in=['%4905___call__80', '%4904___call__80'] out=['%4906___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4930] node_4930    stablehlo.broadcast_in_dim       in=['%cst_812___call__80'] out=['%4907___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [4931] node_4931    stablehlo.multiply               in=['%4907___call__80', '%4906___call__80'] out=['%4908___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4932] node_4932    stablehlo.multiply               in=['%4896___call__80', '%4908___call__80'] out=['%4909___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4933] node_4933    stablehlo.slice                  in=['%4894___call__80'] out=['%4910___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [4934] node_4934    stablehlo.reshape                in=['%4910___call__80'] out=['%4911___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4935] node_4935    stablehlo.multiply               in=['%4909___call__80', '%4911___call__80'] out=['%4912___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [4936] node_4936    stablehlo.dot_general            in=['%4912___call__80', '%arg150'] out=['%4913___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [4937] node_4937    chlo.square                      in=['%4913___call__80'] out=['%4914___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [4938] node_4938    stablehlo.convert                in=['%4914___call__80'] out=['%4915___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [4939] node_4939    stablehlo.reduce                 in=['%4915___call__80', '%cst_813___call__80'] out=['%4916___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %4897___call__80 -> idx=4921 id=node_4921 op=stablehlo.multiply inputs=['%4897___call__80', '%4896___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=5133 id=node_5133 op=stablehlo.multiply
+square input: %5108___call__80
+producer of square input: idx=5132 id=node_5132 op=stablehlo.reshape inputs=['%5107___call__80'] outputs=['%5108___call__80']
+
+Window:
+   [5128] node_5128    stablehlo.broadcast_in_dim       in=['%5103___call__80'] out=['%5104___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [5129] node_5129    stablehlo.multiply               in=['%5100___call__80', '%5104___call__80'] out=['%5105___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [5130] node_5130    stablehlo.dot_general            in=['%5105___call__80', '%arg158'] out=['%5106___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [5131] node_5131    stablehlo.slice                  in=['%5106___call__80'] out=['%5107___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [5132] node_5132    stablehlo.reshape                in=['%5107___call__80'] out=['%5108___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [5133] node_5133    stablehlo.multiply               in=['%5108___call__80', '%5108___call__80'] out=['%5109___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5134] node_5134    stablehlo.multiply               in=['%5109___call__80', '%5108___call__80'] out=['%5110___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5135] node_5135    stablehlo.broadcast_in_dim       in=['%cst_844___call__80'] out=['%5111___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5136] node_5136    stablehlo.multiply               in=['%5111___call__80', '%5110___call__80'] out=['%5112___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5137] node_5137    stablehlo.add                    in=['%5108___call__80', '%5112___call__80'] out=['%5113___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5138] node_5138    stablehlo.broadcast_in_dim       in=['%cst_845___call__80'] out=['%5114___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5139] node_5139    stablehlo.multiply               in=['%5114___call__80', '%5113___call__80'] out=['%5115___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5140] node_5140    stablehlo.tanh                   in=['%5115___call__80'] out=['%5116___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5141] node_5141    stablehlo.broadcast_in_dim       in=['%cst_846___call__80'] out=['%5117___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5142] node_5142    stablehlo.add                    in=['%5117___call__80', '%5116___call__80'] out=['%5118___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5143] node_5143    stablehlo.broadcast_in_dim       in=['%cst_847___call__80'] out=['%5119___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5144] node_5144    stablehlo.multiply               in=['%5119___call__80', '%5118___call__80'] out=['%5120___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5145] node_5145    stablehlo.multiply               in=['%5108___call__80', '%5120___call__80'] out=['%5121___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5146] node_5146    stablehlo.slice                  in=['%5106___call__80'] out=['%5122___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [5147] node_5147    stablehlo.reshape                in=['%5122___call__80'] out=['%5123___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5148] node_5148    stablehlo.multiply               in=['%5121___call__80', '%5123___call__80'] out=['%5124___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5149] node_5149    stablehlo.dot_general            in=['%5124___call__80', '%arg159'] out=['%5125___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [5150] node_5150    chlo.square                      in=['%5125___call__80'] out=['%5126___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [5151] node_5151    stablehlo.convert                in=['%5126___call__80'] out=['%5127___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [5152] node_5152    stablehlo.reduce                 in=['%5127___call__80', '%cst_848___call__80'] out=['%5128___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %5109___call__80 -> idx=5134 id=node_5134 op=stablehlo.multiply inputs=['%5109___call__80', '%5108___call__80'] attrs={}
+
+====================================================================================================
+CANDIDATE idx=5332 id=node_5332 op=stablehlo.multiply
+square input: %5306___call__80
+producer of square input: idx=5331 id=node_5331 op=stablehlo.reshape inputs=['%5305___call__80'] outputs=['%5306___call__80']
+
+Window:
+   [5327] node_5327    stablehlo.broadcast_in_dim       in=['%5301___call__80'] out=['%5302___call__80'] attrs={'dims': [0, 1, 2]} result=['tensor<1x8x2304xbf16>']
+   [5328] node_5328    stablehlo.multiply               in=['%5298___call__80', '%5302___call__80'] out=['%5303___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [5329] node_5329    stablehlo.dot_general            in=['%5303___call__80', '%arg167'] out=['%5304___call__80'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2x9216xbf16>']
+   [5330] node_5330    stablehlo.slice                  in=['%5304___call__80'] out=['%5305___call__80'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 8, 1, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [5331] node_5331    stablehlo.reshape                in=['%5305___call__80'] out=['%5306___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+>> [5332] node_5332    stablehlo.multiply               in=['%5306___call__80', '%5306___call__80'] out=['%5307___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5333] node_5333    stablehlo.multiply               in=['%5307___call__80', '%5306___call__80'] out=['%5308___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5334] node_5334    stablehlo.broadcast_in_dim       in=['%cst_877___call__80'] out=['%5309___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5335] node_5335    stablehlo.multiply               in=['%5309___call__80', '%5308___call__80'] out=['%5310___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5336] node_5336    stablehlo.add                    in=['%5306___call__80', '%5310___call__80'] out=['%5311___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5337] node_5337    stablehlo.broadcast_in_dim       in=['%cst_878___call__80'] out=['%5312___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5338] node_5338    stablehlo.multiply               in=['%5312___call__80', '%5311___call__80'] out=['%5313___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5339] node_5339    stablehlo.tanh                   in=['%5313___call__80'] out=['%5314___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5340] node_5340    stablehlo.broadcast_in_dim       in=['%cst_879___call__80'] out=['%5315___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5341] node_5341    stablehlo.add                    in=['%5315___call__80', '%5314___call__80'] out=['%5316___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5342] node_5342    stablehlo.broadcast_in_dim       in=['%cst_880___call__80'] out=['%5317___call__80'] attrs={'dims': []} result=['tensor<1x8x9216xbf16>']
+   [5343] node_5343    stablehlo.multiply               in=['%5317___call__80', '%5316___call__80'] out=['%5318___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5344] node_5344    stablehlo.multiply               in=['%5306___call__80', '%5318___call__80'] out=['%5319___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5345] node_5345    stablehlo.slice                  in=['%5304___call__80'] out=['%5320___call__80'] attrs={'start_indices': [0, 0, 1, 0], 'limit_indices': [1, 8, 2, 9216], 'strides': [1, 1, 1, 1]} result=['tensor<1x8x1x9216xbf16>']
+   [5346] node_5346    stablehlo.reshape                in=['%5320___call__80'] out=['%5321___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5347] node_5347    stablehlo.multiply               in=['%5319___call__80', '%5321___call__80'] out=['%5322___call__80'] attrs={} result=['tensor<1x8x9216xbf16>']
+   [5348] node_5348    stablehlo.dot_general            in=['%5322___call__80', '%arg168'] out=['%5323___call__80'] attrs={'contracting_dims': ([2], [0]), 'precision': ['DEFAULT', 'DEFAULT']} result=['tensor<1x8x2304xbf16>']
+   [5349] node_5349    chlo.square                      in=['%5323___call__80'] out=['%5324___call__80'] attrs={} result=['tensor<1x8x2304xbf16>']
+   [5350] node_5350    stablehlo.convert                in=['%5324___call__80'] out=['%5325___call__80'] attrs={} result=['tensor<1x8x2304xf32>']
+   [5351] node_5351    stablehlo.reduce                 in=['%5325___call__80', '%cst_881___call__80'] out=['%5326___call__80'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]} result=['tensor<1x8xf32>']
+
+Consumers:
+  %5307___call__80 -> idx=5333 id=node_5333 op=stablehlo.multiply inputs=['%5307___call__80', '%5306___call__80'] attrs={}
+
+DONE

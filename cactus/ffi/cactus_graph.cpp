@@ -201,6 +201,59 @@ int cactus_graph_add_clipped(cactus_graph_t graph, cactus_node_t a, cactus_node_
         return -1;
     }
 }
+extern "C" int cactus_graph_compare(
+    void* graph,
+    uint64_t input1,
+    uint64_t input2,
+    int32_t direction,
+    uint64_t* out
+) {
+    try {
+        if (!graph || !out) return -1;
+
+        if (direction < 0 || direction > static_cast<int32_t>(CompareDirection::GE)) {
+            return -1;
+        }
+
+        auto* g = reinterpret_cast<CactusGraph*>(graph);
+
+        *out = g->compare(
+            static_cast<size_t>(input1),
+            static_cast<size_t>(input2),
+            static_cast<CompareDirection>(direction)
+        );
+
+        return 0;
+    } catch (...) {
+        return -1;
+    }
+}
+
+extern "C" int cactus_graph_select(
+    void* graph,
+    uint64_t mask,
+    uint64_t true_value,
+    uint64_t false_value,
+    uint64_t* out
+) {
+    try {
+        if (!graph || !out) return -1;
+
+        auto* g = reinterpret_cast<CactusGraph*>(graph);
+
+        *out = g->select(
+            static_cast<size_t>(mask),
+            static_cast<size_t>(true_value),
+            static_cast<size_t>(false_value)
+        );
+
+        return 0;
+    } catch (...) {
+        return -1;
+    }
+}
+
+
 
 int cactus_graph_subtract(cactus_graph_t graph, cactus_node_t a, cactus_node_t b, cactus_node_t* out) {
     if (!graph || !out) {

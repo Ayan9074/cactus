@@ -150,7 +150,20 @@ enum class OpType {
     CONV2D_K3S1P1,
     STATS_POOL,
     WEIGHTED_STATS_POOL,
-    DENSE_MLP_INT4_FUSED
+    DENSE_MLP_INT4_FUSED,
+
+    COMPARE,
+    SELECT
+};
+
+
+enum class CompareDirection {
+    EQ = 0,
+    NE = 1,
+    LT = 2,
+    LE = 3,
+    GT = 4,
+    GE = 5,
 };
 
 struct PrecisionTraits {
@@ -333,6 +346,7 @@ struct OpParams {
     std::vector<size_t> new_shape;
     std::vector<size_t> permutation;
     Precision output_precision = Precision::INT8;
+    CompareDirection compare_direction = CompareDirection::EQ;
     BroadcastInfo broadcast_info;
     ComputeBackend backend = ComputeBackend::CPU;
 
@@ -501,6 +515,8 @@ public:
     size_t subtract(size_t input1, size_t input2);
     size_t multiply(size_t input1, size_t input2);
     size_t divide(size_t input1, size_t input2);
+    size_t compare(size_t input1, size_t input2, CompareDirection direction);
+    size_t select(size_t mask, size_t true_value, size_t false_value);
     
     size_t scalar_add(size_t input, float value);
     size_t scalar_subtract(size_t input, float value);

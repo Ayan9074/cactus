@@ -1,0 +1,2467 @@
+MLIR: small_qwen2_france.stablehlo.mlir
+nodes: 337
+outputs: ['%320']
+
+====================================================================================================
+TARGET idx=8 id=node_8 op=stablehlo.multiply
+  inputs: ['%7', '%7']
+  outputs: ['%8']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0000] node_0       stablehlo.broadcast_in_dim       in=['%c'] out=['%0'] attrs={'dims': []}
+   [0001] node_1       stablehlo.compare                in=['%arg0', '%0'] out=['%1'] attrs={'comparison_direction': 'LT'}
+   [0002] node_2       stablehlo.broadcast_in_dim       in=['%c_0'] out=['%2'] attrs={'dims': []}
+   [0003] node_3       stablehlo.add                    in=['%arg0', '%2'] out=['%3'] attrs={}
+   [0004] node_4       stablehlo.select                 in=['%1', '%3', '%arg0'] out=['%4'] attrs={}
+   [0005] node_5       stablehlo.broadcast_in_dim       in=['%4'] out=['%5'] attrs={'dims': [0, 1]}
+   [0006] node_6       stablehlo.gather                 in=['%arg2', '%5'] out=['%6'] attrs={'dimension_numbers': '#stablehlo.gather<offset_dims = [2], collapsed_slice_dims = [0], start_index_map = [0], index_vector_dim = 2>', 'indices_are_sorted': False, 'slice_sizes': [1, 128]}
+   [0007] node_7       stablehlo.convert                in=['%6'] out=['%7'] attrs={}
+>> [0008] node_8       stablehlo.multiply               in=['%7', '%7'] out=['%8'] attrs={}
+   [0009] node_9       stablehlo.reduce                 in=['%8', '%cst'] out=['%9'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0010] node_10      stablehlo.broadcast_in_dim       in=['%9'] out=['%10'] attrs={'dims': [0, 1]}
+   [0011] node_11      stablehlo.broadcast_in_dim       in=['%cst_1'] out=['%11'] attrs={'dims': []}
+   [0012] node_12      stablehlo.divide                 in=['%10', '%11'] out=['%12'] attrs={}
+   [0013] node_13      stablehlo.broadcast_in_dim       in=['%cst_2'] out=['%13'] attrs={'dims': []}
+   [0014] node_14      stablehlo.add                    in=['%12', '%13'] out=['%14'] attrs={}
+   [0015] node_15      stablehlo.rsqrt                  in=['%14'] out=['%15'] attrs={}
+   [0016] node_16      stablehlo.broadcast_in_dim       in=['%15'] out=['%16'] attrs={'dims': [0, 1, 2]}
+   [0017] node_17      stablehlo.multiply               in=['%7', '%16'] out=['%17'] attrs={}
+   [0018] node_18      stablehlo.convert                in=['%17'] out=['%18'] attrs={}
+
+PRODUCERS:
+  %7 <- [7] node_7 stablehlo.convert out=['%7'] attrs={}
+  %7 <- [7] node_7 stablehlo.convert out=['%7'] attrs={}
+
+CONSUMERS:
+  %8 -> [9] node_9 stablehlo.reduce in=['%8', '%cst'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+====================================================================================================
+TARGET idx=9 id=node_9 op=stablehlo.reduce
+  inputs: ['%8', '%cst']
+  outputs: ['%9']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [2]}
+  result: ['tensor<1x5xf32>']
+
+WINDOW:
+   [0000] node_0       stablehlo.broadcast_in_dim       in=['%c'] out=['%0'] attrs={'dims': []}
+   [0001] node_1       stablehlo.compare                in=['%arg0', '%0'] out=['%1'] attrs={'comparison_direction': 'LT'}
+   [0002] node_2       stablehlo.broadcast_in_dim       in=['%c_0'] out=['%2'] attrs={'dims': []}
+   [0003] node_3       stablehlo.add                    in=['%arg0', '%2'] out=['%3'] attrs={}
+   [0004] node_4       stablehlo.select                 in=['%1', '%3', '%arg0'] out=['%4'] attrs={}
+   [0005] node_5       stablehlo.broadcast_in_dim       in=['%4'] out=['%5'] attrs={'dims': [0, 1]}
+   [0006] node_6       stablehlo.gather                 in=['%arg2', '%5'] out=['%6'] attrs={'dimension_numbers': '#stablehlo.gather<offset_dims = [2], collapsed_slice_dims = [0], start_index_map = [0], index_vector_dim = 2>', 'indices_are_sorted': False, 'slice_sizes': [1, 128]}
+   [0007] node_7       stablehlo.convert                in=['%6'] out=['%7'] attrs={}
+   [0008] node_8       stablehlo.multiply               in=['%7', '%7'] out=['%8'] attrs={}
+>> [0009] node_9       stablehlo.reduce                 in=['%8', '%cst'] out=['%9'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0010] node_10      stablehlo.broadcast_in_dim       in=['%9'] out=['%10'] attrs={'dims': [0, 1]}
+   [0011] node_11      stablehlo.broadcast_in_dim       in=['%cst_1'] out=['%11'] attrs={'dims': []}
+   [0012] node_12      stablehlo.divide                 in=['%10', '%11'] out=['%12'] attrs={}
+   [0013] node_13      stablehlo.broadcast_in_dim       in=['%cst_2'] out=['%13'] attrs={'dims': []}
+   [0014] node_14      stablehlo.add                    in=['%12', '%13'] out=['%14'] attrs={}
+   [0015] node_15      stablehlo.rsqrt                  in=['%14'] out=['%15'] attrs={}
+   [0016] node_16      stablehlo.broadcast_in_dim       in=['%15'] out=['%16'] attrs={'dims': [0, 1, 2]}
+   [0017] node_17      stablehlo.multiply               in=['%7', '%16'] out=['%17'] attrs={}
+   [0018] node_18      stablehlo.convert                in=['%17'] out=['%18'] attrs={}
+   [0019] node_19      stablehlo.broadcast_in_dim       in=['%arg5'] out=['%19'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %8 <- [8] node_8 stablehlo.multiply out=['%8'] attrs={}
+  %cst <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %9 -> [10] node_10 stablehlo.broadcast_in_dim in=['%9'] attrs={'dims': [0, 1]}
+
+====================================================================================================
+TARGET idx=12 id=node_12 op=stablehlo.divide
+  inputs: ['%10', '%11']
+  outputs: ['%12']
+  attrs: {}
+  result: ['tensor<1x5x1xf32>']
+
+WINDOW:
+   [0002] node_2       stablehlo.broadcast_in_dim       in=['%c_0'] out=['%2'] attrs={'dims': []}
+   [0003] node_3       stablehlo.add                    in=['%arg0', '%2'] out=['%3'] attrs={}
+   [0004] node_4       stablehlo.select                 in=['%1', '%3', '%arg0'] out=['%4'] attrs={}
+   [0005] node_5       stablehlo.broadcast_in_dim       in=['%4'] out=['%5'] attrs={'dims': [0, 1]}
+   [0006] node_6       stablehlo.gather                 in=['%arg2', '%5'] out=['%6'] attrs={'dimension_numbers': '#stablehlo.gather<offset_dims = [2], collapsed_slice_dims = [0], start_index_map = [0], index_vector_dim = 2>', 'indices_are_sorted': False, 'slice_sizes': [1, 128]}
+   [0007] node_7       stablehlo.convert                in=['%6'] out=['%7'] attrs={}
+   [0008] node_8       stablehlo.multiply               in=['%7', '%7'] out=['%8'] attrs={}
+   [0009] node_9       stablehlo.reduce                 in=['%8', '%cst'] out=['%9'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0010] node_10      stablehlo.broadcast_in_dim       in=['%9'] out=['%10'] attrs={'dims': [0, 1]}
+   [0011] node_11      stablehlo.broadcast_in_dim       in=['%cst_1'] out=['%11'] attrs={'dims': []}
+>> [0012] node_12      stablehlo.divide                 in=['%10', '%11'] out=['%12'] attrs={}
+   [0013] node_13      stablehlo.broadcast_in_dim       in=['%cst_2'] out=['%13'] attrs={'dims': []}
+   [0014] node_14      stablehlo.add                    in=['%12', '%13'] out=['%14'] attrs={}
+   [0015] node_15      stablehlo.rsqrt                  in=['%14'] out=['%15'] attrs={}
+   [0016] node_16      stablehlo.broadcast_in_dim       in=['%15'] out=['%16'] attrs={'dims': [0, 1, 2]}
+   [0017] node_17      stablehlo.multiply               in=['%7', '%16'] out=['%17'] attrs={}
+   [0018] node_18      stablehlo.convert                in=['%17'] out=['%18'] attrs={}
+   [0019] node_19      stablehlo.broadcast_in_dim       in=['%arg5'] out=['%19'] attrs={'dims': [2]}
+   [0020] node_20      stablehlo.broadcast_in_dim       in=['%19'] out=['%20'] attrs={'dims': [0, 1, 2]}
+   [0021] node_21      stablehlo.multiply               in=['%18', '%20'] out=['%21'] attrs={}
+   [0022] node_22      stablehlo.dot_general            in=['%21', '%arg6'] out=['%22'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %10 <- [10] node_10 stablehlo.broadcast_in_dim out=['%10'] attrs={'dims': [0, 1]}
+  %11 <- [11] node_11 stablehlo.broadcast_in_dim out=['%11'] attrs={'dims': []}
+
+CONSUMERS:
+  %12 -> [14] node_14 stablehlo.add in=['%12', '%13'] attrs={}
+
+====================================================================================================
+TARGET idx=17 id=node_17 op=stablehlo.multiply
+  inputs: ['%7', '%16']
+  outputs: ['%17']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0007] node_7       stablehlo.convert                in=['%6'] out=['%7'] attrs={}
+   [0008] node_8       stablehlo.multiply               in=['%7', '%7'] out=['%8'] attrs={}
+   [0009] node_9       stablehlo.reduce                 in=['%8', '%cst'] out=['%9'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0010] node_10      stablehlo.broadcast_in_dim       in=['%9'] out=['%10'] attrs={'dims': [0, 1]}
+   [0011] node_11      stablehlo.broadcast_in_dim       in=['%cst_1'] out=['%11'] attrs={'dims': []}
+   [0012] node_12      stablehlo.divide                 in=['%10', '%11'] out=['%12'] attrs={}
+   [0013] node_13      stablehlo.broadcast_in_dim       in=['%cst_2'] out=['%13'] attrs={'dims': []}
+   [0014] node_14      stablehlo.add                    in=['%12', '%13'] out=['%14'] attrs={}
+   [0015] node_15      stablehlo.rsqrt                  in=['%14'] out=['%15'] attrs={}
+   [0016] node_16      stablehlo.broadcast_in_dim       in=['%15'] out=['%16'] attrs={'dims': [0, 1, 2]}
+>> [0017] node_17      stablehlo.multiply               in=['%7', '%16'] out=['%17'] attrs={}
+   [0018] node_18      stablehlo.convert                in=['%17'] out=['%18'] attrs={}
+   [0019] node_19      stablehlo.broadcast_in_dim       in=['%arg5'] out=['%19'] attrs={'dims': [2]}
+   [0020] node_20      stablehlo.broadcast_in_dim       in=['%19'] out=['%20'] attrs={'dims': [0, 1, 2]}
+   [0021] node_21      stablehlo.multiply               in=['%18', '%20'] out=['%21'] attrs={}
+   [0022] node_22      stablehlo.dot_general            in=['%21', '%arg6'] out=['%22'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0023] node_23      stablehlo.broadcast_in_dim       in=['%arg7'] out=['%23'] attrs={'dims': [2]}
+   [0024] node_24      stablehlo.broadcast_in_dim       in=['%23'] out=['%24'] attrs={'dims': [0, 1, 2]}
+   [0025] node_25      stablehlo.add                    in=['%22', '%24'] out=['%25'] attrs={}
+   [0026] node_26      stablehlo.dot_general            in=['%21', '%arg8'] out=['%26'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0027] node_27      stablehlo.broadcast_in_dim       in=['%arg9'] out=['%27'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %7 <- [7] node_7 stablehlo.convert out=['%7'] attrs={}
+  %16 <- [16] node_16 stablehlo.broadcast_in_dim out=['%16'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %17 -> [18] node_18 stablehlo.convert in=['%17'] attrs={}
+
+====================================================================================================
+TARGET idx=21 id=node_21 op=stablehlo.multiply
+  inputs: ['%18', '%20']
+  outputs: ['%21']
+  attrs: {}
+  result: ['tensor<1x5x128xf16>']
+
+WINDOW:
+   [0011] node_11      stablehlo.broadcast_in_dim       in=['%cst_1'] out=['%11'] attrs={'dims': []}
+   [0012] node_12      stablehlo.divide                 in=['%10', '%11'] out=['%12'] attrs={}
+   [0013] node_13      stablehlo.broadcast_in_dim       in=['%cst_2'] out=['%13'] attrs={'dims': []}
+   [0014] node_14      stablehlo.add                    in=['%12', '%13'] out=['%14'] attrs={}
+   [0015] node_15      stablehlo.rsqrt                  in=['%14'] out=['%15'] attrs={}
+   [0016] node_16      stablehlo.broadcast_in_dim       in=['%15'] out=['%16'] attrs={'dims': [0, 1, 2]}
+   [0017] node_17      stablehlo.multiply               in=['%7', '%16'] out=['%17'] attrs={}
+   [0018] node_18      stablehlo.convert                in=['%17'] out=['%18'] attrs={}
+   [0019] node_19      stablehlo.broadcast_in_dim       in=['%arg5'] out=['%19'] attrs={'dims': [2]}
+   [0020] node_20      stablehlo.broadcast_in_dim       in=['%19'] out=['%20'] attrs={'dims': [0, 1, 2]}
+>> [0021] node_21      stablehlo.multiply               in=['%18', '%20'] out=['%21'] attrs={}
+   [0022] node_22      stablehlo.dot_general            in=['%21', '%arg6'] out=['%22'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0023] node_23      stablehlo.broadcast_in_dim       in=['%arg7'] out=['%23'] attrs={'dims': [2]}
+   [0024] node_24      stablehlo.broadcast_in_dim       in=['%23'] out=['%24'] attrs={'dims': [0, 1, 2]}
+   [0025] node_25      stablehlo.add                    in=['%22', '%24'] out=['%25'] attrs={}
+   [0026] node_26      stablehlo.dot_general            in=['%21', '%arg8'] out=['%26'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0027] node_27      stablehlo.broadcast_in_dim       in=['%arg9'] out=['%27'] attrs={'dims': [2]}
+   [0028] node_28      stablehlo.broadcast_in_dim       in=['%27'] out=['%28'] attrs={'dims': [0, 1, 2]}
+   [0029] node_29      stablehlo.add                    in=['%26', '%28'] out=['%29'] attrs={}
+   [0030] node_30      stablehlo.dot_general            in=['%21', '%arg10'] out=['%30'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0031] node_31      stablehlo.broadcast_in_dim       in=['%arg11'] out=['%31'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %18 <- [18] node_18 stablehlo.convert out=['%18'] attrs={}
+  %20 <- [20] node_20 stablehlo.broadcast_in_dim out=['%20'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %21 -> [22] node_22 stablehlo.dot_general in=['%21', '%arg6'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %21 -> [26] node_26 stablehlo.dot_general in=['%21', '%arg8'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %21 -> [30] node_30 stablehlo.dot_general in=['%21', '%arg10'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=42 id=node_42 op=stablehlo.multiply
+  inputs: ['%41', '%40']
+  outputs: ['%42']
+  attrs: {}
+  result: ['tensor<16xf32>']
+
+WINDOW:
+   [0032] node_32      stablehlo.broadcast_in_dim       in=['%31'] out=['%32'] attrs={'dims': [0, 1, 2]}
+   [0033] node_33      stablehlo.add                    in=['%30', '%32'] out=['%33'] attrs={}
+   [0034] node_34      stablehlo.reshape                in=['%25'] out=['%34'] attrs={}
+   [0035] node_35      stablehlo.transpose              in=['%34'] out=['%35'] attrs={'dims': [0, 2, 1, 3]}
+   [0036] node_36      stablehlo.reshape                in=['%29'] out=['%36'] attrs={}
+   [0037] node_37      stablehlo.transpose              in=['%36'] out=['%37'] attrs={'dims': [0, 2, 1, 3]}
+   [0038] node_38      stablehlo.reshape                in=['%33'] out=['%38'] attrs={}
+   [0039] node_39      stablehlo.transpose              in=['%38'] out=['%39'] attrs={'dims': [0, 2, 1, 3]}
+   [0040] node_40      stablehlo.iota                   in=[] out=['%40'] attrs={'dim': 0}
+   [0041] node_41      stablehlo.broadcast_in_dim       in=['%cst_3'] out=['%41'] attrs={'dims': []}
+>> [0042] node_42      stablehlo.multiply               in=['%41', '%40'] out=['%42'] attrs={}
+   [0043] node_43      stablehlo.broadcast_in_dim       in=['%cst_4'] out=['%43'] attrs={'dims': []}
+   [0044] node_44      stablehlo.add                    in=['%43', '%42'] out=['%44'] attrs={}
+   [0045] node_45      stablehlo.broadcast_in_dim       in=['%cst_5'] out=['%45'] attrs={'dims': []}
+   [0046] node_46      stablehlo.divide                 in=['%44', '%45'] out=['%46'] attrs={}
+   [0047] node_47      stablehlo.broadcast_in_dim       in=['%cst_6'] out=['%47'] attrs={'dims': []}
+   [0048] node_48      stablehlo.power                  in=['%47', '%46'] out=['%48'] attrs={}
+   [0049] node_49      stablehlo.broadcast_in_dim       in=['%cst_7'] out=['%49'] attrs={'dims': []}
+   [0050] node_50      stablehlo.divide                 in=['%49', '%48'] out=['%50'] attrs={}
+   [0051] node_51      stablehlo.convert                in=['%arg1'] out=['%51'] attrs={}
+   [0052] node_52      stablehlo.broadcast_in_dim       in=['%51'] out=['%52'] attrs={'dims': [0, 1]}
+
+PRODUCERS:
+  %41 <- [41] node_41 stablehlo.broadcast_in_dim out=['%41'] attrs={'dims': []}
+  %40 <- [40] node_40 stablehlo.iota out=['%40'] attrs={'dim': 0}
+
+CONSUMERS:
+  %42 -> [44] node_44 stablehlo.add in=['%43', '%42'] attrs={}
+
+====================================================================================================
+TARGET idx=46 id=node_46 op=stablehlo.divide
+  inputs: ['%44', '%45']
+  outputs: ['%46']
+  attrs: {}
+  result: ['tensor<16xf32>']
+
+WINDOW:
+   [0036] node_36      stablehlo.reshape                in=['%29'] out=['%36'] attrs={}
+   [0037] node_37      stablehlo.transpose              in=['%36'] out=['%37'] attrs={'dims': [0, 2, 1, 3]}
+   [0038] node_38      stablehlo.reshape                in=['%33'] out=['%38'] attrs={}
+   [0039] node_39      stablehlo.transpose              in=['%38'] out=['%39'] attrs={'dims': [0, 2, 1, 3]}
+   [0040] node_40      stablehlo.iota                   in=[] out=['%40'] attrs={'dim': 0}
+   [0041] node_41      stablehlo.broadcast_in_dim       in=['%cst_3'] out=['%41'] attrs={'dims': []}
+   [0042] node_42      stablehlo.multiply               in=['%41', '%40'] out=['%42'] attrs={}
+   [0043] node_43      stablehlo.broadcast_in_dim       in=['%cst_4'] out=['%43'] attrs={'dims': []}
+   [0044] node_44      stablehlo.add                    in=['%43', '%42'] out=['%44'] attrs={}
+   [0045] node_45      stablehlo.broadcast_in_dim       in=['%cst_5'] out=['%45'] attrs={'dims': []}
+>> [0046] node_46      stablehlo.divide                 in=['%44', '%45'] out=['%46'] attrs={}
+   [0047] node_47      stablehlo.broadcast_in_dim       in=['%cst_6'] out=['%47'] attrs={'dims': []}
+   [0048] node_48      stablehlo.power                  in=['%47', '%46'] out=['%48'] attrs={}
+   [0049] node_49      stablehlo.broadcast_in_dim       in=['%cst_7'] out=['%49'] attrs={'dims': []}
+   [0050] node_50      stablehlo.divide                 in=['%49', '%48'] out=['%50'] attrs={}
+   [0051] node_51      stablehlo.convert                in=['%arg1'] out=['%51'] attrs={}
+   [0052] node_52      stablehlo.broadcast_in_dim       in=['%51'] out=['%52'] attrs={'dims': [0, 1]}
+   [0053] node_53      stablehlo.broadcast_in_dim       in=['%50'] out=['%53'] attrs={'dims': [2]}
+   [0054] node_54      stablehlo.broadcast_in_dim       in=['%52'] out=['%54'] attrs={'dims': [0, 1, 2]}
+   [0055] node_55      stablehlo.broadcast_in_dim       in=['%53'] out=['%55'] attrs={'dims': [0, 1, 2]}
+   [0056] node_56      stablehlo.multiply               in=['%54', '%55'] out=['%56'] attrs={}
+
+PRODUCERS:
+  %44 <- [44] node_44 stablehlo.add out=['%44'] attrs={}
+  %45 <- [45] node_45 stablehlo.broadcast_in_dim out=['%45'] attrs={'dims': []}
+
+CONSUMERS:
+  %46 -> [48] node_48 stablehlo.power in=['%47', '%46'] attrs={}
+
+====================================================================================================
+TARGET idx=50 id=node_50 op=stablehlo.divide
+  inputs: ['%49', '%48']
+  outputs: ['%50']
+  attrs: {}
+  result: ['tensor<16xf32>']
+
+WINDOW:
+   [0040] node_40      stablehlo.iota                   in=[] out=['%40'] attrs={'dim': 0}
+   [0041] node_41      stablehlo.broadcast_in_dim       in=['%cst_3'] out=['%41'] attrs={'dims': []}
+   [0042] node_42      stablehlo.multiply               in=['%41', '%40'] out=['%42'] attrs={}
+   [0043] node_43      stablehlo.broadcast_in_dim       in=['%cst_4'] out=['%43'] attrs={'dims': []}
+   [0044] node_44      stablehlo.add                    in=['%43', '%42'] out=['%44'] attrs={}
+   [0045] node_45      stablehlo.broadcast_in_dim       in=['%cst_5'] out=['%45'] attrs={'dims': []}
+   [0046] node_46      stablehlo.divide                 in=['%44', '%45'] out=['%46'] attrs={}
+   [0047] node_47      stablehlo.broadcast_in_dim       in=['%cst_6'] out=['%47'] attrs={'dims': []}
+   [0048] node_48      stablehlo.power                  in=['%47', '%46'] out=['%48'] attrs={}
+   [0049] node_49      stablehlo.broadcast_in_dim       in=['%cst_7'] out=['%49'] attrs={'dims': []}
+>> [0050] node_50      stablehlo.divide                 in=['%49', '%48'] out=['%50'] attrs={}
+   [0051] node_51      stablehlo.convert                in=['%arg1'] out=['%51'] attrs={}
+   [0052] node_52      stablehlo.broadcast_in_dim       in=['%51'] out=['%52'] attrs={'dims': [0, 1]}
+   [0053] node_53      stablehlo.broadcast_in_dim       in=['%50'] out=['%53'] attrs={'dims': [2]}
+   [0054] node_54      stablehlo.broadcast_in_dim       in=['%52'] out=['%54'] attrs={'dims': [0, 1, 2]}
+   [0055] node_55      stablehlo.broadcast_in_dim       in=['%53'] out=['%55'] attrs={'dims': [0, 1, 2]}
+   [0056] node_56      stablehlo.multiply               in=['%54', '%55'] out=['%56'] attrs={}
+   [0057] node_57      stablehlo.concatenate            in=['%56', '%56'] out=['%57'] attrs={'dim': 2}
+   [0058] node_58      stablehlo.cosine                 in=['%57'] out=['%58'] attrs={}
+   [0059] node_59      stablehlo.broadcast_in_dim       in=['%58'] out=['%59'] attrs={'dims': [0, 2, 3]}
+   [0060] node_60      stablehlo.convert                in=['%59'] out=['%60'] attrs={}
+
+PRODUCERS:
+  %49 <- [49] node_49 stablehlo.broadcast_in_dim out=['%49'] attrs={'dims': []}
+  %48 <- [48] node_48 stablehlo.power out=['%48'] attrs={}
+
+CONSUMERS:
+  %50 -> [53] node_53 stablehlo.broadcast_in_dim in=['%50'] attrs={'dims': [2]}
+
+====================================================================================================
+TARGET idx=56 id=node_56 op=stablehlo.multiply
+  inputs: ['%54', '%55']
+  outputs: ['%56']
+  attrs: {}
+  result: ['tensor<1x5x16xf32>']
+
+WINDOW:
+   [0046] node_46      stablehlo.divide                 in=['%44', '%45'] out=['%46'] attrs={}
+   [0047] node_47      stablehlo.broadcast_in_dim       in=['%cst_6'] out=['%47'] attrs={'dims': []}
+   [0048] node_48      stablehlo.power                  in=['%47', '%46'] out=['%48'] attrs={}
+   [0049] node_49      stablehlo.broadcast_in_dim       in=['%cst_7'] out=['%49'] attrs={'dims': []}
+   [0050] node_50      stablehlo.divide                 in=['%49', '%48'] out=['%50'] attrs={}
+   [0051] node_51      stablehlo.convert                in=['%arg1'] out=['%51'] attrs={}
+   [0052] node_52      stablehlo.broadcast_in_dim       in=['%51'] out=['%52'] attrs={'dims': [0, 1]}
+   [0053] node_53      stablehlo.broadcast_in_dim       in=['%50'] out=['%53'] attrs={'dims': [2]}
+   [0054] node_54      stablehlo.broadcast_in_dim       in=['%52'] out=['%54'] attrs={'dims': [0, 1, 2]}
+   [0055] node_55      stablehlo.broadcast_in_dim       in=['%53'] out=['%55'] attrs={'dims': [0, 1, 2]}
+>> [0056] node_56      stablehlo.multiply               in=['%54', '%55'] out=['%56'] attrs={}
+   [0057] node_57      stablehlo.concatenate            in=['%56', '%56'] out=['%57'] attrs={'dim': 2}
+   [0058] node_58      stablehlo.cosine                 in=['%57'] out=['%58'] attrs={}
+   [0059] node_59      stablehlo.broadcast_in_dim       in=['%58'] out=['%59'] attrs={'dims': [0, 2, 3]}
+   [0060] node_60      stablehlo.convert                in=['%59'] out=['%60'] attrs={}
+   [0061] node_61      stablehlo.sine                   in=['%57'] out=['%61'] attrs={}
+   [0062] node_62      stablehlo.broadcast_in_dim       in=['%61'] out=['%62'] attrs={'dims': [0, 2, 3]}
+   [0063] node_63      stablehlo.convert                in=['%62'] out=['%63'] attrs={}
+   [0064] node_64      stablehlo.broadcast_in_dim       in=['%60'] out=['%64'] attrs={'dims': [0, 1, 2, 3]}
+   [0065] node_65      stablehlo.multiply               in=['%35', '%64'] out=['%65'] attrs={}
+   [0066] node_66      stablehlo.slice                  in=['%35'] out=['%66'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %54 <- [54] node_54 stablehlo.broadcast_in_dim out=['%54'] attrs={'dims': [0, 1, 2]}
+  %55 <- [55] node_55 stablehlo.broadcast_in_dim out=['%55'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %56 -> [57] node_57 stablehlo.concatenate in=['%56', '%56'] attrs={'dim': 2}
+  %56 -> [57] node_57 stablehlo.concatenate in=['%56', '%56'] attrs={'dim': 2}
+
+====================================================================================================
+TARGET idx=65 id=node_65 op=stablehlo.multiply
+  inputs: ['%35', '%64']
+  outputs: ['%65']
+  attrs: {}
+  result: ['tensor<1x4x5x32xf16>']
+
+WINDOW:
+   [0055] node_55      stablehlo.broadcast_in_dim       in=['%53'] out=['%55'] attrs={'dims': [0, 1, 2]}
+   [0056] node_56      stablehlo.multiply               in=['%54', '%55'] out=['%56'] attrs={}
+   [0057] node_57      stablehlo.concatenate            in=['%56', '%56'] out=['%57'] attrs={'dim': 2}
+   [0058] node_58      stablehlo.cosine                 in=['%57'] out=['%58'] attrs={}
+   [0059] node_59      stablehlo.broadcast_in_dim       in=['%58'] out=['%59'] attrs={'dims': [0, 2, 3]}
+   [0060] node_60      stablehlo.convert                in=['%59'] out=['%60'] attrs={}
+   [0061] node_61      stablehlo.sine                   in=['%57'] out=['%61'] attrs={}
+   [0062] node_62      stablehlo.broadcast_in_dim       in=['%61'] out=['%62'] attrs={'dims': [0, 2, 3]}
+   [0063] node_63      stablehlo.convert                in=['%62'] out=['%63'] attrs={}
+   [0064] node_64      stablehlo.broadcast_in_dim       in=['%60'] out=['%64'] attrs={'dims': [0, 1, 2, 3]}
+>> [0065] node_65      stablehlo.multiply               in=['%35', '%64'] out=['%65'] attrs={}
+   [0066] node_66      stablehlo.slice                  in=['%35'] out=['%66'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0067] node_67      stablehlo.slice                  in=['%35'] out=['%67'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0068] node_68      stablehlo.negate                 in=['%67'] out=['%68'] attrs={}
+   [0069] node_69      stablehlo.concatenate            in=['%68', '%66'] out=['%69'] attrs={'dim': 3}
+   [0070] node_70      stablehlo.broadcast_in_dim       in=['%63'] out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+   [0071] node_71      stablehlo.multiply               in=['%69', '%70'] out=['%71'] attrs={}
+   [0072] node_72      stablehlo.add                    in=['%65', '%71'] out=['%72'] attrs={}
+   [0073] node_73      stablehlo.broadcast_in_dim       in=['%60'] out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+   [0074] node_74      stablehlo.multiply               in=['%37', '%73'] out=['%74'] attrs={}
+   [0075] node_75      stablehlo.slice                  in=['%37'] out=['%75'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %35 <- [35] node_35 stablehlo.transpose out=['%35'] attrs={'dims': [0, 2, 1, 3]}
+  %64 <- [64] node_64 stablehlo.broadcast_in_dim out=['%64'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %65 -> [72] node_72 stablehlo.add in=['%65', '%71'] attrs={}
+
+====================================================================================================
+TARGET idx=68 id=node_68 op=stablehlo.negate
+  inputs: ['%67']
+  outputs: ['%68']
+  attrs: {}
+  result: ['tensor<1x4x5x16xf16>']
+
+WINDOW:
+   [0058] node_58      stablehlo.cosine                 in=['%57'] out=['%58'] attrs={}
+   [0059] node_59      stablehlo.broadcast_in_dim       in=['%58'] out=['%59'] attrs={'dims': [0, 2, 3]}
+   [0060] node_60      stablehlo.convert                in=['%59'] out=['%60'] attrs={}
+   [0061] node_61      stablehlo.sine                   in=['%57'] out=['%61'] attrs={}
+   [0062] node_62      stablehlo.broadcast_in_dim       in=['%61'] out=['%62'] attrs={'dims': [0, 2, 3]}
+   [0063] node_63      stablehlo.convert                in=['%62'] out=['%63'] attrs={}
+   [0064] node_64      stablehlo.broadcast_in_dim       in=['%60'] out=['%64'] attrs={'dims': [0, 1, 2, 3]}
+   [0065] node_65      stablehlo.multiply               in=['%35', '%64'] out=['%65'] attrs={}
+   [0066] node_66      stablehlo.slice                  in=['%35'] out=['%66'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0067] node_67      stablehlo.slice                  in=['%35'] out=['%67'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+>> [0068] node_68      stablehlo.negate                 in=['%67'] out=['%68'] attrs={}
+   [0069] node_69      stablehlo.concatenate            in=['%68', '%66'] out=['%69'] attrs={'dim': 3}
+   [0070] node_70      stablehlo.broadcast_in_dim       in=['%63'] out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+   [0071] node_71      stablehlo.multiply               in=['%69', '%70'] out=['%71'] attrs={}
+   [0072] node_72      stablehlo.add                    in=['%65', '%71'] out=['%72'] attrs={}
+   [0073] node_73      stablehlo.broadcast_in_dim       in=['%60'] out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+   [0074] node_74      stablehlo.multiply               in=['%37', '%73'] out=['%74'] attrs={}
+   [0075] node_75      stablehlo.slice                  in=['%37'] out=['%75'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0076] node_76      stablehlo.slice                  in=['%37'] out=['%76'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0077] node_77      stablehlo.negate                 in=['%76'] out=['%77'] attrs={}
+   [0078] node_78      stablehlo.concatenate            in=['%77', '%75'] out=['%78'] attrs={'dim': 3}
+
+PRODUCERS:
+  %67 <- [67] node_67 stablehlo.slice out=['%67'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+
+CONSUMERS:
+  %68 -> [69] node_69 stablehlo.concatenate in=['%68', '%66'] attrs={'dim': 3}
+
+====================================================================================================
+TARGET idx=71 id=node_71 op=stablehlo.multiply
+  inputs: ['%69', '%70']
+  outputs: ['%71']
+  attrs: {}
+  result: ['tensor<1x4x5x32xf16>']
+
+WINDOW:
+   [0061] node_61      stablehlo.sine                   in=['%57'] out=['%61'] attrs={}
+   [0062] node_62      stablehlo.broadcast_in_dim       in=['%61'] out=['%62'] attrs={'dims': [0, 2, 3]}
+   [0063] node_63      stablehlo.convert                in=['%62'] out=['%63'] attrs={}
+   [0064] node_64      stablehlo.broadcast_in_dim       in=['%60'] out=['%64'] attrs={'dims': [0, 1, 2, 3]}
+   [0065] node_65      stablehlo.multiply               in=['%35', '%64'] out=['%65'] attrs={}
+   [0066] node_66      stablehlo.slice                  in=['%35'] out=['%66'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0067] node_67      stablehlo.slice                  in=['%35'] out=['%67'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0068] node_68      stablehlo.negate                 in=['%67'] out=['%68'] attrs={}
+   [0069] node_69      stablehlo.concatenate            in=['%68', '%66'] out=['%69'] attrs={'dim': 3}
+   [0070] node_70      stablehlo.broadcast_in_dim       in=['%63'] out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+>> [0071] node_71      stablehlo.multiply               in=['%69', '%70'] out=['%71'] attrs={}
+   [0072] node_72      stablehlo.add                    in=['%65', '%71'] out=['%72'] attrs={}
+   [0073] node_73      stablehlo.broadcast_in_dim       in=['%60'] out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+   [0074] node_74      stablehlo.multiply               in=['%37', '%73'] out=['%74'] attrs={}
+   [0075] node_75      stablehlo.slice                  in=['%37'] out=['%75'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0076] node_76      stablehlo.slice                  in=['%37'] out=['%76'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0077] node_77      stablehlo.negate                 in=['%76'] out=['%77'] attrs={}
+   [0078] node_78      stablehlo.concatenate            in=['%77', '%75'] out=['%78'] attrs={'dim': 3}
+   [0079] node_79      stablehlo.broadcast_in_dim       in=['%63'] out=['%79'] attrs={'dims': [0, 1, 2, 3]}
+   [0080] node_80      stablehlo.multiply               in=['%78', '%79'] out=['%80'] attrs={}
+   [0081] node_81      stablehlo.add                    in=['%74', '%80'] out=['%81'] attrs={}
+
+PRODUCERS:
+  %69 <- [69] node_69 stablehlo.concatenate out=['%69'] attrs={'dim': 3}
+  %70 <- [70] node_70 stablehlo.broadcast_in_dim out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %71 -> [72] node_72 stablehlo.add in=['%65', '%71'] attrs={}
+
+====================================================================================================
+TARGET idx=74 id=node_74 op=stablehlo.multiply
+  inputs: ['%37', '%73']
+  outputs: ['%74']
+  attrs: {}
+  result: ['tensor<1x2x5x32xf16>']
+
+WINDOW:
+   [0064] node_64      stablehlo.broadcast_in_dim       in=['%60'] out=['%64'] attrs={'dims': [0, 1, 2, 3]}
+   [0065] node_65      stablehlo.multiply               in=['%35', '%64'] out=['%65'] attrs={}
+   [0066] node_66      stablehlo.slice                  in=['%35'] out=['%66'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0067] node_67      stablehlo.slice                  in=['%35'] out=['%67'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0068] node_68      stablehlo.negate                 in=['%67'] out=['%68'] attrs={}
+   [0069] node_69      stablehlo.concatenate            in=['%68', '%66'] out=['%69'] attrs={'dim': 3}
+   [0070] node_70      stablehlo.broadcast_in_dim       in=['%63'] out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+   [0071] node_71      stablehlo.multiply               in=['%69', '%70'] out=['%71'] attrs={}
+   [0072] node_72      stablehlo.add                    in=['%65', '%71'] out=['%72'] attrs={}
+   [0073] node_73      stablehlo.broadcast_in_dim       in=['%60'] out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+>> [0074] node_74      stablehlo.multiply               in=['%37', '%73'] out=['%74'] attrs={}
+   [0075] node_75      stablehlo.slice                  in=['%37'] out=['%75'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0076] node_76      stablehlo.slice                  in=['%37'] out=['%76'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0077] node_77      stablehlo.negate                 in=['%76'] out=['%77'] attrs={}
+   [0078] node_78      stablehlo.concatenate            in=['%77', '%75'] out=['%78'] attrs={'dim': 3}
+   [0079] node_79      stablehlo.broadcast_in_dim       in=['%63'] out=['%79'] attrs={'dims': [0, 1, 2, 3]}
+   [0080] node_80      stablehlo.multiply               in=['%78', '%79'] out=['%80'] attrs={}
+   [0081] node_81      stablehlo.add                    in=['%74', '%80'] out=['%81'] attrs={}
+   [0082] node_82      stablehlo.slice                  in=['%81'] out=['%82'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0083] node_83      stablehlo.slice                  in=['%81'] out=['%83'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0084] node_84      stablehlo.slice                  in=['%81'] out=['%84'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %37 <- [37] node_37 stablehlo.transpose out=['%37'] attrs={'dims': [0, 2, 1, 3]}
+  %73 <- [73] node_73 stablehlo.broadcast_in_dim out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %74 -> [81] node_81 stablehlo.add in=['%74', '%80'] attrs={}
+
+====================================================================================================
+TARGET idx=77 id=node_77 op=stablehlo.negate
+  inputs: ['%76']
+  outputs: ['%77']
+  attrs: {}
+  result: ['tensor<1x2x5x16xf16>']
+
+WINDOW:
+   [0067] node_67      stablehlo.slice                  in=['%35'] out=['%67'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0068] node_68      stablehlo.negate                 in=['%67'] out=['%68'] attrs={}
+   [0069] node_69      stablehlo.concatenate            in=['%68', '%66'] out=['%69'] attrs={'dim': 3}
+   [0070] node_70      stablehlo.broadcast_in_dim       in=['%63'] out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+   [0071] node_71      stablehlo.multiply               in=['%69', '%70'] out=['%71'] attrs={}
+   [0072] node_72      stablehlo.add                    in=['%65', '%71'] out=['%72'] attrs={}
+   [0073] node_73      stablehlo.broadcast_in_dim       in=['%60'] out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+   [0074] node_74      stablehlo.multiply               in=['%37', '%73'] out=['%74'] attrs={}
+   [0075] node_75      stablehlo.slice                  in=['%37'] out=['%75'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0076] node_76      stablehlo.slice                  in=['%37'] out=['%76'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+>> [0077] node_77      stablehlo.negate                 in=['%76'] out=['%77'] attrs={}
+   [0078] node_78      stablehlo.concatenate            in=['%77', '%75'] out=['%78'] attrs={'dim': 3}
+   [0079] node_79      stablehlo.broadcast_in_dim       in=['%63'] out=['%79'] attrs={'dims': [0, 1, 2, 3]}
+   [0080] node_80      stablehlo.multiply               in=['%78', '%79'] out=['%80'] attrs={}
+   [0081] node_81      stablehlo.add                    in=['%74', '%80'] out=['%81'] attrs={}
+   [0082] node_82      stablehlo.slice                  in=['%81'] out=['%82'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0083] node_83      stablehlo.slice                  in=['%81'] out=['%83'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0084] node_84      stablehlo.slice                  in=['%81'] out=['%84'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0085] node_85      stablehlo.slice                  in=['%81'] out=['%85'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0086] node_86      stablehlo.concatenate            in=['%82', '%83', '%84', '%85'] out=['%86'] attrs={'dim': 1}
+   [0087] node_87      stablehlo.slice                  in=['%39'] out=['%87'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %76 <- [76] node_76 stablehlo.slice out=['%76'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+
+CONSUMERS:
+  %77 -> [78] node_78 stablehlo.concatenate in=['%77', '%75'] attrs={'dim': 3}
+
+====================================================================================================
+TARGET idx=80 id=node_80 op=stablehlo.multiply
+  inputs: ['%78', '%79']
+  outputs: ['%80']
+  attrs: {}
+  result: ['tensor<1x2x5x32xf16>']
+
+WINDOW:
+   [0070] node_70      stablehlo.broadcast_in_dim       in=['%63'] out=['%70'] attrs={'dims': [0, 1, 2, 3]}
+   [0071] node_71      stablehlo.multiply               in=['%69', '%70'] out=['%71'] attrs={}
+   [0072] node_72      stablehlo.add                    in=['%65', '%71'] out=['%72'] attrs={}
+   [0073] node_73      stablehlo.broadcast_in_dim       in=['%60'] out=['%73'] attrs={'dims': [0, 1, 2, 3]}
+   [0074] node_74      stablehlo.multiply               in=['%37', '%73'] out=['%74'] attrs={}
+   [0075] node_75      stablehlo.slice                  in=['%37'] out=['%75'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0076] node_76      stablehlo.slice                  in=['%37'] out=['%76'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0077] node_77      stablehlo.negate                 in=['%76'] out=['%77'] attrs={}
+   [0078] node_78      stablehlo.concatenate            in=['%77', '%75'] out=['%78'] attrs={'dim': 3}
+   [0079] node_79      stablehlo.broadcast_in_dim       in=['%63'] out=['%79'] attrs={'dims': [0, 1, 2, 3]}
+>> [0080] node_80      stablehlo.multiply               in=['%78', '%79'] out=['%80'] attrs={}
+   [0081] node_81      stablehlo.add                    in=['%74', '%80'] out=['%81'] attrs={}
+   [0082] node_82      stablehlo.slice                  in=['%81'] out=['%82'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0083] node_83      stablehlo.slice                  in=['%81'] out=['%83'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0084] node_84      stablehlo.slice                  in=['%81'] out=['%84'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0085] node_85      stablehlo.slice                  in=['%81'] out=['%85'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0086] node_86      stablehlo.concatenate            in=['%82', '%83', '%84', '%85'] out=['%86'] attrs={'dim': 1}
+   [0087] node_87      stablehlo.slice                  in=['%39'] out=['%87'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0088] node_88      stablehlo.slice                  in=['%39'] out=['%88'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0089] node_89      stablehlo.slice                  in=['%39'] out=['%89'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0090] node_90      stablehlo.slice                  in=['%39'] out=['%90'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %78 <- [78] node_78 stablehlo.concatenate out=['%78'] attrs={'dim': 3}
+  %79 <- [79] node_79 stablehlo.broadcast_in_dim out=['%79'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %80 -> [81] node_81 stablehlo.add in=['%74', '%80'] attrs={}
+
+====================================================================================================
+TARGET idx=94 id=node_94 op=stablehlo.multiply
+  inputs: ['%92', '%93']
+  outputs: ['%94']
+  attrs: {}
+  result: ['tensor<1x4x5x5xf16>']
+
+WINDOW:
+   [0084] node_84      stablehlo.slice                  in=['%81'] out=['%84'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0085] node_85      stablehlo.slice                  in=['%81'] out=['%85'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0086] node_86      stablehlo.concatenate            in=['%82', '%83', '%84', '%85'] out=['%86'] attrs={'dim': 1}
+   [0087] node_87      stablehlo.slice                  in=['%39'] out=['%87'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0088] node_88      stablehlo.slice                  in=['%39'] out=['%88'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0089] node_89      stablehlo.slice                  in=['%39'] out=['%89'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0090] node_90      stablehlo.slice                  in=['%39'] out=['%90'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0091] node_91      stablehlo.concatenate            in=['%87', '%88', '%89', '%90'] out=['%91'] attrs={'dim': 1}
+   [0092] node_92      stablehlo.dot_general            in=['%72', '%86'] out=['%92'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [3]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0093] node_93      stablehlo.broadcast_in_dim       in=['%cst_8'] out=['%93'] attrs={'dims': []}
+>> [0094] node_94      stablehlo.multiply               in=['%92', '%93'] out=['%94'] attrs={}
+   [0095] node_95      stablehlo.broadcast_in_dim       in=['%c_9'] out=['%95'] attrs={'dims': []}
+   [0096] node_96      stablehlo.iota                   in=[] out=['%0_tril1'] attrs={'dim': 0}
+   [0097] node_97      stablehlo.broadcast_in_dim       in=['%c_tril1'] out=['%1_tril1'] attrs={'dims': []}
+   [0098] node_98      stablehlo.add                    in=['%0_tril1', '%1_tril1'] out=['%2_tril1'] attrs={}
+   [0099] node_99      stablehlo.iota                   in=[] out=['%3_tril1'] attrs={'dim': 1}
+   [0100] node_100     stablehlo.compare                in=['%2_tril1', '%3_tril1'] out=['%4_tril1'] attrs={'comparison_direction': 'GE'}
+   [0101] node_101     stablehlo.broadcast_in_dim       in=['%c_0_tril1'] out=['%5_tril1'] attrs={'dims': []}
+   [0102] node_102     stablehlo.select                 in=['%4_tril1', '%95', '%5_tril1'] out=['%6_tril1'] attrs={}
+   [0103] node_103     stablehlo.broadcast_in_dim       in=['%6_tril1'] out=['%97'] attrs={'dims': [2, 3]}
+   [0104] node_104     stablehlo.broadcast_in_dim       in=['%97'] out=['%0__where2'] attrs={'dims': [0, 1, 2, 3]}
+
+PRODUCERS:
+  %92 <- [92] node_92 stablehlo.dot_general out=['%92'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [3]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %93 <- [93] node_93 stablehlo.broadcast_in_dim out=['%93'] attrs={'dims': []}
+
+CONSUMERS:
+  %94 -> [106] node_106 stablehlo.select in=['%0__where2', '%94', '%1__where2'] attrs={}
+
+====================================================================================================
+TARGET idx=107 id=node_107 op=stablehlo.reduce
+  inputs: ['%2__where2', '%cst_11']
+  outputs: ['%99']
+  attrs: {'applies': 'stablehlo.maximum', 'dimensions': [3]}
+  result: ['tensor<1x4x5xf16>']
+
+WINDOW:
+   [0097] node_97      stablehlo.broadcast_in_dim       in=['%c_tril1'] out=['%1_tril1'] attrs={'dims': []}
+   [0098] node_98      stablehlo.add                    in=['%0_tril1', '%1_tril1'] out=['%2_tril1'] attrs={}
+   [0099] node_99      stablehlo.iota                   in=[] out=['%3_tril1'] attrs={'dim': 1}
+   [0100] node_100     stablehlo.compare                in=['%2_tril1', '%3_tril1'] out=['%4_tril1'] attrs={'comparison_direction': 'GE'}
+   [0101] node_101     stablehlo.broadcast_in_dim       in=['%c_0_tril1'] out=['%5_tril1'] attrs={'dims': []}
+   [0102] node_102     stablehlo.select                 in=['%4_tril1', '%95', '%5_tril1'] out=['%6_tril1'] attrs={}
+   [0103] node_103     stablehlo.broadcast_in_dim       in=['%6_tril1'] out=['%97'] attrs={'dims': [2, 3]}
+   [0104] node_104     stablehlo.broadcast_in_dim       in=['%97'] out=['%0__where2'] attrs={'dims': [0, 1, 2, 3]}
+   [0105] node_105     stablehlo.broadcast_in_dim       in=['%cst_10'] out=['%1__where2'] attrs={'dims': []}
+   [0106] node_106     stablehlo.select                 in=['%0__where2', '%94', '%1__where2'] out=['%2__where2'] attrs={}
+>> [0107] node_107     stablehlo.reduce                 in=['%2__where2', '%cst_11'] out=['%99'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0108] node_108     stablehlo.broadcast_in_dim       in=['%cst_12'] out=['%100'] attrs={'dims': []}
+   [0109] node_109     stablehlo.maximum                in=['%100', '%99'] out=['%101'] attrs={}
+   [0110] node_110     stablehlo.broadcast_in_dim       in=['%101'] out=['%102'] attrs={'dims': [0, 1, 2]}
+   [0111] node_111     stablehlo.broadcast_in_dim       in=['%102'] out=['%103'] attrs={'dims': [0, 1, 2, 3]}
+   [0112] node_112     stablehlo.subtract               in=['%2__where2', '%103'] out=['%104'] attrs={}
+   [0113] node_113     stablehlo.exponential            in=['%104'] out=['%105'] attrs={}
+   [0114] node_114     stablehlo.convert                in=['%105'] out=['%106'] attrs={}
+   [0115] node_115     stablehlo.reduce                 in=['%106', '%cst_13'] out=['%107'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0116] node_116     stablehlo.broadcast_in_dim       in=['%107'] out=['%108'] attrs={'dims': [0, 1, 2]}
+   [0117] node_117     stablehlo.convert                in=['%108'] out=['%109'] attrs={}
+
+PRODUCERS:
+  %2__where2 <- [106] node_106 stablehlo.select out=['%2__where2'] attrs={}
+  %cst_11 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %99 -> [109] node_109 stablehlo.maximum in=['%100', '%99'] attrs={}
+
+====================================================================================================
+TARGET idx=109 id=node_109 op=stablehlo.maximum
+  inputs: ['%100', '%99']
+  outputs: ['%101']
+  attrs: {}
+  result: ['tensor<1x4x5xf16>']
+
+WINDOW:
+   [0099] node_99      stablehlo.iota                   in=[] out=['%3_tril1'] attrs={'dim': 1}
+   [0100] node_100     stablehlo.compare                in=['%2_tril1', '%3_tril1'] out=['%4_tril1'] attrs={'comparison_direction': 'GE'}
+   [0101] node_101     stablehlo.broadcast_in_dim       in=['%c_0_tril1'] out=['%5_tril1'] attrs={'dims': []}
+   [0102] node_102     stablehlo.select                 in=['%4_tril1', '%95', '%5_tril1'] out=['%6_tril1'] attrs={}
+   [0103] node_103     stablehlo.broadcast_in_dim       in=['%6_tril1'] out=['%97'] attrs={'dims': [2, 3]}
+   [0104] node_104     stablehlo.broadcast_in_dim       in=['%97'] out=['%0__where2'] attrs={'dims': [0, 1, 2, 3]}
+   [0105] node_105     stablehlo.broadcast_in_dim       in=['%cst_10'] out=['%1__where2'] attrs={'dims': []}
+   [0106] node_106     stablehlo.select                 in=['%0__where2', '%94', '%1__where2'] out=['%2__where2'] attrs={}
+   [0107] node_107     stablehlo.reduce                 in=['%2__where2', '%cst_11'] out=['%99'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0108] node_108     stablehlo.broadcast_in_dim       in=['%cst_12'] out=['%100'] attrs={'dims': []}
+>> [0109] node_109     stablehlo.maximum                in=['%100', '%99'] out=['%101'] attrs={}
+   [0110] node_110     stablehlo.broadcast_in_dim       in=['%101'] out=['%102'] attrs={'dims': [0, 1, 2]}
+   [0111] node_111     stablehlo.broadcast_in_dim       in=['%102'] out=['%103'] attrs={'dims': [0, 1, 2, 3]}
+   [0112] node_112     stablehlo.subtract               in=['%2__where2', '%103'] out=['%104'] attrs={}
+   [0113] node_113     stablehlo.exponential            in=['%104'] out=['%105'] attrs={}
+   [0114] node_114     stablehlo.convert                in=['%105'] out=['%106'] attrs={}
+   [0115] node_115     stablehlo.reduce                 in=['%106', '%cst_13'] out=['%107'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0116] node_116     stablehlo.broadcast_in_dim       in=['%107'] out=['%108'] attrs={'dims': [0, 1, 2]}
+   [0117] node_117     stablehlo.convert                in=['%108'] out=['%109'] attrs={}
+   [0118] node_118     stablehlo.broadcast_in_dim       in=['%109'] out=['%110'] attrs={'dims': [0, 1, 2, 3]}
+   [0119] node_119     stablehlo.divide                 in=['%105', '%110'] out=['%111'] attrs={}
+
+PRODUCERS:
+  %100 <- [108] node_108 stablehlo.broadcast_in_dim out=['%100'] attrs={'dims': []}
+  %99 <- [107] node_107 stablehlo.reduce out=['%99'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+
+CONSUMERS:
+  %101 -> [110] node_110 stablehlo.broadcast_in_dim in=['%101'] attrs={'dims': [0, 1, 2]}
+
+====================================================================================================
+TARGET idx=113 id=node_113 op=stablehlo.exponential
+  inputs: ['%104']
+  outputs: ['%105']
+  attrs: {}
+  result: ['tensor<1x4x5x5xf16>']
+
+WINDOW:
+   [0103] node_103     stablehlo.broadcast_in_dim       in=['%6_tril1'] out=['%97'] attrs={'dims': [2, 3]}
+   [0104] node_104     stablehlo.broadcast_in_dim       in=['%97'] out=['%0__where2'] attrs={'dims': [0, 1, 2, 3]}
+   [0105] node_105     stablehlo.broadcast_in_dim       in=['%cst_10'] out=['%1__where2'] attrs={'dims': []}
+   [0106] node_106     stablehlo.select                 in=['%0__where2', '%94', '%1__where2'] out=['%2__where2'] attrs={}
+   [0107] node_107     stablehlo.reduce                 in=['%2__where2', '%cst_11'] out=['%99'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0108] node_108     stablehlo.broadcast_in_dim       in=['%cst_12'] out=['%100'] attrs={'dims': []}
+   [0109] node_109     stablehlo.maximum                in=['%100', '%99'] out=['%101'] attrs={}
+   [0110] node_110     stablehlo.broadcast_in_dim       in=['%101'] out=['%102'] attrs={'dims': [0, 1, 2]}
+   [0111] node_111     stablehlo.broadcast_in_dim       in=['%102'] out=['%103'] attrs={'dims': [0, 1, 2, 3]}
+   [0112] node_112     stablehlo.subtract               in=['%2__where2', '%103'] out=['%104'] attrs={}
+>> [0113] node_113     stablehlo.exponential            in=['%104'] out=['%105'] attrs={}
+   [0114] node_114     stablehlo.convert                in=['%105'] out=['%106'] attrs={}
+   [0115] node_115     stablehlo.reduce                 in=['%106', '%cst_13'] out=['%107'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0116] node_116     stablehlo.broadcast_in_dim       in=['%107'] out=['%108'] attrs={'dims': [0, 1, 2]}
+   [0117] node_117     stablehlo.convert                in=['%108'] out=['%109'] attrs={}
+   [0118] node_118     stablehlo.broadcast_in_dim       in=['%109'] out=['%110'] attrs={'dims': [0, 1, 2, 3]}
+   [0119] node_119     stablehlo.divide                 in=['%105', '%110'] out=['%111'] attrs={}
+   [0120] node_120     stablehlo.dot_general            in=['%111', '%91'] out=['%112'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0121] node_121     stablehlo.transpose              in=['%112'] out=['%113'] attrs={'dims': [0, 2, 1, 3]}
+   [0122] node_122     stablehlo.reshape                in=['%113'] out=['%114'] attrs={}
+   [0123] node_123     stablehlo.dot_general            in=['%114', '%arg12'] out=['%115'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %104 <- [112] node_112 stablehlo.subtract out=['%104'] attrs={}
+
+CONSUMERS:
+  %105 -> [114] node_114 stablehlo.convert in=['%105'] attrs={}
+  %105 -> [119] node_119 stablehlo.divide in=['%105', '%110'] attrs={}
+
+====================================================================================================
+TARGET idx=115 id=node_115 op=stablehlo.reduce
+  inputs: ['%106', '%cst_13']
+  outputs: ['%107']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [3]}
+  result: ['tensor<1x4x5xf32>']
+
+WINDOW:
+   [0105] node_105     stablehlo.broadcast_in_dim       in=['%cst_10'] out=['%1__where2'] attrs={'dims': []}
+   [0106] node_106     stablehlo.select                 in=['%0__where2', '%94', '%1__where2'] out=['%2__where2'] attrs={}
+   [0107] node_107     stablehlo.reduce                 in=['%2__where2', '%cst_11'] out=['%99'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0108] node_108     stablehlo.broadcast_in_dim       in=['%cst_12'] out=['%100'] attrs={'dims': []}
+   [0109] node_109     stablehlo.maximum                in=['%100', '%99'] out=['%101'] attrs={}
+   [0110] node_110     stablehlo.broadcast_in_dim       in=['%101'] out=['%102'] attrs={'dims': [0, 1, 2]}
+   [0111] node_111     stablehlo.broadcast_in_dim       in=['%102'] out=['%103'] attrs={'dims': [0, 1, 2, 3]}
+   [0112] node_112     stablehlo.subtract               in=['%2__where2', '%103'] out=['%104'] attrs={}
+   [0113] node_113     stablehlo.exponential            in=['%104'] out=['%105'] attrs={}
+   [0114] node_114     stablehlo.convert                in=['%105'] out=['%106'] attrs={}
+>> [0115] node_115     stablehlo.reduce                 in=['%106', '%cst_13'] out=['%107'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0116] node_116     stablehlo.broadcast_in_dim       in=['%107'] out=['%108'] attrs={'dims': [0, 1, 2]}
+   [0117] node_117     stablehlo.convert                in=['%108'] out=['%109'] attrs={}
+   [0118] node_118     stablehlo.broadcast_in_dim       in=['%109'] out=['%110'] attrs={'dims': [0, 1, 2, 3]}
+   [0119] node_119     stablehlo.divide                 in=['%105', '%110'] out=['%111'] attrs={}
+   [0120] node_120     stablehlo.dot_general            in=['%111', '%91'] out=['%112'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0121] node_121     stablehlo.transpose              in=['%112'] out=['%113'] attrs={'dims': [0, 2, 1, 3]}
+   [0122] node_122     stablehlo.reshape                in=['%113'] out=['%114'] attrs={}
+   [0123] node_123     stablehlo.dot_general            in=['%114', '%arg12'] out=['%115'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0124] node_124     stablehlo.broadcast_in_dim       in=['%arg13'] out=['%116'] attrs={'dims': [2]}
+   [0125] node_125     stablehlo.broadcast_in_dim       in=['%116'] out=['%117'] attrs={'dims': [0, 1, 2]}
+
+PRODUCERS:
+  %106 <- [114] node_114 stablehlo.convert out=['%106'] attrs={}
+  %cst_13 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %107 -> [116] node_116 stablehlo.broadcast_in_dim in=['%107'] attrs={'dims': [0, 1, 2]}
+
+====================================================================================================
+TARGET idx=119 id=node_119 op=stablehlo.divide
+  inputs: ['%105', '%110']
+  outputs: ['%111']
+  attrs: {}
+  result: ['tensor<1x4x5x5xf16>']
+
+WINDOW:
+   [0109] node_109     stablehlo.maximum                in=['%100', '%99'] out=['%101'] attrs={}
+   [0110] node_110     stablehlo.broadcast_in_dim       in=['%101'] out=['%102'] attrs={'dims': [0, 1, 2]}
+   [0111] node_111     stablehlo.broadcast_in_dim       in=['%102'] out=['%103'] attrs={'dims': [0, 1, 2, 3]}
+   [0112] node_112     stablehlo.subtract               in=['%2__where2', '%103'] out=['%104'] attrs={}
+   [0113] node_113     stablehlo.exponential            in=['%104'] out=['%105'] attrs={}
+   [0114] node_114     stablehlo.convert                in=['%105'] out=['%106'] attrs={}
+   [0115] node_115     stablehlo.reduce                 in=['%106', '%cst_13'] out=['%107'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0116] node_116     stablehlo.broadcast_in_dim       in=['%107'] out=['%108'] attrs={'dims': [0, 1, 2]}
+   [0117] node_117     stablehlo.convert                in=['%108'] out=['%109'] attrs={}
+   [0118] node_118     stablehlo.broadcast_in_dim       in=['%109'] out=['%110'] attrs={'dims': [0, 1, 2, 3]}
+>> [0119] node_119     stablehlo.divide                 in=['%105', '%110'] out=['%111'] attrs={}
+   [0120] node_120     stablehlo.dot_general            in=['%111', '%91'] out=['%112'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0121] node_121     stablehlo.transpose              in=['%112'] out=['%113'] attrs={'dims': [0, 2, 1, 3]}
+   [0122] node_122     stablehlo.reshape                in=['%113'] out=['%114'] attrs={}
+   [0123] node_123     stablehlo.dot_general            in=['%114', '%arg12'] out=['%115'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0124] node_124     stablehlo.broadcast_in_dim       in=['%arg13'] out=['%116'] attrs={'dims': [2]}
+   [0125] node_125     stablehlo.broadcast_in_dim       in=['%116'] out=['%117'] attrs={'dims': [0, 1, 2]}
+   [0126] node_126     stablehlo.add                    in=['%115', '%117'] out=['%118'] attrs={}
+   [0127] node_127     stablehlo.add                    in=['%6', '%118'] out=['%119'] attrs={}
+   [0128] node_128     stablehlo.convert                in=['%119'] out=['%120'] attrs={}
+   [0129] node_129     stablehlo.multiply               in=['%120', '%120'] out=['%121'] attrs={}
+
+PRODUCERS:
+  %105 <- [113] node_113 stablehlo.exponential out=['%105'] attrs={}
+  %110 <- [118] node_118 stablehlo.broadcast_in_dim out=['%110'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %111 -> [120] node_120 stablehlo.dot_general in=['%111', '%91'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=129 id=node_129 op=stablehlo.multiply
+  inputs: ['%120', '%120']
+  outputs: ['%121']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0119] node_119     stablehlo.divide                 in=['%105', '%110'] out=['%111'] attrs={}
+   [0120] node_120     stablehlo.dot_general            in=['%111', '%91'] out=['%112'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0121] node_121     stablehlo.transpose              in=['%112'] out=['%113'] attrs={'dims': [0, 2, 1, 3]}
+   [0122] node_122     stablehlo.reshape                in=['%113'] out=['%114'] attrs={}
+   [0123] node_123     stablehlo.dot_general            in=['%114', '%arg12'] out=['%115'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0124] node_124     stablehlo.broadcast_in_dim       in=['%arg13'] out=['%116'] attrs={'dims': [2]}
+   [0125] node_125     stablehlo.broadcast_in_dim       in=['%116'] out=['%117'] attrs={'dims': [0, 1, 2]}
+   [0126] node_126     stablehlo.add                    in=['%115', '%117'] out=['%118'] attrs={}
+   [0127] node_127     stablehlo.add                    in=['%6', '%118'] out=['%119'] attrs={}
+   [0128] node_128     stablehlo.convert                in=['%119'] out=['%120'] attrs={}
+>> [0129] node_129     stablehlo.multiply               in=['%120', '%120'] out=['%121'] attrs={}
+   [0130] node_130     stablehlo.reduce                 in=['%121', '%cst_14'] out=['%122'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0131] node_131     stablehlo.broadcast_in_dim       in=['%122'] out=['%123'] attrs={'dims': [0, 1]}
+   [0132] node_132     stablehlo.broadcast_in_dim       in=['%cst_15'] out=['%124'] attrs={'dims': []}
+   [0133] node_133     stablehlo.divide                 in=['%123', '%124'] out=['%125'] attrs={}
+   [0134] node_134     stablehlo.broadcast_in_dim       in=['%cst_16'] out=['%126'] attrs={'dims': []}
+   [0135] node_135     stablehlo.add                    in=['%125', '%126'] out=['%127'] attrs={}
+   [0136] node_136     stablehlo.rsqrt                  in=['%127'] out=['%128'] attrs={}
+   [0137] node_137     stablehlo.broadcast_in_dim       in=['%128'] out=['%129'] attrs={'dims': [0, 1, 2]}
+   [0138] node_138     stablehlo.multiply               in=['%120', '%129'] out=['%130'] attrs={}
+   [0139] node_139     stablehlo.convert                in=['%130'] out=['%131'] attrs={}
+
+PRODUCERS:
+  %120 <- [128] node_128 stablehlo.convert out=['%120'] attrs={}
+  %120 <- [128] node_128 stablehlo.convert out=['%120'] attrs={}
+
+CONSUMERS:
+  %121 -> [130] node_130 stablehlo.reduce in=['%121', '%cst_14'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+====================================================================================================
+TARGET idx=130 id=node_130 op=stablehlo.reduce
+  inputs: ['%121', '%cst_14']
+  outputs: ['%122']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [2]}
+  result: ['tensor<1x5xf32>']
+
+WINDOW:
+   [0120] node_120     stablehlo.dot_general            in=['%111', '%91'] out=['%112'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0121] node_121     stablehlo.transpose              in=['%112'] out=['%113'] attrs={'dims': [0, 2, 1, 3]}
+   [0122] node_122     stablehlo.reshape                in=['%113'] out=['%114'] attrs={}
+   [0123] node_123     stablehlo.dot_general            in=['%114', '%arg12'] out=['%115'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0124] node_124     stablehlo.broadcast_in_dim       in=['%arg13'] out=['%116'] attrs={'dims': [2]}
+   [0125] node_125     stablehlo.broadcast_in_dim       in=['%116'] out=['%117'] attrs={'dims': [0, 1, 2]}
+   [0126] node_126     stablehlo.add                    in=['%115', '%117'] out=['%118'] attrs={}
+   [0127] node_127     stablehlo.add                    in=['%6', '%118'] out=['%119'] attrs={}
+   [0128] node_128     stablehlo.convert                in=['%119'] out=['%120'] attrs={}
+   [0129] node_129     stablehlo.multiply               in=['%120', '%120'] out=['%121'] attrs={}
+>> [0130] node_130     stablehlo.reduce                 in=['%121', '%cst_14'] out=['%122'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0131] node_131     stablehlo.broadcast_in_dim       in=['%122'] out=['%123'] attrs={'dims': [0, 1]}
+   [0132] node_132     stablehlo.broadcast_in_dim       in=['%cst_15'] out=['%124'] attrs={'dims': []}
+   [0133] node_133     stablehlo.divide                 in=['%123', '%124'] out=['%125'] attrs={}
+   [0134] node_134     stablehlo.broadcast_in_dim       in=['%cst_16'] out=['%126'] attrs={'dims': []}
+   [0135] node_135     stablehlo.add                    in=['%125', '%126'] out=['%127'] attrs={}
+   [0136] node_136     stablehlo.rsqrt                  in=['%127'] out=['%128'] attrs={}
+   [0137] node_137     stablehlo.broadcast_in_dim       in=['%128'] out=['%129'] attrs={'dims': [0, 1, 2]}
+   [0138] node_138     stablehlo.multiply               in=['%120', '%129'] out=['%130'] attrs={}
+   [0139] node_139     stablehlo.convert                in=['%130'] out=['%131'] attrs={}
+   [0140] node_140     stablehlo.broadcast_in_dim       in=['%arg14'] out=['%132'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %121 <- [129] node_129 stablehlo.multiply out=['%121'] attrs={}
+  %cst_14 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %122 -> [131] node_131 stablehlo.broadcast_in_dim in=['%122'] attrs={'dims': [0, 1]}
+
+====================================================================================================
+TARGET idx=133 id=node_133 op=stablehlo.divide
+  inputs: ['%123', '%124']
+  outputs: ['%125']
+  attrs: {}
+  result: ['tensor<1x5x1xf32>']
+
+WINDOW:
+   [0123] node_123     stablehlo.dot_general            in=['%114', '%arg12'] out=['%115'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0124] node_124     stablehlo.broadcast_in_dim       in=['%arg13'] out=['%116'] attrs={'dims': [2]}
+   [0125] node_125     stablehlo.broadcast_in_dim       in=['%116'] out=['%117'] attrs={'dims': [0, 1, 2]}
+   [0126] node_126     stablehlo.add                    in=['%115', '%117'] out=['%118'] attrs={}
+   [0127] node_127     stablehlo.add                    in=['%6', '%118'] out=['%119'] attrs={}
+   [0128] node_128     stablehlo.convert                in=['%119'] out=['%120'] attrs={}
+   [0129] node_129     stablehlo.multiply               in=['%120', '%120'] out=['%121'] attrs={}
+   [0130] node_130     stablehlo.reduce                 in=['%121', '%cst_14'] out=['%122'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0131] node_131     stablehlo.broadcast_in_dim       in=['%122'] out=['%123'] attrs={'dims': [0, 1]}
+   [0132] node_132     stablehlo.broadcast_in_dim       in=['%cst_15'] out=['%124'] attrs={'dims': []}
+>> [0133] node_133     stablehlo.divide                 in=['%123', '%124'] out=['%125'] attrs={}
+   [0134] node_134     stablehlo.broadcast_in_dim       in=['%cst_16'] out=['%126'] attrs={'dims': []}
+   [0135] node_135     stablehlo.add                    in=['%125', '%126'] out=['%127'] attrs={}
+   [0136] node_136     stablehlo.rsqrt                  in=['%127'] out=['%128'] attrs={}
+   [0137] node_137     stablehlo.broadcast_in_dim       in=['%128'] out=['%129'] attrs={'dims': [0, 1, 2]}
+   [0138] node_138     stablehlo.multiply               in=['%120', '%129'] out=['%130'] attrs={}
+   [0139] node_139     stablehlo.convert                in=['%130'] out=['%131'] attrs={}
+   [0140] node_140     stablehlo.broadcast_in_dim       in=['%arg14'] out=['%132'] attrs={'dims': [2]}
+   [0141] node_141     stablehlo.broadcast_in_dim       in=['%132'] out=['%133'] attrs={'dims': [0, 1, 2]}
+   [0142] node_142     stablehlo.multiply               in=['%131', '%133'] out=['%134'] attrs={}
+   [0143] node_143     stablehlo.dot_general            in=['%134', '%arg15'] out=['%135'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %123 <- [131] node_131 stablehlo.broadcast_in_dim out=['%123'] attrs={'dims': [0, 1]}
+  %124 <- [132] node_132 stablehlo.broadcast_in_dim out=['%124'] attrs={'dims': []}
+
+CONSUMERS:
+  %125 -> [135] node_135 stablehlo.add in=['%125', '%126'] attrs={}
+
+====================================================================================================
+TARGET idx=138 id=node_138 op=stablehlo.multiply
+  inputs: ['%120', '%129']
+  outputs: ['%130']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0128] node_128     stablehlo.convert                in=['%119'] out=['%120'] attrs={}
+   [0129] node_129     stablehlo.multiply               in=['%120', '%120'] out=['%121'] attrs={}
+   [0130] node_130     stablehlo.reduce                 in=['%121', '%cst_14'] out=['%122'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0131] node_131     stablehlo.broadcast_in_dim       in=['%122'] out=['%123'] attrs={'dims': [0, 1]}
+   [0132] node_132     stablehlo.broadcast_in_dim       in=['%cst_15'] out=['%124'] attrs={'dims': []}
+   [0133] node_133     stablehlo.divide                 in=['%123', '%124'] out=['%125'] attrs={}
+   [0134] node_134     stablehlo.broadcast_in_dim       in=['%cst_16'] out=['%126'] attrs={'dims': []}
+   [0135] node_135     stablehlo.add                    in=['%125', '%126'] out=['%127'] attrs={}
+   [0136] node_136     stablehlo.rsqrt                  in=['%127'] out=['%128'] attrs={}
+   [0137] node_137     stablehlo.broadcast_in_dim       in=['%128'] out=['%129'] attrs={'dims': [0, 1, 2]}
+>> [0138] node_138     stablehlo.multiply               in=['%120', '%129'] out=['%130'] attrs={}
+   [0139] node_139     stablehlo.convert                in=['%130'] out=['%131'] attrs={}
+   [0140] node_140     stablehlo.broadcast_in_dim       in=['%arg14'] out=['%132'] attrs={'dims': [2]}
+   [0141] node_141     stablehlo.broadcast_in_dim       in=['%132'] out=['%133'] attrs={'dims': [0, 1, 2]}
+   [0142] node_142     stablehlo.multiply               in=['%131', '%133'] out=['%134'] attrs={}
+   [0143] node_143     stablehlo.dot_general            in=['%134', '%arg15'] out=['%135'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0144] node_144     stablehlo.broadcast_in_dim       in=['%arg16'] out=['%136'] attrs={'dims': [2]}
+   [0145] node_145     stablehlo.broadcast_in_dim       in=['%136'] out=['%137'] attrs={'dims': [0, 1, 2]}
+   [0146] node_146     stablehlo.add                    in=['%135', '%137'] out=['%138'] attrs={}
+   [0147] node_147     stablehlo.dot_general            in=['%134', '%arg17'] out=['%139'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %120 <- [128] node_128 stablehlo.convert out=['%120'] attrs={}
+  %129 <- [137] node_137 stablehlo.broadcast_in_dim out=['%129'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %130 -> [139] node_139 stablehlo.convert in=['%130'] attrs={}
+
+====================================================================================================
+TARGET idx=142 id=node_142 op=stablehlo.multiply
+  inputs: ['%131', '%133']
+  outputs: ['%134']
+  attrs: {}
+  result: ['tensor<1x5x128xf16>']
+
+WINDOW:
+   [0132] node_132     stablehlo.broadcast_in_dim       in=['%cst_15'] out=['%124'] attrs={'dims': []}
+   [0133] node_133     stablehlo.divide                 in=['%123', '%124'] out=['%125'] attrs={}
+   [0134] node_134     stablehlo.broadcast_in_dim       in=['%cst_16'] out=['%126'] attrs={'dims': []}
+   [0135] node_135     stablehlo.add                    in=['%125', '%126'] out=['%127'] attrs={}
+   [0136] node_136     stablehlo.rsqrt                  in=['%127'] out=['%128'] attrs={}
+   [0137] node_137     stablehlo.broadcast_in_dim       in=['%128'] out=['%129'] attrs={'dims': [0, 1, 2]}
+   [0138] node_138     stablehlo.multiply               in=['%120', '%129'] out=['%130'] attrs={}
+   [0139] node_139     stablehlo.convert                in=['%130'] out=['%131'] attrs={}
+   [0140] node_140     stablehlo.broadcast_in_dim       in=['%arg14'] out=['%132'] attrs={'dims': [2]}
+   [0141] node_141     stablehlo.broadcast_in_dim       in=['%132'] out=['%133'] attrs={'dims': [0, 1, 2]}
+>> [0142] node_142     stablehlo.multiply               in=['%131', '%133'] out=['%134'] attrs={}
+   [0143] node_143     stablehlo.dot_general            in=['%134', '%arg15'] out=['%135'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0144] node_144     stablehlo.broadcast_in_dim       in=['%arg16'] out=['%136'] attrs={'dims': [2]}
+   [0145] node_145     stablehlo.broadcast_in_dim       in=['%136'] out=['%137'] attrs={'dims': [0, 1, 2]}
+   [0146] node_146     stablehlo.add                    in=['%135', '%137'] out=['%138'] attrs={}
+   [0147] node_147     stablehlo.dot_general            in=['%134', '%arg17'] out=['%139'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+   [0149] node_149     stablehlo.broadcast_in_dim       in=['%140'] out=['%141'] attrs={'dims': [0, 1, 2]}
+   [0150] node_150     stablehlo.add                    in=['%139', '%141'] out=['%142'] attrs={}
+   [0151] node_151     stablehlo.negate                 in=['%138'] out=['%143'] attrs={}
+   [0152] node_152     stablehlo.exponential            in=['%143'] out=['%144'] attrs={}
+
+PRODUCERS:
+  %131 <- [139] node_139 stablehlo.convert out=['%131'] attrs={}
+  %133 <- [141] node_141 stablehlo.broadcast_in_dim out=['%133'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %134 -> [143] node_143 stablehlo.dot_general in=['%134', '%arg15'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %134 -> [147] node_147 stablehlo.dot_general in=['%134', '%arg17'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=151 id=node_151 op=stablehlo.negate
+  inputs: ['%138']
+  outputs: ['%143']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0141] node_141     stablehlo.broadcast_in_dim       in=['%132'] out=['%133'] attrs={'dims': [0, 1, 2]}
+   [0142] node_142     stablehlo.multiply               in=['%131', '%133'] out=['%134'] attrs={}
+   [0143] node_143     stablehlo.dot_general            in=['%134', '%arg15'] out=['%135'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0144] node_144     stablehlo.broadcast_in_dim       in=['%arg16'] out=['%136'] attrs={'dims': [2]}
+   [0145] node_145     stablehlo.broadcast_in_dim       in=['%136'] out=['%137'] attrs={'dims': [0, 1, 2]}
+   [0146] node_146     stablehlo.add                    in=['%135', '%137'] out=['%138'] attrs={}
+   [0147] node_147     stablehlo.dot_general            in=['%134', '%arg17'] out=['%139'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+   [0149] node_149     stablehlo.broadcast_in_dim       in=['%140'] out=['%141'] attrs={'dims': [0, 1, 2]}
+   [0150] node_150     stablehlo.add                    in=['%139', '%141'] out=['%142'] attrs={}
+>> [0151] node_151     stablehlo.negate                 in=['%138'] out=['%143'] attrs={}
+   [0152] node_152     stablehlo.exponential            in=['%143'] out=['%144'] attrs={}
+   [0153] node_153     stablehlo.broadcast_in_dim       in=['%cst_17'] out=['%145'] attrs={'dims': []}
+   [0154] node_154     stablehlo.add                    in=['%145', '%144'] out=['%146'] attrs={}
+   [0155] node_155     stablehlo.broadcast_in_dim       in=['%cst_18'] out=['%147'] attrs={'dims': []}
+   [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+   [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+   [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+
+PRODUCERS:
+  %138 <- [146] node_146 stablehlo.add out=['%138'] attrs={}
+
+CONSUMERS:
+  %143 -> [152] node_152 stablehlo.exponential in=['%143'] attrs={}
+
+====================================================================================================
+TARGET idx=152 id=node_152 op=stablehlo.exponential
+  inputs: ['%143']
+  outputs: ['%144']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0142] node_142     stablehlo.multiply               in=['%131', '%133'] out=['%134'] attrs={}
+   [0143] node_143     stablehlo.dot_general            in=['%134', '%arg15'] out=['%135'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0144] node_144     stablehlo.broadcast_in_dim       in=['%arg16'] out=['%136'] attrs={'dims': [2]}
+   [0145] node_145     stablehlo.broadcast_in_dim       in=['%136'] out=['%137'] attrs={'dims': [0, 1, 2]}
+   [0146] node_146     stablehlo.add                    in=['%135', '%137'] out=['%138'] attrs={}
+   [0147] node_147     stablehlo.dot_general            in=['%134', '%arg17'] out=['%139'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+   [0149] node_149     stablehlo.broadcast_in_dim       in=['%140'] out=['%141'] attrs={'dims': [0, 1, 2]}
+   [0150] node_150     stablehlo.add                    in=['%139', '%141'] out=['%142'] attrs={}
+   [0151] node_151     stablehlo.negate                 in=['%138'] out=['%143'] attrs={}
+>> [0152] node_152     stablehlo.exponential            in=['%143'] out=['%144'] attrs={}
+   [0153] node_153     stablehlo.broadcast_in_dim       in=['%cst_17'] out=['%145'] attrs={'dims': []}
+   [0154] node_154     stablehlo.add                    in=['%145', '%144'] out=['%146'] attrs={}
+   [0155] node_155     stablehlo.broadcast_in_dim       in=['%cst_18'] out=['%147'] attrs={'dims': []}
+   [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+   [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+   [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+
+PRODUCERS:
+  %143 <- [151] node_151 stablehlo.negate out=['%143'] attrs={}
+
+CONSUMERS:
+  %144 -> [154] node_154 stablehlo.add in=['%145', '%144'] attrs={}
+
+====================================================================================================
+TARGET idx=156 id=node_156 op=stablehlo.divide
+  inputs: ['%147', '%146']
+  outputs: ['%148']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0146] node_146     stablehlo.add                    in=['%135', '%137'] out=['%138'] attrs={}
+   [0147] node_147     stablehlo.dot_general            in=['%134', '%arg17'] out=['%139'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+   [0149] node_149     stablehlo.broadcast_in_dim       in=['%140'] out=['%141'] attrs={'dims': [0, 1, 2]}
+   [0150] node_150     stablehlo.add                    in=['%139', '%141'] out=['%142'] attrs={}
+   [0151] node_151     stablehlo.negate                 in=['%138'] out=['%143'] attrs={}
+   [0152] node_152     stablehlo.exponential            in=['%143'] out=['%144'] attrs={}
+   [0153] node_153     stablehlo.broadcast_in_dim       in=['%cst_17'] out=['%145'] attrs={'dims': []}
+   [0154] node_154     stablehlo.add                    in=['%145', '%144'] out=['%146'] attrs={}
+   [0155] node_155     stablehlo.broadcast_in_dim       in=['%cst_18'] out=['%147'] attrs={'dims': []}
+>> [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+   [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+   [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+   [0163] node_163     stablehlo.add                    in=['%119', '%154'] out=['%155'] attrs={}
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+   [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+   [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+PRODUCERS:
+  %147 <- [155] node_155 stablehlo.broadcast_in_dim out=['%147'] attrs={'dims': []}
+  %146 <- [154] node_154 stablehlo.add out=['%146'] attrs={}
+
+CONSUMERS:
+  %148 -> [157] node_157 stablehlo.multiply in=['%138', '%148'] attrs={}
+
+====================================================================================================
+TARGET idx=157 id=node_157 op=stablehlo.multiply
+  inputs: ['%138', '%148']
+  outputs: ['%149']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0147] node_147     stablehlo.dot_general            in=['%134', '%arg17'] out=['%139'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+   [0149] node_149     stablehlo.broadcast_in_dim       in=['%140'] out=['%141'] attrs={'dims': [0, 1, 2]}
+   [0150] node_150     stablehlo.add                    in=['%139', '%141'] out=['%142'] attrs={}
+   [0151] node_151     stablehlo.negate                 in=['%138'] out=['%143'] attrs={}
+   [0152] node_152     stablehlo.exponential            in=['%143'] out=['%144'] attrs={}
+   [0153] node_153     stablehlo.broadcast_in_dim       in=['%cst_17'] out=['%145'] attrs={'dims': []}
+   [0154] node_154     stablehlo.add                    in=['%145', '%144'] out=['%146'] attrs={}
+   [0155] node_155     stablehlo.broadcast_in_dim       in=['%cst_18'] out=['%147'] attrs={'dims': []}
+   [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+>> [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+   [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+   [0163] node_163     stablehlo.add                    in=['%119', '%154'] out=['%155'] attrs={}
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+   [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+   [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0167] node_167     stablehlo.broadcast_in_dim       in=['%158'] out=['%159'] attrs={'dims': [0, 1]}
+
+PRODUCERS:
+  %138 <- [146] node_146 stablehlo.add out=['%138'] attrs={}
+  %148 <- [156] node_156 stablehlo.divide out=['%148'] attrs={}
+
+CONSUMERS:
+  %149 -> [158] node_158 stablehlo.multiply in=['%149', '%142'] attrs={}
+
+====================================================================================================
+TARGET idx=158 id=node_158 op=stablehlo.multiply
+  inputs: ['%149', '%142']
+  outputs: ['%150']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0148] node_148     stablehlo.broadcast_in_dim       in=['%arg18'] out=['%140'] attrs={'dims': [2]}
+   [0149] node_149     stablehlo.broadcast_in_dim       in=['%140'] out=['%141'] attrs={'dims': [0, 1, 2]}
+   [0150] node_150     stablehlo.add                    in=['%139', '%141'] out=['%142'] attrs={}
+   [0151] node_151     stablehlo.negate                 in=['%138'] out=['%143'] attrs={}
+   [0152] node_152     stablehlo.exponential            in=['%143'] out=['%144'] attrs={}
+   [0153] node_153     stablehlo.broadcast_in_dim       in=['%cst_17'] out=['%145'] attrs={'dims': []}
+   [0154] node_154     stablehlo.add                    in=['%145', '%144'] out=['%146'] attrs={}
+   [0155] node_155     stablehlo.broadcast_in_dim       in=['%cst_18'] out=['%147'] attrs={'dims': []}
+   [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+   [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+>> [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+   [0163] node_163     stablehlo.add                    in=['%119', '%154'] out=['%155'] attrs={}
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+   [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+   [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0167] node_167     stablehlo.broadcast_in_dim       in=['%158'] out=['%159'] attrs={'dims': [0, 1]}
+   [0168] node_168     stablehlo.broadcast_in_dim       in=['%cst_20'] out=['%160'] attrs={'dims': []}
+
+PRODUCERS:
+  %149 <- [157] node_157 stablehlo.multiply out=['%149'] attrs={}
+  %142 <- [150] node_150 stablehlo.add out=['%142'] attrs={}
+
+CONSUMERS:
+  %150 -> [159] node_159 stablehlo.dot_general in=['%150', '%arg19'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=165 id=node_165 op=stablehlo.multiply
+  inputs: ['%156', '%156']
+  outputs: ['%157']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0155] node_155     stablehlo.broadcast_in_dim       in=['%cst_18'] out=['%147'] attrs={'dims': []}
+   [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+   [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+   [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+   [0163] node_163     stablehlo.add                    in=['%119', '%154'] out=['%155'] attrs={}
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+>> [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+   [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0167] node_167     stablehlo.broadcast_in_dim       in=['%158'] out=['%159'] attrs={'dims': [0, 1]}
+   [0168] node_168     stablehlo.broadcast_in_dim       in=['%cst_20'] out=['%160'] attrs={'dims': []}
+   [0169] node_169     stablehlo.divide                 in=['%159', '%160'] out=['%161'] attrs={}
+   [0170] node_170     stablehlo.broadcast_in_dim       in=['%cst_21'] out=['%162'] attrs={'dims': []}
+   [0171] node_171     stablehlo.add                    in=['%161', '%162'] out=['%163'] attrs={}
+   [0172] node_172     stablehlo.rsqrt                  in=['%163'] out=['%164'] attrs={}
+   [0173] node_173     stablehlo.broadcast_in_dim       in=['%164'] out=['%165'] attrs={'dims': [0, 1, 2]}
+   [0174] node_174     stablehlo.multiply               in=['%156', '%165'] out=['%166'] attrs={}
+   [0175] node_175     stablehlo.convert                in=['%166'] out=['%167'] attrs={}
+
+PRODUCERS:
+  %156 <- [164] node_164 stablehlo.convert out=['%156'] attrs={}
+  %156 <- [164] node_164 stablehlo.convert out=['%156'] attrs={}
+
+CONSUMERS:
+  %157 -> [166] node_166 stablehlo.reduce in=['%157', '%cst_19'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+====================================================================================================
+TARGET idx=166 id=node_166 op=stablehlo.reduce
+  inputs: ['%157', '%cst_19']
+  outputs: ['%158']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [2]}
+  result: ['tensor<1x5xf32>']
+
+WINDOW:
+   [0156] node_156     stablehlo.divide                 in=['%147', '%146'] out=['%148'] attrs={}
+   [0157] node_157     stablehlo.multiply               in=['%138', '%148'] out=['%149'] attrs={}
+   [0158] node_158     stablehlo.multiply               in=['%149', '%142'] out=['%150'] attrs={}
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+   [0163] node_163     stablehlo.add                    in=['%119', '%154'] out=['%155'] attrs={}
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+   [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+>> [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0167] node_167     stablehlo.broadcast_in_dim       in=['%158'] out=['%159'] attrs={'dims': [0, 1]}
+   [0168] node_168     stablehlo.broadcast_in_dim       in=['%cst_20'] out=['%160'] attrs={'dims': []}
+   [0169] node_169     stablehlo.divide                 in=['%159', '%160'] out=['%161'] attrs={}
+   [0170] node_170     stablehlo.broadcast_in_dim       in=['%cst_21'] out=['%162'] attrs={'dims': []}
+   [0171] node_171     stablehlo.add                    in=['%161', '%162'] out=['%163'] attrs={}
+   [0172] node_172     stablehlo.rsqrt                  in=['%163'] out=['%164'] attrs={}
+   [0173] node_173     stablehlo.broadcast_in_dim       in=['%164'] out=['%165'] attrs={'dims': [0, 1, 2]}
+   [0174] node_174     stablehlo.multiply               in=['%156', '%165'] out=['%166'] attrs={}
+   [0175] node_175     stablehlo.convert                in=['%166'] out=['%167'] attrs={}
+   [0176] node_176     stablehlo.broadcast_in_dim       in=['%arg21'] out=['%168'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %157 <- [165] node_165 stablehlo.multiply out=['%157'] attrs={}
+  %cst_19 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %158 -> [167] node_167 stablehlo.broadcast_in_dim in=['%158'] attrs={'dims': [0, 1]}
+
+====================================================================================================
+TARGET idx=169 id=node_169 op=stablehlo.divide
+  inputs: ['%159', '%160']
+  outputs: ['%161']
+  attrs: {}
+  result: ['tensor<1x5x1xf32>']
+
+WINDOW:
+   [0159] node_159     stablehlo.dot_general            in=['%150', '%arg19'] out=['%151'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0160] node_160     stablehlo.broadcast_in_dim       in=['%arg20'] out=['%152'] attrs={'dims': [2]}
+   [0161] node_161     stablehlo.broadcast_in_dim       in=['%152'] out=['%153'] attrs={'dims': [0, 1, 2]}
+   [0162] node_162     stablehlo.add                    in=['%151', '%153'] out=['%154'] attrs={}
+   [0163] node_163     stablehlo.add                    in=['%119', '%154'] out=['%155'] attrs={}
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+   [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+   [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0167] node_167     stablehlo.broadcast_in_dim       in=['%158'] out=['%159'] attrs={'dims': [0, 1]}
+   [0168] node_168     stablehlo.broadcast_in_dim       in=['%cst_20'] out=['%160'] attrs={'dims': []}
+>> [0169] node_169     stablehlo.divide                 in=['%159', '%160'] out=['%161'] attrs={}
+   [0170] node_170     stablehlo.broadcast_in_dim       in=['%cst_21'] out=['%162'] attrs={'dims': []}
+   [0171] node_171     stablehlo.add                    in=['%161', '%162'] out=['%163'] attrs={}
+   [0172] node_172     stablehlo.rsqrt                  in=['%163'] out=['%164'] attrs={}
+   [0173] node_173     stablehlo.broadcast_in_dim       in=['%164'] out=['%165'] attrs={'dims': [0, 1, 2]}
+   [0174] node_174     stablehlo.multiply               in=['%156', '%165'] out=['%166'] attrs={}
+   [0175] node_175     stablehlo.convert                in=['%166'] out=['%167'] attrs={}
+   [0176] node_176     stablehlo.broadcast_in_dim       in=['%arg21'] out=['%168'] attrs={'dims': [2]}
+   [0177] node_177     stablehlo.broadcast_in_dim       in=['%168'] out=['%169'] attrs={'dims': [0, 1, 2]}
+   [0178] node_178     stablehlo.multiply               in=['%167', '%169'] out=['%170'] attrs={}
+   [0179] node_179     stablehlo.dot_general            in=['%170', '%arg22'] out=['%171'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %159 <- [167] node_167 stablehlo.broadcast_in_dim out=['%159'] attrs={'dims': [0, 1]}
+  %160 <- [168] node_168 stablehlo.broadcast_in_dim out=['%160'] attrs={'dims': []}
+
+CONSUMERS:
+  %161 -> [171] node_171 stablehlo.add in=['%161', '%162'] attrs={}
+
+====================================================================================================
+TARGET idx=174 id=node_174 op=stablehlo.multiply
+  inputs: ['%156', '%165']
+  outputs: ['%166']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0164] node_164     stablehlo.convert                in=['%155'] out=['%156'] attrs={}
+   [0165] node_165     stablehlo.multiply               in=['%156', '%156'] out=['%157'] attrs={}
+   [0166] node_166     stablehlo.reduce                 in=['%157', '%cst_19'] out=['%158'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0167] node_167     stablehlo.broadcast_in_dim       in=['%158'] out=['%159'] attrs={'dims': [0, 1]}
+   [0168] node_168     stablehlo.broadcast_in_dim       in=['%cst_20'] out=['%160'] attrs={'dims': []}
+   [0169] node_169     stablehlo.divide                 in=['%159', '%160'] out=['%161'] attrs={}
+   [0170] node_170     stablehlo.broadcast_in_dim       in=['%cst_21'] out=['%162'] attrs={'dims': []}
+   [0171] node_171     stablehlo.add                    in=['%161', '%162'] out=['%163'] attrs={}
+   [0172] node_172     stablehlo.rsqrt                  in=['%163'] out=['%164'] attrs={}
+   [0173] node_173     stablehlo.broadcast_in_dim       in=['%164'] out=['%165'] attrs={'dims': [0, 1, 2]}
+>> [0174] node_174     stablehlo.multiply               in=['%156', '%165'] out=['%166'] attrs={}
+   [0175] node_175     stablehlo.convert                in=['%166'] out=['%167'] attrs={}
+   [0176] node_176     stablehlo.broadcast_in_dim       in=['%arg21'] out=['%168'] attrs={'dims': [2]}
+   [0177] node_177     stablehlo.broadcast_in_dim       in=['%168'] out=['%169'] attrs={'dims': [0, 1, 2]}
+   [0178] node_178     stablehlo.multiply               in=['%167', '%169'] out=['%170'] attrs={}
+   [0179] node_179     stablehlo.dot_general            in=['%170', '%arg22'] out=['%171'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0180] node_180     stablehlo.broadcast_in_dim       in=['%arg23'] out=['%172'] attrs={'dims': [2]}
+   [0181] node_181     stablehlo.broadcast_in_dim       in=['%172'] out=['%173'] attrs={'dims': [0, 1, 2]}
+   [0182] node_182     stablehlo.add                    in=['%171', '%173'] out=['%174'] attrs={}
+   [0183] node_183     stablehlo.dot_general            in=['%170', '%arg24'] out=['%175'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0184] node_184     stablehlo.broadcast_in_dim       in=['%arg25'] out=['%176'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %156 <- [164] node_164 stablehlo.convert out=['%156'] attrs={}
+  %165 <- [173] node_173 stablehlo.broadcast_in_dim out=['%165'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %166 -> [175] node_175 stablehlo.convert in=['%166'] attrs={}
+
+====================================================================================================
+TARGET idx=178 id=node_178 op=stablehlo.multiply
+  inputs: ['%167', '%169']
+  outputs: ['%170']
+  attrs: {}
+  result: ['tensor<1x5x128xf16>']
+
+WINDOW:
+   [0168] node_168     stablehlo.broadcast_in_dim       in=['%cst_20'] out=['%160'] attrs={'dims': []}
+   [0169] node_169     stablehlo.divide                 in=['%159', '%160'] out=['%161'] attrs={}
+   [0170] node_170     stablehlo.broadcast_in_dim       in=['%cst_21'] out=['%162'] attrs={'dims': []}
+   [0171] node_171     stablehlo.add                    in=['%161', '%162'] out=['%163'] attrs={}
+   [0172] node_172     stablehlo.rsqrt                  in=['%163'] out=['%164'] attrs={}
+   [0173] node_173     stablehlo.broadcast_in_dim       in=['%164'] out=['%165'] attrs={'dims': [0, 1, 2]}
+   [0174] node_174     stablehlo.multiply               in=['%156', '%165'] out=['%166'] attrs={}
+   [0175] node_175     stablehlo.convert                in=['%166'] out=['%167'] attrs={}
+   [0176] node_176     stablehlo.broadcast_in_dim       in=['%arg21'] out=['%168'] attrs={'dims': [2]}
+   [0177] node_177     stablehlo.broadcast_in_dim       in=['%168'] out=['%169'] attrs={'dims': [0, 1, 2]}
+>> [0178] node_178     stablehlo.multiply               in=['%167', '%169'] out=['%170'] attrs={}
+   [0179] node_179     stablehlo.dot_general            in=['%170', '%arg22'] out=['%171'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0180] node_180     stablehlo.broadcast_in_dim       in=['%arg23'] out=['%172'] attrs={'dims': [2]}
+   [0181] node_181     stablehlo.broadcast_in_dim       in=['%172'] out=['%173'] attrs={'dims': [0, 1, 2]}
+   [0182] node_182     stablehlo.add                    in=['%171', '%173'] out=['%174'] attrs={}
+   [0183] node_183     stablehlo.dot_general            in=['%170', '%arg24'] out=['%175'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0184] node_184     stablehlo.broadcast_in_dim       in=['%arg25'] out=['%176'] attrs={'dims': [2]}
+   [0185] node_185     stablehlo.broadcast_in_dim       in=['%176'] out=['%177'] attrs={'dims': [0, 1, 2]}
+   [0186] node_186     stablehlo.add                    in=['%175', '%177'] out=['%178'] attrs={}
+   [0187] node_187     stablehlo.dot_general            in=['%170', '%arg26'] out=['%179'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0188] node_188     stablehlo.broadcast_in_dim       in=['%arg27'] out=['%180'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %167 <- [175] node_175 stablehlo.convert out=['%167'] attrs={}
+  %169 <- [177] node_177 stablehlo.broadcast_in_dim out=['%169'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %170 -> [179] node_179 stablehlo.dot_general in=['%170', '%arg22'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %170 -> [183] node_183 stablehlo.dot_general in=['%170', '%arg24'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %170 -> [187] node_187 stablehlo.dot_general in=['%170', '%arg26'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=199 id=node_199 op=stablehlo.multiply
+  inputs: ['%190', '%189']
+  outputs: ['%191']
+  attrs: {}
+  result: ['tensor<16xf32>']
+
+WINDOW:
+   [0189] node_189     stablehlo.broadcast_in_dim       in=['%180'] out=['%181'] attrs={'dims': [0, 1, 2]}
+   [0190] node_190     stablehlo.add                    in=['%179', '%181'] out=['%182'] attrs={}
+   [0191] node_191     stablehlo.reshape                in=['%174'] out=['%183'] attrs={}
+   [0192] node_192     stablehlo.transpose              in=['%183'] out=['%184'] attrs={'dims': [0, 2, 1, 3]}
+   [0193] node_193     stablehlo.reshape                in=['%178'] out=['%185'] attrs={}
+   [0194] node_194     stablehlo.transpose              in=['%185'] out=['%186'] attrs={'dims': [0, 2, 1, 3]}
+   [0195] node_195     stablehlo.reshape                in=['%182'] out=['%187'] attrs={}
+   [0196] node_196     stablehlo.transpose              in=['%187'] out=['%188'] attrs={'dims': [0, 2, 1, 3]}
+   [0197] node_197     stablehlo.iota                   in=[] out=['%189'] attrs={'dim': 0}
+   [0198] node_198     stablehlo.broadcast_in_dim       in=['%cst_22'] out=['%190'] attrs={'dims': []}
+>> [0199] node_199     stablehlo.multiply               in=['%190', '%189'] out=['%191'] attrs={}
+   [0200] node_200     stablehlo.broadcast_in_dim       in=['%cst_23'] out=['%192'] attrs={'dims': []}
+   [0201] node_201     stablehlo.add                    in=['%192', '%191'] out=['%193'] attrs={}
+   [0202] node_202     stablehlo.broadcast_in_dim       in=['%cst_24'] out=['%194'] attrs={'dims': []}
+   [0203] node_203     stablehlo.divide                 in=['%193', '%194'] out=['%195'] attrs={}
+   [0204] node_204     stablehlo.broadcast_in_dim       in=['%cst_25'] out=['%196'] attrs={'dims': []}
+   [0205] node_205     stablehlo.power                  in=['%196', '%195'] out=['%197'] attrs={}
+   [0206] node_206     stablehlo.broadcast_in_dim       in=['%cst_26'] out=['%198'] attrs={'dims': []}
+   [0207] node_207     stablehlo.divide                 in=['%198', '%197'] out=['%199'] attrs={}
+   [0208] node_208     stablehlo.convert                in=['%arg1'] out=['%200'] attrs={}
+   [0209] node_209     stablehlo.broadcast_in_dim       in=['%200'] out=['%201'] attrs={'dims': [0, 1]}
+
+PRODUCERS:
+  %190 <- [198] node_198 stablehlo.broadcast_in_dim out=['%190'] attrs={'dims': []}
+  %189 <- [197] node_197 stablehlo.iota out=['%189'] attrs={'dim': 0}
+
+CONSUMERS:
+  %191 -> [201] node_201 stablehlo.add in=['%192', '%191'] attrs={}
+
+====================================================================================================
+TARGET idx=203 id=node_203 op=stablehlo.divide
+  inputs: ['%193', '%194']
+  outputs: ['%195']
+  attrs: {}
+  result: ['tensor<16xf32>']
+
+WINDOW:
+   [0193] node_193     stablehlo.reshape                in=['%178'] out=['%185'] attrs={}
+   [0194] node_194     stablehlo.transpose              in=['%185'] out=['%186'] attrs={'dims': [0, 2, 1, 3]}
+   [0195] node_195     stablehlo.reshape                in=['%182'] out=['%187'] attrs={}
+   [0196] node_196     stablehlo.transpose              in=['%187'] out=['%188'] attrs={'dims': [0, 2, 1, 3]}
+   [0197] node_197     stablehlo.iota                   in=[] out=['%189'] attrs={'dim': 0}
+   [0198] node_198     stablehlo.broadcast_in_dim       in=['%cst_22'] out=['%190'] attrs={'dims': []}
+   [0199] node_199     stablehlo.multiply               in=['%190', '%189'] out=['%191'] attrs={}
+   [0200] node_200     stablehlo.broadcast_in_dim       in=['%cst_23'] out=['%192'] attrs={'dims': []}
+   [0201] node_201     stablehlo.add                    in=['%192', '%191'] out=['%193'] attrs={}
+   [0202] node_202     stablehlo.broadcast_in_dim       in=['%cst_24'] out=['%194'] attrs={'dims': []}
+>> [0203] node_203     stablehlo.divide                 in=['%193', '%194'] out=['%195'] attrs={}
+   [0204] node_204     stablehlo.broadcast_in_dim       in=['%cst_25'] out=['%196'] attrs={'dims': []}
+   [0205] node_205     stablehlo.power                  in=['%196', '%195'] out=['%197'] attrs={}
+   [0206] node_206     stablehlo.broadcast_in_dim       in=['%cst_26'] out=['%198'] attrs={'dims': []}
+   [0207] node_207     stablehlo.divide                 in=['%198', '%197'] out=['%199'] attrs={}
+   [0208] node_208     stablehlo.convert                in=['%arg1'] out=['%200'] attrs={}
+   [0209] node_209     stablehlo.broadcast_in_dim       in=['%200'] out=['%201'] attrs={'dims': [0, 1]}
+   [0210] node_210     stablehlo.broadcast_in_dim       in=['%199'] out=['%202'] attrs={'dims': [2]}
+   [0211] node_211     stablehlo.broadcast_in_dim       in=['%201'] out=['%203'] attrs={'dims': [0, 1, 2]}
+   [0212] node_212     stablehlo.broadcast_in_dim       in=['%202'] out=['%204'] attrs={'dims': [0, 1, 2]}
+   [0213] node_213     stablehlo.multiply               in=['%203', '%204'] out=['%205'] attrs={}
+
+PRODUCERS:
+  %193 <- [201] node_201 stablehlo.add out=['%193'] attrs={}
+  %194 <- [202] node_202 stablehlo.broadcast_in_dim out=['%194'] attrs={'dims': []}
+
+CONSUMERS:
+  %195 -> [205] node_205 stablehlo.power in=['%196', '%195'] attrs={}
+
+====================================================================================================
+TARGET idx=207 id=node_207 op=stablehlo.divide
+  inputs: ['%198', '%197']
+  outputs: ['%199']
+  attrs: {}
+  result: ['tensor<16xf32>']
+
+WINDOW:
+   [0197] node_197     stablehlo.iota                   in=[] out=['%189'] attrs={'dim': 0}
+   [0198] node_198     stablehlo.broadcast_in_dim       in=['%cst_22'] out=['%190'] attrs={'dims': []}
+   [0199] node_199     stablehlo.multiply               in=['%190', '%189'] out=['%191'] attrs={}
+   [0200] node_200     stablehlo.broadcast_in_dim       in=['%cst_23'] out=['%192'] attrs={'dims': []}
+   [0201] node_201     stablehlo.add                    in=['%192', '%191'] out=['%193'] attrs={}
+   [0202] node_202     stablehlo.broadcast_in_dim       in=['%cst_24'] out=['%194'] attrs={'dims': []}
+   [0203] node_203     stablehlo.divide                 in=['%193', '%194'] out=['%195'] attrs={}
+   [0204] node_204     stablehlo.broadcast_in_dim       in=['%cst_25'] out=['%196'] attrs={'dims': []}
+   [0205] node_205     stablehlo.power                  in=['%196', '%195'] out=['%197'] attrs={}
+   [0206] node_206     stablehlo.broadcast_in_dim       in=['%cst_26'] out=['%198'] attrs={'dims': []}
+>> [0207] node_207     stablehlo.divide                 in=['%198', '%197'] out=['%199'] attrs={}
+   [0208] node_208     stablehlo.convert                in=['%arg1'] out=['%200'] attrs={}
+   [0209] node_209     stablehlo.broadcast_in_dim       in=['%200'] out=['%201'] attrs={'dims': [0, 1]}
+   [0210] node_210     stablehlo.broadcast_in_dim       in=['%199'] out=['%202'] attrs={'dims': [2]}
+   [0211] node_211     stablehlo.broadcast_in_dim       in=['%201'] out=['%203'] attrs={'dims': [0, 1, 2]}
+   [0212] node_212     stablehlo.broadcast_in_dim       in=['%202'] out=['%204'] attrs={'dims': [0, 1, 2]}
+   [0213] node_213     stablehlo.multiply               in=['%203', '%204'] out=['%205'] attrs={}
+   [0214] node_214     stablehlo.concatenate            in=['%205', '%205'] out=['%206'] attrs={'dim': 2}
+   [0215] node_215     stablehlo.cosine                 in=['%206'] out=['%207'] attrs={}
+   [0216] node_216     stablehlo.broadcast_in_dim       in=['%207'] out=['%208'] attrs={'dims': [0, 2, 3]}
+   [0217] node_217     stablehlo.convert                in=['%208'] out=['%209'] attrs={}
+
+PRODUCERS:
+  %198 <- [206] node_206 stablehlo.broadcast_in_dim out=['%198'] attrs={'dims': []}
+  %197 <- [205] node_205 stablehlo.power out=['%197'] attrs={}
+
+CONSUMERS:
+  %199 -> [210] node_210 stablehlo.broadcast_in_dim in=['%199'] attrs={'dims': [2]}
+
+====================================================================================================
+TARGET idx=213 id=node_213 op=stablehlo.multiply
+  inputs: ['%203', '%204']
+  outputs: ['%205']
+  attrs: {}
+  result: ['tensor<1x5x16xf32>']
+
+WINDOW:
+   [0203] node_203     stablehlo.divide                 in=['%193', '%194'] out=['%195'] attrs={}
+   [0204] node_204     stablehlo.broadcast_in_dim       in=['%cst_25'] out=['%196'] attrs={'dims': []}
+   [0205] node_205     stablehlo.power                  in=['%196', '%195'] out=['%197'] attrs={}
+   [0206] node_206     stablehlo.broadcast_in_dim       in=['%cst_26'] out=['%198'] attrs={'dims': []}
+   [0207] node_207     stablehlo.divide                 in=['%198', '%197'] out=['%199'] attrs={}
+   [0208] node_208     stablehlo.convert                in=['%arg1'] out=['%200'] attrs={}
+   [0209] node_209     stablehlo.broadcast_in_dim       in=['%200'] out=['%201'] attrs={'dims': [0, 1]}
+   [0210] node_210     stablehlo.broadcast_in_dim       in=['%199'] out=['%202'] attrs={'dims': [2]}
+   [0211] node_211     stablehlo.broadcast_in_dim       in=['%201'] out=['%203'] attrs={'dims': [0, 1, 2]}
+   [0212] node_212     stablehlo.broadcast_in_dim       in=['%202'] out=['%204'] attrs={'dims': [0, 1, 2]}
+>> [0213] node_213     stablehlo.multiply               in=['%203', '%204'] out=['%205'] attrs={}
+   [0214] node_214     stablehlo.concatenate            in=['%205', '%205'] out=['%206'] attrs={'dim': 2}
+   [0215] node_215     stablehlo.cosine                 in=['%206'] out=['%207'] attrs={}
+   [0216] node_216     stablehlo.broadcast_in_dim       in=['%207'] out=['%208'] attrs={'dims': [0, 2, 3]}
+   [0217] node_217     stablehlo.convert                in=['%208'] out=['%209'] attrs={}
+   [0218] node_218     stablehlo.sine                   in=['%206'] out=['%210'] attrs={}
+   [0219] node_219     stablehlo.broadcast_in_dim       in=['%210'] out=['%211'] attrs={'dims': [0, 2, 3]}
+   [0220] node_220     stablehlo.convert                in=['%211'] out=['%212'] attrs={}
+   [0221] node_221     stablehlo.broadcast_in_dim       in=['%209'] out=['%213'] attrs={'dims': [0, 1, 2, 3]}
+   [0222] node_222     stablehlo.multiply               in=['%184', '%213'] out=['%214'] attrs={}
+   [0223] node_223     stablehlo.slice                  in=['%184'] out=['%215'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %203 <- [211] node_211 stablehlo.broadcast_in_dim out=['%203'] attrs={'dims': [0, 1, 2]}
+  %204 <- [212] node_212 stablehlo.broadcast_in_dim out=['%204'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %205 -> [214] node_214 stablehlo.concatenate in=['%205', '%205'] attrs={'dim': 2}
+  %205 -> [214] node_214 stablehlo.concatenate in=['%205', '%205'] attrs={'dim': 2}
+
+====================================================================================================
+TARGET idx=222 id=node_222 op=stablehlo.multiply
+  inputs: ['%184', '%213']
+  outputs: ['%214']
+  attrs: {}
+  result: ['tensor<1x4x5x32xf16>']
+
+WINDOW:
+   [0212] node_212     stablehlo.broadcast_in_dim       in=['%202'] out=['%204'] attrs={'dims': [0, 1, 2]}
+   [0213] node_213     stablehlo.multiply               in=['%203', '%204'] out=['%205'] attrs={}
+   [0214] node_214     stablehlo.concatenate            in=['%205', '%205'] out=['%206'] attrs={'dim': 2}
+   [0215] node_215     stablehlo.cosine                 in=['%206'] out=['%207'] attrs={}
+   [0216] node_216     stablehlo.broadcast_in_dim       in=['%207'] out=['%208'] attrs={'dims': [0, 2, 3]}
+   [0217] node_217     stablehlo.convert                in=['%208'] out=['%209'] attrs={}
+   [0218] node_218     stablehlo.sine                   in=['%206'] out=['%210'] attrs={}
+   [0219] node_219     stablehlo.broadcast_in_dim       in=['%210'] out=['%211'] attrs={'dims': [0, 2, 3]}
+   [0220] node_220     stablehlo.convert                in=['%211'] out=['%212'] attrs={}
+   [0221] node_221     stablehlo.broadcast_in_dim       in=['%209'] out=['%213'] attrs={'dims': [0, 1, 2, 3]}
+>> [0222] node_222     stablehlo.multiply               in=['%184', '%213'] out=['%214'] attrs={}
+   [0223] node_223     stablehlo.slice                  in=['%184'] out=['%215'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0224] node_224     stablehlo.slice                  in=['%184'] out=['%216'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0225] node_225     stablehlo.negate                 in=['%216'] out=['%217'] attrs={}
+   [0226] node_226     stablehlo.concatenate            in=['%217', '%215'] out=['%218'] attrs={'dim': 3}
+   [0227] node_227     stablehlo.broadcast_in_dim       in=['%212'] out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+   [0228] node_228     stablehlo.multiply               in=['%218', '%219'] out=['%220'] attrs={}
+   [0229] node_229     stablehlo.add                    in=['%214', '%220'] out=['%221'] attrs={}
+   [0230] node_230     stablehlo.broadcast_in_dim       in=['%209'] out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+   [0231] node_231     stablehlo.multiply               in=['%186', '%222'] out=['%223'] attrs={}
+   [0232] node_232     stablehlo.slice                  in=['%186'] out=['%224'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %184 <- [192] node_192 stablehlo.transpose out=['%184'] attrs={'dims': [0, 2, 1, 3]}
+  %213 <- [221] node_221 stablehlo.broadcast_in_dim out=['%213'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %214 -> [229] node_229 stablehlo.add in=['%214', '%220'] attrs={}
+
+====================================================================================================
+TARGET idx=225 id=node_225 op=stablehlo.negate
+  inputs: ['%216']
+  outputs: ['%217']
+  attrs: {}
+  result: ['tensor<1x4x5x16xf16>']
+
+WINDOW:
+   [0215] node_215     stablehlo.cosine                 in=['%206'] out=['%207'] attrs={}
+   [0216] node_216     stablehlo.broadcast_in_dim       in=['%207'] out=['%208'] attrs={'dims': [0, 2, 3]}
+   [0217] node_217     stablehlo.convert                in=['%208'] out=['%209'] attrs={}
+   [0218] node_218     stablehlo.sine                   in=['%206'] out=['%210'] attrs={}
+   [0219] node_219     stablehlo.broadcast_in_dim       in=['%210'] out=['%211'] attrs={'dims': [0, 2, 3]}
+   [0220] node_220     stablehlo.convert                in=['%211'] out=['%212'] attrs={}
+   [0221] node_221     stablehlo.broadcast_in_dim       in=['%209'] out=['%213'] attrs={'dims': [0, 1, 2, 3]}
+   [0222] node_222     stablehlo.multiply               in=['%184', '%213'] out=['%214'] attrs={}
+   [0223] node_223     stablehlo.slice                  in=['%184'] out=['%215'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0224] node_224     stablehlo.slice                  in=['%184'] out=['%216'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+>> [0225] node_225     stablehlo.negate                 in=['%216'] out=['%217'] attrs={}
+   [0226] node_226     stablehlo.concatenate            in=['%217', '%215'] out=['%218'] attrs={'dim': 3}
+   [0227] node_227     stablehlo.broadcast_in_dim       in=['%212'] out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+   [0228] node_228     stablehlo.multiply               in=['%218', '%219'] out=['%220'] attrs={}
+   [0229] node_229     stablehlo.add                    in=['%214', '%220'] out=['%221'] attrs={}
+   [0230] node_230     stablehlo.broadcast_in_dim       in=['%209'] out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+   [0231] node_231     stablehlo.multiply               in=['%186', '%222'] out=['%223'] attrs={}
+   [0232] node_232     stablehlo.slice                  in=['%186'] out=['%224'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0233] node_233     stablehlo.slice                  in=['%186'] out=['%225'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0234] node_234     stablehlo.negate                 in=['%225'] out=['%226'] attrs={}
+   [0235] node_235     stablehlo.concatenate            in=['%226', '%224'] out=['%227'] attrs={'dim': 3}
+
+PRODUCERS:
+  %216 <- [224] node_224 stablehlo.slice out=['%216'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+
+CONSUMERS:
+  %217 -> [226] node_226 stablehlo.concatenate in=['%217', '%215'] attrs={'dim': 3}
+
+====================================================================================================
+TARGET idx=228 id=node_228 op=stablehlo.multiply
+  inputs: ['%218', '%219']
+  outputs: ['%220']
+  attrs: {}
+  result: ['tensor<1x4x5x32xf16>']
+
+WINDOW:
+   [0218] node_218     stablehlo.sine                   in=['%206'] out=['%210'] attrs={}
+   [0219] node_219     stablehlo.broadcast_in_dim       in=['%210'] out=['%211'] attrs={'dims': [0, 2, 3]}
+   [0220] node_220     stablehlo.convert                in=['%211'] out=['%212'] attrs={}
+   [0221] node_221     stablehlo.broadcast_in_dim       in=['%209'] out=['%213'] attrs={'dims': [0, 1, 2, 3]}
+   [0222] node_222     stablehlo.multiply               in=['%184', '%213'] out=['%214'] attrs={}
+   [0223] node_223     stablehlo.slice                  in=['%184'] out=['%215'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0224] node_224     stablehlo.slice                  in=['%184'] out=['%216'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0225] node_225     stablehlo.negate                 in=['%216'] out=['%217'] attrs={}
+   [0226] node_226     stablehlo.concatenate            in=['%217', '%215'] out=['%218'] attrs={'dim': 3}
+   [0227] node_227     stablehlo.broadcast_in_dim       in=['%212'] out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+>> [0228] node_228     stablehlo.multiply               in=['%218', '%219'] out=['%220'] attrs={}
+   [0229] node_229     stablehlo.add                    in=['%214', '%220'] out=['%221'] attrs={}
+   [0230] node_230     stablehlo.broadcast_in_dim       in=['%209'] out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+   [0231] node_231     stablehlo.multiply               in=['%186', '%222'] out=['%223'] attrs={}
+   [0232] node_232     stablehlo.slice                  in=['%186'] out=['%224'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0233] node_233     stablehlo.slice                  in=['%186'] out=['%225'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0234] node_234     stablehlo.negate                 in=['%225'] out=['%226'] attrs={}
+   [0235] node_235     stablehlo.concatenate            in=['%226', '%224'] out=['%227'] attrs={'dim': 3}
+   [0236] node_236     stablehlo.broadcast_in_dim       in=['%212'] out=['%228'] attrs={'dims': [0, 1, 2, 3]}
+   [0237] node_237     stablehlo.multiply               in=['%227', '%228'] out=['%229'] attrs={}
+   [0238] node_238     stablehlo.add                    in=['%223', '%229'] out=['%230'] attrs={}
+
+PRODUCERS:
+  %218 <- [226] node_226 stablehlo.concatenate out=['%218'] attrs={'dim': 3}
+  %219 <- [227] node_227 stablehlo.broadcast_in_dim out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %220 -> [229] node_229 stablehlo.add in=['%214', '%220'] attrs={}
+
+====================================================================================================
+TARGET idx=231 id=node_231 op=stablehlo.multiply
+  inputs: ['%186', '%222']
+  outputs: ['%223']
+  attrs: {}
+  result: ['tensor<1x2x5x32xf16>']
+
+WINDOW:
+   [0221] node_221     stablehlo.broadcast_in_dim       in=['%209'] out=['%213'] attrs={'dims': [0, 1, 2, 3]}
+   [0222] node_222     stablehlo.multiply               in=['%184', '%213'] out=['%214'] attrs={}
+   [0223] node_223     stablehlo.slice                  in=['%184'] out=['%215'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 4, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0224] node_224     stablehlo.slice                  in=['%184'] out=['%216'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0225] node_225     stablehlo.negate                 in=['%216'] out=['%217'] attrs={}
+   [0226] node_226     stablehlo.concatenate            in=['%217', '%215'] out=['%218'] attrs={'dim': 3}
+   [0227] node_227     stablehlo.broadcast_in_dim       in=['%212'] out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+   [0228] node_228     stablehlo.multiply               in=['%218', '%219'] out=['%220'] attrs={}
+   [0229] node_229     stablehlo.add                    in=['%214', '%220'] out=['%221'] attrs={}
+   [0230] node_230     stablehlo.broadcast_in_dim       in=['%209'] out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+>> [0231] node_231     stablehlo.multiply               in=['%186', '%222'] out=['%223'] attrs={}
+   [0232] node_232     stablehlo.slice                  in=['%186'] out=['%224'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0233] node_233     stablehlo.slice                  in=['%186'] out=['%225'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0234] node_234     stablehlo.negate                 in=['%225'] out=['%226'] attrs={}
+   [0235] node_235     stablehlo.concatenate            in=['%226', '%224'] out=['%227'] attrs={'dim': 3}
+   [0236] node_236     stablehlo.broadcast_in_dim       in=['%212'] out=['%228'] attrs={'dims': [0, 1, 2, 3]}
+   [0237] node_237     stablehlo.multiply               in=['%227', '%228'] out=['%229'] attrs={}
+   [0238] node_238     stablehlo.add                    in=['%223', '%229'] out=['%230'] attrs={}
+   [0239] node_239     stablehlo.slice                  in=['%230'] out=['%231'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0240] node_240     stablehlo.slice                  in=['%230'] out=['%232'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0241] node_241     stablehlo.slice                  in=['%230'] out=['%233'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %186 <- [194] node_194 stablehlo.transpose out=['%186'] attrs={'dims': [0, 2, 1, 3]}
+  %222 <- [230] node_230 stablehlo.broadcast_in_dim out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %223 -> [238] node_238 stablehlo.add in=['%223', '%229'] attrs={}
+
+====================================================================================================
+TARGET idx=234 id=node_234 op=stablehlo.negate
+  inputs: ['%225']
+  outputs: ['%226']
+  attrs: {}
+  result: ['tensor<1x2x5x16xf16>']
+
+WINDOW:
+   [0224] node_224     stablehlo.slice                  in=['%184'] out=['%216'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 4, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0225] node_225     stablehlo.negate                 in=['%216'] out=['%217'] attrs={}
+   [0226] node_226     stablehlo.concatenate            in=['%217', '%215'] out=['%218'] attrs={'dim': 3}
+   [0227] node_227     stablehlo.broadcast_in_dim       in=['%212'] out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+   [0228] node_228     stablehlo.multiply               in=['%218', '%219'] out=['%220'] attrs={}
+   [0229] node_229     stablehlo.add                    in=['%214', '%220'] out=['%221'] attrs={}
+   [0230] node_230     stablehlo.broadcast_in_dim       in=['%209'] out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+   [0231] node_231     stablehlo.multiply               in=['%186', '%222'] out=['%223'] attrs={}
+   [0232] node_232     stablehlo.slice                  in=['%186'] out=['%224'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0233] node_233     stablehlo.slice                  in=['%186'] out=['%225'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+>> [0234] node_234     stablehlo.negate                 in=['%225'] out=['%226'] attrs={}
+   [0235] node_235     stablehlo.concatenate            in=['%226', '%224'] out=['%227'] attrs={'dim': 3}
+   [0236] node_236     stablehlo.broadcast_in_dim       in=['%212'] out=['%228'] attrs={'dims': [0, 1, 2, 3]}
+   [0237] node_237     stablehlo.multiply               in=['%227', '%228'] out=['%229'] attrs={}
+   [0238] node_238     stablehlo.add                    in=['%223', '%229'] out=['%230'] attrs={}
+   [0239] node_239     stablehlo.slice                  in=['%230'] out=['%231'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0240] node_240     stablehlo.slice                  in=['%230'] out=['%232'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0241] node_241     stablehlo.slice                  in=['%230'] out=['%233'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0242] node_242     stablehlo.slice                  in=['%230'] out=['%234'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0243] node_243     stablehlo.concatenate            in=['%231', '%232', '%233', '%234'] out=['%235'] attrs={'dim': 1}
+   [0244] node_244     stablehlo.slice                  in=['%188'] out=['%236'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %225 <- [233] node_233 stablehlo.slice out=['%225'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+
+CONSUMERS:
+  %226 -> [235] node_235 stablehlo.concatenate in=['%226', '%224'] attrs={'dim': 3}
+
+====================================================================================================
+TARGET idx=237 id=node_237 op=stablehlo.multiply
+  inputs: ['%227', '%228']
+  outputs: ['%229']
+  attrs: {}
+  result: ['tensor<1x2x5x32xf16>']
+
+WINDOW:
+   [0227] node_227     stablehlo.broadcast_in_dim       in=['%212'] out=['%219'] attrs={'dims': [0, 1, 2, 3]}
+   [0228] node_228     stablehlo.multiply               in=['%218', '%219'] out=['%220'] attrs={}
+   [0229] node_229     stablehlo.add                    in=['%214', '%220'] out=['%221'] attrs={}
+   [0230] node_230     stablehlo.broadcast_in_dim       in=['%209'] out=['%222'] attrs={'dims': [0, 1, 2, 3]}
+   [0231] node_231     stablehlo.multiply               in=['%186', '%222'] out=['%223'] attrs={}
+   [0232] node_232     stablehlo.slice                  in=['%186'] out=['%224'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 2, 5, 16], 'strides': [1, 1, 1, 1]}
+   [0233] node_233     stablehlo.slice                  in=['%186'] out=['%225'] attrs={'start_indices': [0, 0, 0, 16], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0234] node_234     stablehlo.negate                 in=['%225'] out=['%226'] attrs={}
+   [0235] node_235     stablehlo.concatenate            in=['%226', '%224'] out=['%227'] attrs={'dim': 3}
+   [0236] node_236     stablehlo.broadcast_in_dim       in=['%212'] out=['%228'] attrs={'dims': [0, 1, 2, 3]}
+>> [0237] node_237     stablehlo.multiply               in=['%227', '%228'] out=['%229'] attrs={}
+   [0238] node_238     stablehlo.add                    in=['%223', '%229'] out=['%230'] attrs={}
+   [0239] node_239     stablehlo.slice                  in=['%230'] out=['%231'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0240] node_240     stablehlo.slice                  in=['%230'] out=['%232'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0241] node_241     stablehlo.slice                  in=['%230'] out=['%233'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0242] node_242     stablehlo.slice                  in=['%230'] out=['%234'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0243] node_243     stablehlo.concatenate            in=['%231', '%232', '%233', '%234'] out=['%235'] attrs={'dim': 1}
+   [0244] node_244     stablehlo.slice                  in=['%188'] out=['%236'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0245] node_245     stablehlo.slice                  in=['%188'] out=['%237'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0246] node_246     stablehlo.slice                  in=['%188'] out=['%238'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0247] node_247     stablehlo.slice                  in=['%188'] out=['%239'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+
+PRODUCERS:
+  %227 <- [235] node_235 stablehlo.concatenate out=['%227'] attrs={'dim': 3}
+  %228 <- [236] node_236 stablehlo.broadcast_in_dim out=['%228'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %229 -> [238] node_238 stablehlo.add in=['%223', '%229'] attrs={}
+
+====================================================================================================
+TARGET idx=251 id=node_251 op=stablehlo.multiply
+  inputs: ['%241', '%242']
+  outputs: ['%243']
+  attrs: {}
+  result: ['tensor<1x4x5x5xf16>']
+
+WINDOW:
+   [0241] node_241     stablehlo.slice                  in=['%230'] out=['%233'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0242] node_242     stablehlo.slice                  in=['%230'] out=['%234'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0243] node_243     stablehlo.concatenate            in=['%231', '%232', '%233', '%234'] out=['%235'] attrs={'dim': 1}
+   [0244] node_244     stablehlo.slice                  in=['%188'] out=['%236'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0245] node_245     stablehlo.slice                  in=['%188'] out=['%237'] attrs={'start_indices': [0, 0, 0, 0], 'limit_indices': [1, 1, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0246] node_246     stablehlo.slice                  in=['%188'] out=['%238'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0247] node_247     stablehlo.slice                  in=['%188'] out=['%239'] attrs={'start_indices': [0, 1, 0, 0], 'limit_indices': [1, 2, 5, 32], 'strides': [1, 1, 1, 1]}
+   [0248] node_248     stablehlo.concatenate            in=['%236', '%237', '%238', '%239'] out=['%240'] attrs={'dim': 1}
+   [0249] node_249     stablehlo.dot_general            in=['%221', '%235'] out=['%241'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [3]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0250] node_250     stablehlo.broadcast_in_dim       in=['%cst_27'] out=['%242'] attrs={'dims': []}
+>> [0251] node_251     stablehlo.multiply               in=['%241', '%242'] out=['%243'] attrs={}
+   [0252] node_252     stablehlo.broadcast_in_dim       in=['%c_28'] out=['%244'] attrs={'dims': []}
+   [0253] node_253     stablehlo.iota                   in=[] out=['%0_tril3'] attrs={'dim': 0}
+   [0254] node_254     stablehlo.broadcast_in_dim       in=['%c_tril3'] out=['%1_tril3'] attrs={'dims': []}
+   [0255] node_255     stablehlo.add                    in=['%0_tril3', '%1_tril3'] out=['%2_tril3'] attrs={}
+   [0256] node_256     stablehlo.iota                   in=[] out=['%3_tril3'] attrs={'dim': 1}
+   [0257] node_257     stablehlo.compare                in=['%2_tril3', '%3_tril3'] out=['%4_tril3'] attrs={'comparison_direction': 'GE'}
+   [0258] node_258     stablehlo.broadcast_in_dim       in=['%c_0_tril3'] out=['%5_tril3'] attrs={'dims': []}
+   [0259] node_259     stablehlo.select                 in=['%4_tril3', '%244', '%5_tril3'] out=['%6_tril3'] attrs={}
+   [0260] node_260     stablehlo.broadcast_in_dim       in=['%6_tril3'] out=['%246'] attrs={'dims': [2, 3]}
+   [0261] node_261     stablehlo.broadcast_in_dim       in=['%246'] out=['%0__where4'] attrs={'dims': [0, 1, 2, 3]}
+
+PRODUCERS:
+  %241 <- [249] node_249 stablehlo.dot_general out=['%241'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [3]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %242 <- [250] node_250 stablehlo.broadcast_in_dim out=['%242'] attrs={'dims': []}
+
+CONSUMERS:
+  %243 -> [263] node_263 stablehlo.select in=['%0__where4', '%243', '%1__where4'] attrs={}
+
+====================================================================================================
+TARGET idx=264 id=node_264 op=stablehlo.reduce
+  inputs: ['%2__where4', '%cst_30']
+  outputs: ['%248']
+  attrs: {'applies': 'stablehlo.maximum', 'dimensions': [3]}
+  result: ['tensor<1x4x5xf16>']
+
+WINDOW:
+   [0254] node_254     stablehlo.broadcast_in_dim       in=['%c_tril3'] out=['%1_tril3'] attrs={'dims': []}
+   [0255] node_255     stablehlo.add                    in=['%0_tril3', '%1_tril3'] out=['%2_tril3'] attrs={}
+   [0256] node_256     stablehlo.iota                   in=[] out=['%3_tril3'] attrs={'dim': 1}
+   [0257] node_257     stablehlo.compare                in=['%2_tril3', '%3_tril3'] out=['%4_tril3'] attrs={'comparison_direction': 'GE'}
+   [0258] node_258     stablehlo.broadcast_in_dim       in=['%c_0_tril3'] out=['%5_tril3'] attrs={'dims': []}
+   [0259] node_259     stablehlo.select                 in=['%4_tril3', '%244', '%5_tril3'] out=['%6_tril3'] attrs={}
+   [0260] node_260     stablehlo.broadcast_in_dim       in=['%6_tril3'] out=['%246'] attrs={'dims': [2, 3]}
+   [0261] node_261     stablehlo.broadcast_in_dim       in=['%246'] out=['%0__where4'] attrs={'dims': [0, 1, 2, 3]}
+   [0262] node_262     stablehlo.broadcast_in_dim       in=['%cst_29'] out=['%1__where4'] attrs={'dims': []}
+   [0263] node_263     stablehlo.select                 in=['%0__where4', '%243', '%1__where4'] out=['%2__where4'] attrs={}
+>> [0264] node_264     stablehlo.reduce                 in=['%2__where4', '%cst_30'] out=['%248'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0265] node_265     stablehlo.broadcast_in_dim       in=['%cst_31'] out=['%249'] attrs={'dims': []}
+   [0266] node_266     stablehlo.maximum                in=['%249', '%248'] out=['%250'] attrs={}
+   [0267] node_267     stablehlo.broadcast_in_dim       in=['%250'] out=['%251'] attrs={'dims': [0, 1, 2]}
+   [0268] node_268     stablehlo.broadcast_in_dim       in=['%251'] out=['%252'] attrs={'dims': [0, 1, 2, 3]}
+   [0269] node_269     stablehlo.subtract               in=['%2__where4', '%252'] out=['%253'] attrs={}
+   [0270] node_270     stablehlo.exponential            in=['%253'] out=['%254'] attrs={}
+   [0271] node_271     stablehlo.convert                in=['%254'] out=['%255'] attrs={}
+   [0272] node_272     stablehlo.reduce                 in=['%255', '%cst_32'] out=['%256'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0273] node_273     stablehlo.broadcast_in_dim       in=['%256'] out=['%257'] attrs={'dims': [0, 1, 2]}
+   [0274] node_274     stablehlo.convert                in=['%257'] out=['%258'] attrs={}
+
+PRODUCERS:
+  %2__where4 <- [263] node_263 stablehlo.select out=['%2__where4'] attrs={}
+  %cst_30 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %248 -> [266] node_266 stablehlo.maximum in=['%249', '%248'] attrs={}
+
+====================================================================================================
+TARGET idx=266 id=node_266 op=stablehlo.maximum
+  inputs: ['%249', '%248']
+  outputs: ['%250']
+  attrs: {}
+  result: ['tensor<1x4x5xf16>']
+
+WINDOW:
+   [0256] node_256     stablehlo.iota                   in=[] out=['%3_tril3'] attrs={'dim': 1}
+   [0257] node_257     stablehlo.compare                in=['%2_tril3', '%3_tril3'] out=['%4_tril3'] attrs={'comparison_direction': 'GE'}
+   [0258] node_258     stablehlo.broadcast_in_dim       in=['%c_0_tril3'] out=['%5_tril3'] attrs={'dims': []}
+   [0259] node_259     stablehlo.select                 in=['%4_tril3', '%244', '%5_tril3'] out=['%6_tril3'] attrs={}
+   [0260] node_260     stablehlo.broadcast_in_dim       in=['%6_tril3'] out=['%246'] attrs={'dims': [2, 3]}
+   [0261] node_261     stablehlo.broadcast_in_dim       in=['%246'] out=['%0__where4'] attrs={'dims': [0, 1, 2, 3]}
+   [0262] node_262     stablehlo.broadcast_in_dim       in=['%cst_29'] out=['%1__where4'] attrs={'dims': []}
+   [0263] node_263     stablehlo.select                 in=['%0__where4', '%243', '%1__where4'] out=['%2__where4'] attrs={}
+   [0264] node_264     stablehlo.reduce                 in=['%2__where4', '%cst_30'] out=['%248'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0265] node_265     stablehlo.broadcast_in_dim       in=['%cst_31'] out=['%249'] attrs={'dims': []}
+>> [0266] node_266     stablehlo.maximum                in=['%249', '%248'] out=['%250'] attrs={}
+   [0267] node_267     stablehlo.broadcast_in_dim       in=['%250'] out=['%251'] attrs={'dims': [0, 1, 2]}
+   [0268] node_268     stablehlo.broadcast_in_dim       in=['%251'] out=['%252'] attrs={'dims': [0, 1, 2, 3]}
+   [0269] node_269     stablehlo.subtract               in=['%2__where4', '%252'] out=['%253'] attrs={}
+   [0270] node_270     stablehlo.exponential            in=['%253'] out=['%254'] attrs={}
+   [0271] node_271     stablehlo.convert                in=['%254'] out=['%255'] attrs={}
+   [0272] node_272     stablehlo.reduce                 in=['%255', '%cst_32'] out=['%256'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0273] node_273     stablehlo.broadcast_in_dim       in=['%256'] out=['%257'] attrs={'dims': [0, 1, 2]}
+   [0274] node_274     stablehlo.convert                in=['%257'] out=['%258'] attrs={}
+   [0275] node_275     stablehlo.broadcast_in_dim       in=['%258'] out=['%259'] attrs={'dims': [0, 1, 2, 3]}
+   [0276] node_276     stablehlo.divide                 in=['%254', '%259'] out=['%260'] attrs={}
+
+PRODUCERS:
+  %249 <- [265] node_265 stablehlo.broadcast_in_dim out=['%249'] attrs={'dims': []}
+  %248 <- [264] node_264 stablehlo.reduce out=['%248'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+
+CONSUMERS:
+  %250 -> [267] node_267 stablehlo.broadcast_in_dim in=['%250'] attrs={'dims': [0, 1, 2]}
+
+====================================================================================================
+TARGET idx=270 id=node_270 op=stablehlo.exponential
+  inputs: ['%253']
+  outputs: ['%254']
+  attrs: {}
+  result: ['tensor<1x4x5x5xf16>']
+
+WINDOW:
+   [0260] node_260     stablehlo.broadcast_in_dim       in=['%6_tril3'] out=['%246'] attrs={'dims': [2, 3]}
+   [0261] node_261     stablehlo.broadcast_in_dim       in=['%246'] out=['%0__where4'] attrs={'dims': [0, 1, 2, 3]}
+   [0262] node_262     stablehlo.broadcast_in_dim       in=['%cst_29'] out=['%1__where4'] attrs={'dims': []}
+   [0263] node_263     stablehlo.select                 in=['%0__where4', '%243', '%1__where4'] out=['%2__where4'] attrs={}
+   [0264] node_264     stablehlo.reduce                 in=['%2__where4', '%cst_30'] out=['%248'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0265] node_265     stablehlo.broadcast_in_dim       in=['%cst_31'] out=['%249'] attrs={'dims': []}
+   [0266] node_266     stablehlo.maximum                in=['%249', '%248'] out=['%250'] attrs={}
+   [0267] node_267     stablehlo.broadcast_in_dim       in=['%250'] out=['%251'] attrs={'dims': [0, 1, 2]}
+   [0268] node_268     stablehlo.broadcast_in_dim       in=['%251'] out=['%252'] attrs={'dims': [0, 1, 2, 3]}
+   [0269] node_269     stablehlo.subtract               in=['%2__where4', '%252'] out=['%253'] attrs={}
+>> [0270] node_270     stablehlo.exponential            in=['%253'] out=['%254'] attrs={}
+   [0271] node_271     stablehlo.convert                in=['%254'] out=['%255'] attrs={}
+   [0272] node_272     stablehlo.reduce                 in=['%255', '%cst_32'] out=['%256'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0273] node_273     stablehlo.broadcast_in_dim       in=['%256'] out=['%257'] attrs={'dims': [0, 1, 2]}
+   [0274] node_274     stablehlo.convert                in=['%257'] out=['%258'] attrs={}
+   [0275] node_275     stablehlo.broadcast_in_dim       in=['%258'] out=['%259'] attrs={'dims': [0, 1, 2, 3]}
+   [0276] node_276     stablehlo.divide                 in=['%254', '%259'] out=['%260'] attrs={}
+   [0277] node_277     stablehlo.dot_general            in=['%260', '%240'] out=['%261'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0278] node_278     stablehlo.transpose              in=['%261'] out=['%262'] attrs={'dims': [0, 2, 1, 3]}
+   [0279] node_279     stablehlo.reshape                in=['%262'] out=['%263'] attrs={}
+   [0280] node_280     stablehlo.dot_general            in=['%263', '%arg28'] out=['%264'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %253 <- [269] node_269 stablehlo.subtract out=['%253'] attrs={}
+
+CONSUMERS:
+  %254 -> [271] node_271 stablehlo.convert in=['%254'] attrs={}
+  %254 -> [276] node_276 stablehlo.divide in=['%254', '%259'] attrs={}
+
+====================================================================================================
+TARGET idx=272 id=node_272 op=stablehlo.reduce
+  inputs: ['%255', '%cst_32']
+  outputs: ['%256']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [3]}
+  result: ['tensor<1x4x5xf32>']
+
+WINDOW:
+   [0262] node_262     stablehlo.broadcast_in_dim       in=['%cst_29'] out=['%1__where4'] attrs={'dims': []}
+   [0263] node_263     stablehlo.select                 in=['%0__where4', '%243', '%1__where4'] out=['%2__where4'] attrs={}
+   [0264] node_264     stablehlo.reduce                 in=['%2__where4', '%cst_30'] out=['%248'] attrs={'applies': 'stablehlo.maximum', 'dimensions': [3]}
+   [0265] node_265     stablehlo.broadcast_in_dim       in=['%cst_31'] out=['%249'] attrs={'dims': []}
+   [0266] node_266     stablehlo.maximum                in=['%249', '%248'] out=['%250'] attrs={}
+   [0267] node_267     stablehlo.broadcast_in_dim       in=['%250'] out=['%251'] attrs={'dims': [0, 1, 2]}
+   [0268] node_268     stablehlo.broadcast_in_dim       in=['%251'] out=['%252'] attrs={'dims': [0, 1, 2, 3]}
+   [0269] node_269     stablehlo.subtract               in=['%2__where4', '%252'] out=['%253'] attrs={}
+   [0270] node_270     stablehlo.exponential            in=['%253'] out=['%254'] attrs={}
+   [0271] node_271     stablehlo.convert                in=['%254'] out=['%255'] attrs={}
+>> [0272] node_272     stablehlo.reduce                 in=['%255', '%cst_32'] out=['%256'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0273] node_273     stablehlo.broadcast_in_dim       in=['%256'] out=['%257'] attrs={'dims': [0, 1, 2]}
+   [0274] node_274     stablehlo.convert                in=['%257'] out=['%258'] attrs={}
+   [0275] node_275     stablehlo.broadcast_in_dim       in=['%258'] out=['%259'] attrs={'dims': [0, 1, 2, 3]}
+   [0276] node_276     stablehlo.divide                 in=['%254', '%259'] out=['%260'] attrs={}
+   [0277] node_277     stablehlo.dot_general            in=['%260', '%240'] out=['%261'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0278] node_278     stablehlo.transpose              in=['%261'] out=['%262'] attrs={'dims': [0, 2, 1, 3]}
+   [0279] node_279     stablehlo.reshape                in=['%262'] out=['%263'] attrs={}
+   [0280] node_280     stablehlo.dot_general            in=['%263', '%arg28'] out=['%264'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0281] node_281     stablehlo.broadcast_in_dim       in=['%arg29'] out=['%265'] attrs={'dims': [2]}
+   [0282] node_282     stablehlo.broadcast_in_dim       in=['%265'] out=['%266'] attrs={'dims': [0, 1, 2]}
+
+PRODUCERS:
+  %255 <- [271] node_271 stablehlo.convert out=['%255'] attrs={}
+  %cst_32 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %256 -> [273] node_273 stablehlo.broadcast_in_dim in=['%256'] attrs={'dims': [0, 1, 2]}
+
+====================================================================================================
+TARGET idx=276 id=node_276 op=stablehlo.divide
+  inputs: ['%254', '%259']
+  outputs: ['%260']
+  attrs: {}
+  result: ['tensor<1x4x5x5xf16>']
+
+WINDOW:
+   [0266] node_266     stablehlo.maximum                in=['%249', '%248'] out=['%250'] attrs={}
+   [0267] node_267     stablehlo.broadcast_in_dim       in=['%250'] out=['%251'] attrs={'dims': [0, 1, 2]}
+   [0268] node_268     stablehlo.broadcast_in_dim       in=['%251'] out=['%252'] attrs={'dims': [0, 1, 2, 3]}
+   [0269] node_269     stablehlo.subtract               in=['%2__where4', '%252'] out=['%253'] attrs={}
+   [0270] node_270     stablehlo.exponential            in=['%253'] out=['%254'] attrs={}
+   [0271] node_271     stablehlo.convert                in=['%254'] out=['%255'] attrs={}
+   [0272] node_272     stablehlo.reduce                 in=['%255', '%cst_32'] out=['%256'] attrs={'applies': 'stablehlo.add', 'dimensions': [3]}
+   [0273] node_273     stablehlo.broadcast_in_dim       in=['%256'] out=['%257'] attrs={'dims': [0, 1, 2]}
+   [0274] node_274     stablehlo.convert                in=['%257'] out=['%258'] attrs={}
+   [0275] node_275     stablehlo.broadcast_in_dim       in=['%258'] out=['%259'] attrs={'dims': [0, 1, 2, 3]}
+>> [0276] node_276     stablehlo.divide                 in=['%254', '%259'] out=['%260'] attrs={}
+   [0277] node_277     stablehlo.dot_general            in=['%260', '%240'] out=['%261'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0278] node_278     stablehlo.transpose              in=['%261'] out=['%262'] attrs={'dims': [0, 2, 1, 3]}
+   [0279] node_279     stablehlo.reshape                in=['%262'] out=['%263'] attrs={}
+   [0280] node_280     stablehlo.dot_general            in=['%263', '%arg28'] out=['%264'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0281] node_281     stablehlo.broadcast_in_dim       in=['%arg29'] out=['%265'] attrs={'dims': [2]}
+   [0282] node_282     stablehlo.broadcast_in_dim       in=['%265'] out=['%266'] attrs={'dims': [0, 1, 2]}
+   [0283] node_283     stablehlo.add                    in=['%264', '%266'] out=['%267'] attrs={}
+   [0284] node_284     stablehlo.add                    in=['%155', '%267'] out=['%268'] attrs={}
+   [0285] node_285     stablehlo.convert                in=['%268'] out=['%269'] attrs={}
+   [0286] node_286     stablehlo.multiply               in=['%269', '%269'] out=['%270'] attrs={}
+
+PRODUCERS:
+  %254 <- [270] node_270 stablehlo.exponential out=['%254'] attrs={}
+  %259 <- [275] node_275 stablehlo.broadcast_in_dim out=['%259'] attrs={'dims': [0, 1, 2, 3]}
+
+CONSUMERS:
+  %260 -> [277] node_277 stablehlo.dot_general in=['%260', '%240'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=286 id=node_286 op=stablehlo.multiply
+  inputs: ['%269', '%269']
+  outputs: ['%270']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0276] node_276     stablehlo.divide                 in=['%254', '%259'] out=['%260'] attrs={}
+   [0277] node_277     stablehlo.dot_general            in=['%260', '%240'] out=['%261'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0278] node_278     stablehlo.transpose              in=['%261'] out=['%262'] attrs={'dims': [0, 2, 1, 3]}
+   [0279] node_279     stablehlo.reshape                in=['%262'] out=['%263'] attrs={}
+   [0280] node_280     stablehlo.dot_general            in=['%263', '%arg28'] out=['%264'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0281] node_281     stablehlo.broadcast_in_dim       in=['%arg29'] out=['%265'] attrs={'dims': [2]}
+   [0282] node_282     stablehlo.broadcast_in_dim       in=['%265'] out=['%266'] attrs={'dims': [0, 1, 2]}
+   [0283] node_283     stablehlo.add                    in=['%264', '%266'] out=['%267'] attrs={}
+   [0284] node_284     stablehlo.add                    in=['%155', '%267'] out=['%268'] attrs={}
+   [0285] node_285     stablehlo.convert                in=['%268'] out=['%269'] attrs={}
+>> [0286] node_286     stablehlo.multiply               in=['%269', '%269'] out=['%270'] attrs={}
+   [0287] node_287     stablehlo.reduce                 in=['%270', '%cst_33'] out=['%271'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0288] node_288     stablehlo.broadcast_in_dim       in=['%271'] out=['%272'] attrs={'dims': [0, 1]}
+   [0289] node_289     stablehlo.broadcast_in_dim       in=['%cst_34'] out=['%273'] attrs={'dims': []}
+   [0290] node_290     stablehlo.divide                 in=['%272', '%273'] out=['%274'] attrs={}
+   [0291] node_291     stablehlo.broadcast_in_dim       in=['%cst_35'] out=['%275'] attrs={'dims': []}
+   [0292] node_292     stablehlo.add                    in=['%274', '%275'] out=['%276'] attrs={}
+   [0293] node_293     stablehlo.rsqrt                  in=['%276'] out=['%277'] attrs={}
+   [0294] node_294     stablehlo.broadcast_in_dim       in=['%277'] out=['%278'] attrs={'dims': [0, 1, 2]}
+   [0295] node_295     stablehlo.multiply               in=['%269', '%278'] out=['%279'] attrs={}
+   [0296] node_296     stablehlo.convert                in=['%279'] out=['%280'] attrs={}
+
+PRODUCERS:
+  %269 <- [285] node_285 stablehlo.convert out=['%269'] attrs={}
+  %269 <- [285] node_285 stablehlo.convert out=['%269'] attrs={}
+
+CONSUMERS:
+  %270 -> [287] node_287 stablehlo.reduce in=['%270', '%cst_33'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+====================================================================================================
+TARGET idx=287 id=node_287 op=stablehlo.reduce
+  inputs: ['%270', '%cst_33']
+  outputs: ['%271']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [2]}
+  result: ['tensor<1x5xf32>']
+
+WINDOW:
+   [0277] node_277     stablehlo.dot_general            in=['%260', '%240'] out=['%261'] attrs={'batching_dims': ([0, 1], [0, 1]), 'contracting_dims': ([3], [2]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0278] node_278     stablehlo.transpose              in=['%261'] out=['%262'] attrs={'dims': [0, 2, 1, 3]}
+   [0279] node_279     stablehlo.reshape                in=['%262'] out=['%263'] attrs={}
+   [0280] node_280     stablehlo.dot_general            in=['%263', '%arg28'] out=['%264'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0281] node_281     stablehlo.broadcast_in_dim       in=['%arg29'] out=['%265'] attrs={'dims': [2]}
+   [0282] node_282     stablehlo.broadcast_in_dim       in=['%265'] out=['%266'] attrs={'dims': [0, 1, 2]}
+   [0283] node_283     stablehlo.add                    in=['%264', '%266'] out=['%267'] attrs={}
+   [0284] node_284     stablehlo.add                    in=['%155', '%267'] out=['%268'] attrs={}
+   [0285] node_285     stablehlo.convert                in=['%268'] out=['%269'] attrs={}
+   [0286] node_286     stablehlo.multiply               in=['%269', '%269'] out=['%270'] attrs={}
+>> [0287] node_287     stablehlo.reduce                 in=['%270', '%cst_33'] out=['%271'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0288] node_288     stablehlo.broadcast_in_dim       in=['%271'] out=['%272'] attrs={'dims': [0, 1]}
+   [0289] node_289     stablehlo.broadcast_in_dim       in=['%cst_34'] out=['%273'] attrs={'dims': []}
+   [0290] node_290     stablehlo.divide                 in=['%272', '%273'] out=['%274'] attrs={}
+   [0291] node_291     stablehlo.broadcast_in_dim       in=['%cst_35'] out=['%275'] attrs={'dims': []}
+   [0292] node_292     stablehlo.add                    in=['%274', '%275'] out=['%276'] attrs={}
+   [0293] node_293     stablehlo.rsqrt                  in=['%276'] out=['%277'] attrs={}
+   [0294] node_294     stablehlo.broadcast_in_dim       in=['%277'] out=['%278'] attrs={'dims': [0, 1, 2]}
+   [0295] node_295     stablehlo.multiply               in=['%269', '%278'] out=['%279'] attrs={}
+   [0296] node_296     stablehlo.convert                in=['%279'] out=['%280'] attrs={}
+   [0297] node_297     stablehlo.broadcast_in_dim       in=['%arg30'] out=['%281'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %270 <- [286] node_286 stablehlo.multiply out=['%270'] attrs={}
+  %cst_33 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %271 -> [288] node_288 stablehlo.broadcast_in_dim in=['%271'] attrs={'dims': [0, 1]}
+
+====================================================================================================
+TARGET idx=290 id=node_290 op=stablehlo.divide
+  inputs: ['%272', '%273']
+  outputs: ['%274']
+  attrs: {}
+  result: ['tensor<1x5x1xf32>']
+
+WINDOW:
+   [0280] node_280     stablehlo.dot_general            in=['%263', '%arg28'] out=['%264'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0281] node_281     stablehlo.broadcast_in_dim       in=['%arg29'] out=['%265'] attrs={'dims': [2]}
+   [0282] node_282     stablehlo.broadcast_in_dim       in=['%265'] out=['%266'] attrs={'dims': [0, 1, 2]}
+   [0283] node_283     stablehlo.add                    in=['%264', '%266'] out=['%267'] attrs={}
+   [0284] node_284     stablehlo.add                    in=['%155', '%267'] out=['%268'] attrs={}
+   [0285] node_285     stablehlo.convert                in=['%268'] out=['%269'] attrs={}
+   [0286] node_286     stablehlo.multiply               in=['%269', '%269'] out=['%270'] attrs={}
+   [0287] node_287     stablehlo.reduce                 in=['%270', '%cst_33'] out=['%271'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0288] node_288     stablehlo.broadcast_in_dim       in=['%271'] out=['%272'] attrs={'dims': [0, 1]}
+   [0289] node_289     stablehlo.broadcast_in_dim       in=['%cst_34'] out=['%273'] attrs={'dims': []}
+>> [0290] node_290     stablehlo.divide                 in=['%272', '%273'] out=['%274'] attrs={}
+   [0291] node_291     stablehlo.broadcast_in_dim       in=['%cst_35'] out=['%275'] attrs={'dims': []}
+   [0292] node_292     stablehlo.add                    in=['%274', '%275'] out=['%276'] attrs={}
+   [0293] node_293     stablehlo.rsqrt                  in=['%276'] out=['%277'] attrs={}
+   [0294] node_294     stablehlo.broadcast_in_dim       in=['%277'] out=['%278'] attrs={'dims': [0, 1, 2]}
+   [0295] node_295     stablehlo.multiply               in=['%269', '%278'] out=['%279'] attrs={}
+   [0296] node_296     stablehlo.convert                in=['%279'] out=['%280'] attrs={}
+   [0297] node_297     stablehlo.broadcast_in_dim       in=['%arg30'] out=['%281'] attrs={'dims': [2]}
+   [0298] node_298     stablehlo.broadcast_in_dim       in=['%281'] out=['%282'] attrs={'dims': [0, 1, 2]}
+   [0299] node_299     stablehlo.multiply               in=['%280', '%282'] out=['%283'] attrs={}
+   [0300] node_300     stablehlo.dot_general            in=['%283', '%arg31'] out=['%284'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %272 <- [288] node_288 stablehlo.broadcast_in_dim out=['%272'] attrs={'dims': [0, 1]}
+  %273 <- [289] node_289 stablehlo.broadcast_in_dim out=['%273'] attrs={'dims': []}
+
+CONSUMERS:
+  %274 -> [292] node_292 stablehlo.add in=['%274', '%275'] attrs={}
+
+====================================================================================================
+TARGET idx=295 id=node_295 op=stablehlo.multiply
+  inputs: ['%269', '%278']
+  outputs: ['%279']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0285] node_285     stablehlo.convert                in=['%268'] out=['%269'] attrs={}
+   [0286] node_286     stablehlo.multiply               in=['%269', '%269'] out=['%270'] attrs={}
+   [0287] node_287     stablehlo.reduce                 in=['%270', '%cst_33'] out=['%271'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0288] node_288     stablehlo.broadcast_in_dim       in=['%271'] out=['%272'] attrs={'dims': [0, 1]}
+   [0289] node_289     stablehlo.broadcast_in_dim       in=['%cst_34'] out=['%273'] attrs={'dims': []}
+   [0290] node_290     stablehlo.divide                 in=['%272', '%273'] out=['%274'] attrs={}
+   [0291] node_291     stablehlo.broadcast_in_dim       in=['%cst_35'] out=['%275'] attrs={'dims': []}
+   [0292] node_292     stablehlo.add                    in=['%274', '%275'] out=['%276'] attrs={}
+   [0293] node_293     stablehlo.rsqrt                  in=['%276'] out=['%277'] attrs={}
+   [0294] node_294     stablehlo.broadcast_in_dim       in=['%277'] out=['%278'] attrs={'dims': [0, 1, 2]}
+>> [0295] node_295     stablehlo.multiply               in=['%269', '%278'] out=['%279'] attrs={}
+   [0296] node_296     stablehlo.convert                in=['%279'] out=['%280'] attrs={}
+   [0297] node_297     stablehlo.broadcast_in_dim       in=['%arg30'] out=['%281'] attrs={'dims': [2]}
+   [0298] node_298     stablehlo.broadcast_in_dim       in=['%281'] out=['%282'] attrs={'dims': [0, 1, 2]}
+   [0299] node_299     stablehlo.multiply               in=['%280', '%282'] out=['%283'] attrs={}
+   [0300] node_300     stablehlo.dot_general            in=['%283', '%arg31'] out=['%284'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0301] node_301     stablehlo.broadcast_in_dim       in=['%arg32'] out=['%285'] attrs={'dims': [2]}
+   [0302] node_302     stablehlo.broadcast_in_dim       in=['%285'] out=['%286'] attrs={'dims': [0, 1, 2]}
+   [0303] node_303     stablehlo.add                    in=['%284', '%286'] out=['%287'] attrs={}
+   [0304] node_304     stablehlo.dot_general            in=['%283', '%arg33'] out=['%288'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %269 <- [285] node_285 stablehlo.convert out=['%269'] attrs={}
+  %278 <- [294] node_294 stablehlo.broadcast_in_dim out=['%278'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %279 -> [296] node_296 stablehlo.convert in=['%279'] attrs={}
+
+====================================================================================================
+TARGET idx=299 id=node_299 op=stablehlo.multiply
+  inputs: ['%280', '%282']
+  outputs: ['%283']
+  attrs: {}
+  result: ['tensor<1x5x128xf16>']
+
+WINDOW:
+   [0289] node_289     stablehlo.broadcast_in_dim       in=['%cst_34'] out=['%273'] attrs={'dims': []}
+   [0290] node_290     stablehlo.divide                 in=['%272', '%273'] out=['%274'] attrs={}
+   [0291] node_291     stablehlo.broadcast_in_dim       in=['%cst_35'] out=['%275'] attrs={'dims': []}
+   [0292] node_292     stablehlo.add                    in=['%274', '%275'] out=['%276'] attrs={}
+   [0293] node_293     stablehlo.rsqrt                  in=['%276'] out=['%277'] attrs={}
+   [0294] node_294     stablehlo.broadcast_in_dim       in=['%277'] out=['%278'] attrs={'dims': [0, 1, 2]}
+   [0295] node_295     stablehlo.multiply               in=['%269', '%278'] out=['%279'] attrs={}
+   [0296] node_296     stablehlo.convert                in=['%279'] out=['%280'] attrs={}
+   [0297] node_297     stablehlo.broadcast_in_dim       in=['%arg30'] out=['%281'] attrs={'dims': [2]}
+   [0298] node_298     stablehlo.broadcast_in_dim       in=['%281'] out=['%282'] attrs={'dims': [0, 1, 2]}
+>> [0299] node_299     stablehlo.multiply               in=['%280', '%282'] out=['%283'] attrs={}
+   [0300] node_300     stablehlo.dot_general            in=['%283', '%arg31'] out=['%284'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0301] node_301     stablehlo.broadcast_in_dim       in=['%arg32'] out=['%285'] attrs={'dims': [2]}
+   [0302] node_302     stablehlo.broadcast_in_dim       in=['%285'] out=['%286'] attrs={'dims': [0, 1, 2]}
+   [0303] node_303     stablehlo.add                    in=['%284', '%286'] out=['%287'] attrs={}
+   [0304] node_304     stablehlo.dot_general            in=['%283', '%arg33'] out=['%288'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+   [0306] node_306     stablehlo.broadcast_in_dim       in=['%289'] out=['%290'] attrs={'dims': [0, 1, 2]}
+   [0307] node_307     stablehlo.add                    in=['%288', '%290'] out=['%291'] attrs={}
+   [0308] node_308     stablehlo.negate                 in=['%287'] out=['%292'] attrs={}
+   [0309] node_309     stablehlo.exponential            in=['%292'] out=['%293'] attrs={}
+
+PRODUCERS:
+  %280 <- [296] node_296 stablehlo.convert out=['%280'] attrs={}
+  %282 <- [298] node_298 stablehlo.broadcast_in_dim out=['%282'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %283 -> [300] node_300 stablehlo.dot_general in=['%283', '%arg31'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+  %283 -> [304] node_304 stablehlo.dot_general in=['%283', '%arg33'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=308 id=node_308 op=stablehlo.negate
+  inputs: ['%287']
+  outputs: ['%292']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0298] node_298     stablehlo.broadcast_in_dim       in=['%281'] out=['%282'] attrs={'dims': [0, 1, 2]}
+   [0299] node_299     stablehlo.multiply               in=['%280', '%282'] out=['%283'] attrs={}
+   [0300] node_300     stablehlo.dot_general            in=['%283', '%arg31'] out=['%284'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0301] node_301     stablehlo.broadcast_in_dim       in=['%arg32'] out=['%285'] attrs={'dims': [2]}
+   [0302] node_302     stablehlo.broadcast_in_dim       in=['%285'] out=['%286'] attrs={'dims': [0, 1, 2]}
+   [0303] node_303     stablehlo.add                    in=['%284', '%286'] out=['%287'] attrs={}
+   [0304] node_304     stablehlo.dot_general            in=['%283', '%arg33'] out=['%288'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+   [0306] node_306     stablehlo.broadcast_in_dim       in=['%289'] out=['%290'] attrs={'dims': [0, 1, 2]}
+   [0307] node_307     stablehlo.add                    in=['%288', '%290'] out=['%291'] attrs={}
+>> [0308] node_308     stablehlo.negate                 in=['%287'] out=['%292'] attrs={}
+   [0309] node_309     stablehlo.exponential            in=['%292'] out=['%293'] attrs={}
+   [0310] node_310     stablehlo.broadcast_in_dim       in=['%cst_36'] out=['%294'] attrs={'dims': []}
+   [0311] node_311     stablehlo.add                    in=['%294', '%293'] out=['%295'] attrs={}
+   [0312] node_312     stablehlo.broadcast_in_dim       in=['%cst_37'] out=['%296'] attrs={'dims': []}
+   [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+   [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+   [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+
+PRODUCERS:
+  %287 <- [303] node_303 stablehlo.add out=['%287'] attrs={}
+
+CONSUMERS:
+  %292 -> [309] node_309 stablehlo.exponential in=['%292'] attrs={}
+
+====================================================================================================
+TARGET idx=309 id=node_309 op=stablehlo.exponential
+  inputs: ['%292']
+  outputs: ['%293']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0299] node_299     stablehlo.multiply               in=['%280', '%282'] out=['%283'] attrs={}
+   [0300] node_300     stablehlo.dot_general            in=['%283', '%arg31'] out=['%284'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0301] node_301     stablehlo.broadcast_in_dim       in=['%arg32'] out=['%285'] attrs={'dims': [2]}
+   [0302] node_302     stablehlo.broadcast_in_dim       in=['%285'] out=['%286'] attrs={'dims': [0, 1, 2]}
+   [0303] node_303     stablehlo.add                    in=['%284', '%286'] out=['%287'] attrs={}
+   [0304] node_304     stablehlo.dot_general            in=['%283', '%arg33'] out=['%288'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+   [0306] node_306     stablehlo.broadcast_in_dim       in=['%289'] out=['%290'] attrs={'dims': [0, 1, 2]}
+   [0307] node_307     stablehlo.add                    in=['%288', '%290'] out=['%291'] attrs={}
+   [0308] node_308     stablehlo.negate                 in=['%287'] out=['%292'] attrs={}
+>> [0309] node_309     stablehlo.exponential            in=['%292'] out=['%293'] attrs={}
+   [0310] node_310     stablehlo.broadcast_in_dim       in=['%cst_36'] out=['%294'] attrs={'dims': []}
+   [0311] node_311     stablehlo.add                    in=['%294', '%293'] out=['%295'] attrs={}
+   [0312] node_312     stablehlo.broadcast_in_dim       in=['%cst_37'] out=['%296'] attrs={'dims': []}
+   [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+   [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+   [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+
+PRODUCERS:
+  %292 <- [308] node_308 stablehlo.negate out=['%292'] attrs={}
+
+CONSUMERS:
+  %293 -> [311] node_311 stablehlo.add in=['%294', '%293'] attrs={}
+
+====================================================================================================
+TARGET idx=313 id=node_313 op=stablehlo.divide
+  inputs: ['%296', '%295']
+  outputs: ['%297']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0303] node_303     stablehlo.add                    in=['%284', '%286'] out=['%287'] attrs={}
+   [0304] node_304     stablehlo.dot_general            in=['%283', '%arg33'] out=['%288'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+   [0306] node_306     stablehlo.broadcast_in_dim       in=['%289'] out=['%290'] attrs={'dims': [0, 1, 2]}
+   [0307] node_307     stablehlo.add                    in=['%288', '%290'] out=['%291'] attrs={}
+   [0308] node_308     stablehlo.negate                 in=['%287'] out=['%292'] attrs={}
+   [0309] node_309     stablehlo.exponential            in=['%292'] out=['%293'] attrs={}
+   [0310] node_310     stablehlo.broadcast_in_dim       in=['%cst_36'] out=['%294'] attrs={'dims': []}
+   [0311] node_311     stablehlo.add                    in=['%294', '%293'] out=['%295'] attrs={}
+   [0312] node_312     stablehlo.broadcast_in_dim       in=['%cst_37'] out=['%296'] attrs={'dims': []}
+>> [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+   [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+   [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+   [0320] node_320     stablehlo.add                    in=['%268', '%303'] out=['%304'] attrs={}
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+   [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+   [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+PRODUCERS:
+  %296 <- [312] node_312 stablehlo.broadcast_in_dim out=['%296'] attrs={'dims': []}
+  %295 <- [311] node_311 stablehlo.add out=['%295'] attrs={}
+
+CONSUMERS:
+  %297 -> [314] node_314 stablehlo.multiply in=['%287', '%297'] attrs={}
+
+====================================================================================================
+TARGET idx=314 id=node_314 op=stablehlo.multiply
+  inputs: ['%287', '%297']
+  outputs: ['%298']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0304] node_304     stablehlo.dot_general            in=['%283', '%arg33'] out=['%288'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+   [0306] node_306     stablehlo.broadcast_in_dim       in=['%289'] out=['%290'] attrs={'dims': [0, 1, 2]}
+   [0307] node_307     stablehlo.add                    in=['%288', '%290'] out=['%291'] attrs={}
+   [0308] node_308     stablehlo.negate                 in=['%287'] out=['%292'] attrs={}
+   [0309] node_309     stablehlo.exponential            in=['%292'] out=['%293'] attrs={}
+   [0310] node_310     stablehlo.broadcast_in_dim       in=['%cst_36'] out=['%294'] attrs={'dims': []}
+   [0311] node_311     stablehlo.add                    in=['%294', '%293'] out=['%295'] attrs={}
+   [0312] node_312     stablehlo.broadcast_in_dim       in=['%cst_37'] out=['%296'] attrs={'dims': []}
+   [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+>> [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+   [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+   [0320] node_320     stablehlo.add                    in=['%268', '%303'] out=['%304'] attrs={}
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+   [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+   [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0324] node_324     stablehlo.broadcast_in_dim       in=['%307'] out=['%308'] attrs={'dims': [0, 1]}
+
+PRODUCERS:
+  %287 <- [303] node_303 stablehlo.add out=['%287'] attrs={}
+  %297 <- [313] node_313 stablehlo.divide out=['%297'] attrs={}
+
+CONSUMERS:
+  %298 -> [315] node_315 stablehlo.multiply in=['%298', '%291'] attrs={}
+
+====================================================================================================
+TARGET idx=315 id=node_315 op=stablehlo.multiply
+  inputs: ['%298', '%291']
+  outputs: ['%299']
+  attrs: {}
+  result: ['tensor<1x5x32xf16>']
+
+WINDOW:
+   [0305] node_305     stablehlo.broadcast_in_dim       in=['%arg34'] out=['%289'] attrs={'dims': [2]}
+   [0306] node_306     stablehlo.broadcast_in_dim       in=['%289'] out=['%290'] attrs={'dims': [0, 1, 2]}
+   [0307] node_307     stablehlo.add                    in=['%288', '%290'] out=['%291'] attrs={}
+   [0308] node_308     stablehlo.negate                 in=['%287'] out=['%292'] attrs={}
+   [0309] node_309     stablehlo.exponential            in=['%292'] out=['%293'] attrs={}
+   [0310] node_310     stablehlo.broadcast_in_dim       in=['%cst_36'] out=['%294'] attrs={'dims': []}
+   [0311] node_311     stablehlo.add                    in=['%294', '%293'] out=['%295'] attrs={}
+   [0312] node_312     stablehlo.broadcast_in_dim       in=['%cst_37'] out=['%296'] attrs={'dims': []}
+   [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+   [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+>> [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+   [0320] node_320     stablehlo.add                    in=['%268', '%303'] out=['%304'] attrs={}
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+   [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+   [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0324] node_324     stablehlo.broadcast_in_dim       in=['%307'] out=['%308'] attrs={'dims': [0, 1]}
+   [0325] node_325     stablehlo.broadcast_in_dim       in=['%cst_39'] out=['%309'] attrs={'dims': []}
+
+PRODUCERS:
+  %298 <- [314] node_314 stablehlo.multiply out=['%298'] attrs={}
+  %291 <- [307] node_307 stablehlo.add out=['%291'] attrs={}
+
+CONSUMERS:
+  %299 -> [316] node_316 stablehlo.dot_general in=['%299', '%arg35'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+====================================================================================================
+TARGET idx=322 id=node_322 op=stablehlo.multiply
+  inputs: ['%305', '%305']
+  outputs: ['%306']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0312] node_312     stablehlo.broadcast_in_dim       in=['%cst_37'] out=['%296'] attrs={'dims': []}
+   [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+   [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+   [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+   [0320] node_320     stablehlo.add                    in=['%268', '%303'] out=['%304'] attrs={}
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+>> [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+   [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0324] node_324     stablehlo.broadcast_in_dim       in=['%307'] out=['%308'] attrs={'dims': [0, 1]}
+   [0325] node_325     stablehlo.broadcast_in_dim       in=['%cst_39'] out=['%309'] attrs={'dims': []}
+   [0326] node_326     stablehlo.divide                 in=['%308', '%309'] out=['%310'] attrs={}
+   [0327] node_327     stablehlo.broadcast_in_dim       in=['%cst_40'] out=['%311'] attrs={'dims': []}
+   [0328] node_328     stablehlo.add                    in=['%310', '%311'] out=['%312'] attrs={}
+   [0329] node_329     stablehlo.rsqrt                  in=['%312'] out=['%313'] attrs={}
+   [0330] node_330     stablehlo.broadcast_in_dim       in=['%313'] out=['%314'] attrs={'dims': [0, 1, 2]}
+   [0331] node_331     stablehlo.multiply               in=['%305', '%314'] out=['%315'] attrs={}
+   [0332] node_332     stablehlo.convert                in=['%315'] out=['%316'] attrs={}
+
+PRODUCERS:
+  %305 <- [321] node_321 stablehlo.convert out=['%305'] attrs={}
+  %305 <- [321] node_321 stablehlo.convert out=['%305'] attrs={}
+
+CONSUMERS:
+  %306 -> [323] node_323 stablehlo.reduce in=['%306', '%cst_38'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+
+====================================================================================================
+TARGET idx=323 id=node_323 op=stablehlo.reduce
+  inputs: ['%306', '%cst_38']
+  outputs: ['%307']
+  attrs: {'applies': 'stablehlo.add', 'dimensions': [2]}
+  result: ['tensor<1x5xf32>']
+
+WINDOW:
+   [0313] node_313     stablehlo.divide                 in=['%296', '%295'] out=['%297'] attrs={}
+   [0314] node_314     stablehlo.multiply               in=['%287', '%297'] out=['%298'] attrs={}
+   [0315] node_315     stablehlo.multiply               in=['%298', '%291'] out=['%299'] attrs={}
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+   [0320] node_320     stablehlo.add                    in=['%268', '%303'] out=['%304'] attrs={}
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+   [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+>> [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0324] node_324     stablehlo.broadcast_in_dim       in=['%307'] out=['%308'] attrs={'dims': [0, 1]}
+   [0325] node_325     stablehlo.broadcast_in_dim       in=['%cst_39'] out=['%309'] attrs={'dims': []}
+   [0326] node_326     stablehlo.divide                 in=['%308', '%309'] out=['%310'] attrs={}
+   [0327] node_327     stablehlo.broadcast_in_dim       in=['%cst_40'] out=['%311'] attrs={'dims': []}
+   [0328] node_328     stablehlo.add                    in=['%310', '%311'] out=['%312'] attrs={}
+   [0329] node_329     stablehlo.rsqrt                  in=['%312'] out=['%313'] attrs={}
+   [0330] node_330     stablehlo.broadcast_in_dim       in=['%313'] out=['%314'] attrs={'dims': [0, 1, 2]}
+   [0331] node_331     stablehlo.multiply               in=['%305', '%314'] out=['%315'] attrs={}
+   [0332] node_332     stablehlo.convert                in=['%315'] out=['%316'] attrs={}
+   [0333] node_333     stablehlo.broadcast_in_dim       in=['%arg3'] out=['%317'] attrs={'dims': [2]}
+
+PRODUCERS:
+  %306 <- [322] node_322 stablehlo.multiply out=['%306'] attrs={}
+  %cst_38 <- ARG/CONST/UNKNOWN
+
+CONSUMERS:
+  %307 -> [324] node_324 stablehlo.broadcast_in_dim in=['%307'] attrs={'dims': [0, 1]}
+
+====================================================================================================
+TARGET idx=326 id=node_326 op=stablehlo.divide
+  inputs: ['%308', '%309']
+  outputs: ['%310']
+  attrs: {}
+  result: ['tensor<1x5x1xf32>']
+
+WINDOW:
+   [0316] node_316     stablehlo.dot_general            in=['%299', '%arg35'] out=['%300'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+   [0317] node_317     stablehlo.broadcast_in_dim       in=['%arg36'] out=['%301'] attrs={'dims': [2]}
+   [0318] node_318     stablehlo.broadcast_in_dim       in=['%301'] out=['%302'] attrs={'dims': [0, 1, 2]}
+   [0319] node_319     stablehlo.add                    in=['%300', '%302'] out=['%303'] attrs={}
+   [0320] node_320     stablehlo.add                    in=['%268', '%303'] out=['%304'] attrs={}
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+   [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+   [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0324] node_324     stablehlo.broadcast_in_dim       in=['%307'] out=['%308'] attrs={'dims': [0, 1]}
+   [0325] node_325     stablehlo.broadcast_in_dim       in=['%cst_39'] out=['%309'] attrs={'dims': []}
+>> [0326] node_326     stablehlo.divide                 in=['%308', '%309'] out=['%310'] attrs={}
+   [0327] node_327     stablehlo.broadcast_in_dim       in=['%cst_40'] out=['%311'] attrs={'dims': []}
+   [0328] node_328     stablehlo.add                    in=['%310', '%311'] out=['%312'] attrs={}
+   [0329] node_329     stablehlo.rsqrt                  in=['%312'] out=['%313'] attrs={}
+   [0330] node_330     stablehlo.broadcast_in_dim       in=['%313'] out=['%314'] attrs={'dims': [0, 1, 2]}
+   [0331] node_331     stablehlo.multiply               in=['%305', '%314'] out=['%315'] attrs={}
+   [0332] node_332     stablehlo.convert                in=['%315'] out=['%316'] attrs={}
+   [0333] node_333     stablehlo.broadcast_in_dim       in=['%arg3'] out=['%317'] attrs={'dims': [2]}
+   [0334] node_334     stablehlo.broadcast_in_dim       in=['%317'] out=['%318'] attrs={'dims': [0, 1, 2]}
+   [0335] node_335     stablehlo.multiply               in=['%316', '%318'] out=['%319'] attrs={}
+   [0336] node_336     stablehlo.dot_general            in=['%319', '%arg4'] out=['%320'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %308 <- [324] node_324 stablehlo.broadcast_in_dim out=['%308'] attrs={'dims': [0, 1]}
+  %309 <- [325] node_325 stablehlo.broadcast_in_dim out=['%309'] attrs={'dims': []}
+
+CONSUMERS:
+  %310 -> [328] node_328 stablehlo.add in=['%310', '%311'] attrs={}
+
+====================================================================================================
+TARGET idx=331 id=node_331 op=stablehlo.multiply
+  inputs: ['%305', '%314']
+  outputs: ['%315']
+  attrs: {}
+  result: ['tensor<1x5x128xf32>']
+
+WINDOW:
+   [0321] node_321     stablehlo.convert                in=['%304'] out=['%305'] attrs={}
+   [0322] node_322     stablehlo.multiply               in=['%305', '%305'] out=['%306'] attrs={}
+   [0323] node_323     stablehlo.reduce                 in=['%306', '%cst_38'] out=['%307'] attrs={'applies': 'stablehlo.add', 'dimensions': [2]}
+   [0324] node_324     stablehlo.broadcast_in_dim       in=['%307'] out=['%308'] attrs={'dims': [0, 1]}
+   [0325] node_325     stablehlo.broadcast_in_dim       in=['%cst_39'] out=['%309'] attrs={'dims': []}
+   [0326] node_326     stablehlo.divide                 in=['%308', '%309'] out=['%310'] attrs={}
+   [0327] node_327     stablehlo.broadcast_in_dim       in=['%cst_40'] out=['%311'] attrs={'dims': []}
+   [0328] node_328     stablehlo.add                    in=['%310', '%311'] out=['%312'] attrs={}
+   [0329] node_329     stablehlo.rsqrt                  in=['%312'] out=['%313'] attrs={}
+   [0330] node_330     stablehlo.broadcast_in_dim       in=['%313'] out=['%314'] attrs={'dims': [0, 1, 2]}
+>> [0331] node_331     stablehlo.multiply               in=['%305', '%314'] out=['%315'] attrs={}
+   [0332] node_332     stablehlo.convert                in=['%315'] out=['%316'] attrs={}
+   [0333] node_333     stablehlo.broadcast_in_dim       in=['%arg3'] out=['%317'] attrs={'dims': [2]}
+   [0334] node_334     stablehlo.broadcast_in_dim       in=['%317'] out=['%318'] attrs={'dims': [0, 1, 2]}
+   [0335] node_335     stablehlo.multiply               in=['%316', '%318'] out=['%319'] attrs={}
+   [0336] node_336     stablehlo.dot_general            in=['%319', '%arg4'] out=['%320'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %305 <- [321] node_321 stablehlo.convert out=['%305'] attrs={}
+  %314 <- [330] node_330 stablehlo.broadcast_in_dim out=['%314'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %315 -> [332] node_332 stablehlo.convert in=['%315'] attrs={}
+
+====================================================================================================
+TARGET idx=335 id=node_335 op=stablehlo.multiply
+  inputs: ['%316', '%318']
+  outputs: ['%319']
+  attrs: {}
+  result: ['tensor<1x5x128xf16>']
+
+WINDOW:
+   [0325] node_325     stablehlo.broadcast_in_dim       in=['%cst_39'] out=['%309'] attrs={'dims': []}
+   [0326] node_326     stablehlo.divide                 in=['%308', '%309'] out=['%310'] attrs={}
+   [0327] node_327     stablehlo.broadcast_in_dim       in=['%cst_40'] out=['%311'] attrs={'dims': []}
+   [0328] node_328     stablehlo.add                    in=['%310', '%311'] out=['%312'] attrs={}
+   [0329] node_329     stablehlo.rsqrt                  in=['%312'] out=['%313'] attrs={}
+   [0330] node_330     stablehlo.broadcast_in_dim       in=['%313'] out=['%314'] attrs={'dims': [0, 1, 2]}
+   [0331] node_331     stablehlo.multiply               in=['%305', '%314'] out=['%315'] attrs={}
+   [0332] node_332     stablehlo.convert                in=['%315'] out=['%316'] attrs={}
+   [0333] node_333     stablehlo.broadcast_in_dim       in=['%arg3'] out=['%317'] attrs={'dims': [2]}
+   [0334] node_334     stablehlo.broadcast_in_dim       in=['%317'] out=['%318'] attrs={'dims': [0, 1, 2]}
+>> [0335] node_335     stablehlo.multiply               in=['%316', '%318'] out=['%319'] attrs={}
+   [0336] node_336     stablehlo.dot_general            in=['%319', '%arg4'] out=['%320'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+PRODUCERS:
+  %316 <- [332] node_332 stablehlo.convert out=['%316'] attrs={}
+  %318 <- [334] node_334 stablehlo.broadcast_in_dim out=['%318'] attrs={'dims': [0, 1, 2]}
+
+CONSUMERS:
+  %319 -> [336] node_336 stablehlo.dot_general in=['%319', '%arg4'] attrs={'contracting_dims': ([2], [1]), 'precision': ['DEFAULT', 'DEFAULT']}
+
+DONE

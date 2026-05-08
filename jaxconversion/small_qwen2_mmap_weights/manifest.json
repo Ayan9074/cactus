@@ -1,0 +1,333 @@
+[
+  {
+    "arg": 2,
+    "file": "arg2.weights",
+    "shape": [
+      151665,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 38826240
+  },
+  {
+    "arg": 3,
+    "file": "arg3.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 4,
+    "file": "arg4.weights",
+    "shape": [
+      151665,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 38826240
+  },
+  {
+    "arg": 5,
+    "file": "arg5.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 6,
+    "file": "arg6.weights",
+    "shape": [
+      128,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 32768
+  },
+  {
+    "arg": 7,
+    "file": "arg7.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 8,
+    "file": "arg8.weights",
+    "shape": [
+      64,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 16384
+  },
+  {
+    "arg": 9,
+    "file": "arg9.weights",
+    "shape": [
+      64
+    ],
+    "dtype": "fp16",
+    "bytes": 128
+  },
+  {
+    "arg": 10,
+    "file": "arg10.weights",
+    "shape": [
+      64,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 16384
+  },
+  {
+    "arg": 11,
+    "file": "arg11.weights",
+    "shape": [
+      64
+    ],
+    "dtype": "fp16",
+    "bytes": 128
+  },
+  {
+    "arg": 12,
+    "file": "arg12.weights",
+    "shape": [
+      128,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 32768
+  },
+  {
+    "arg": 13,
+    "file": "arg13.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 14,
+    "file": "arg14.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 15,
+    "file": "arg15.weights",
+    "shape": [
+      32,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 8192
+  },
+  {
+    "arg": 16,
+    "file": "arg16.weights",
+    "shape": [
+      32
+    ],
+    "dtype": "fp16",
+    "bytes": 64
+  },
+  {
+    "arg": 17,
+    "file": "arg17.weights",
+    "shape": [
+      32,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 8192
+  },
+  {
+    "arg": 18,
+    "file": "arg18.weights",
+    "shape": [
+      32
+    ],
+    "dtype": "fp16",
+    "bytes": 64
+  },
+  {
+    "arg": 19,
+    "file": "arg19.weights",
+    "shape": [
+      128,
+      32
+    ],
+    "dtype": "fp16",
+    "bytes": 8192
+  },
+  {
+    "arg": 20,
+    "file": "arg20.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 21,
+    "file": "arg21.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 22,
+    "file": "arg22.weights",
+    "shape": [
+      128,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 32768
+  },
+  {
+    "arg": 23,
+    "file": "arg23.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 24,
+    "file": "arg24.weights",
+    "shape": [
+      64,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 16384
+  },
+  {
+    "arg": 25,
+    "file": "arg25.weights",
+    "shape": [
+      64
+    ],
+    "dtype": "fp16",
+    "bytes": 128
+  },
+  {
+    "arg": 26,
+    "file": "arg26.weights",
+    "shape": [
+      64,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 16384
+  },
+  {
+    "arg": 27,
+    "file": "arg27.weights",
+    "shape": [
+      64
+    ],
+    "dtype": "fp16",
+    "bytes": 128
+  },
+  {
+    "arg": 28,
+    "file": "arg28.weights",
+    "shape": [
+      128,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 32768
+  },
+  {
+    "arg": 29,
+    "file": "arg29.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 30,
+    "file": "arg30.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  },
+  {
+    "arg": 31,
+    "file": "arg31.weights",
+    "shape": [
+      32,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 8192
+  },
+  {
+    "arg": 32,
+    "file": "arg32.weights",
+    "shape": [
+      32
+    ],
+    "dtype": "fp16",
+    "bytes": 64
+  },
+  {
+    "arg": 33,
+    "file": "arg33.weights",
+    "shape": [
+      32,
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 8192
+  },
+  {
+    "arg": 34,
+    "file": "arg34.weights",
+    "shape": [
+      32
+    ],
+    "dtype": "fp16",
+    "bytes": 64
+  },
+  {
+    "arg": 35,
+    "file": "arg35.weights",
+    "shape": [
+      128,
+      32
+    ],
+    "dtype": "fp16",
+    "bytes": 8192
+  },
+  {
+    "arg": 36,
+    "file": "arg36.weights",
+    "shape": [
+      128
+    ],
+    "dtype": "fp16",
+    "bytes": 256
+  }
+]

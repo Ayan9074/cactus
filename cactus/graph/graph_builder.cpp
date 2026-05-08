@@ -17,6 +17,47 @@ size_t CactusGraph::add(size_t input1, size_t input2) {
     return add_node(OpType::ADD, {input1, input2}, broadcast_info.output_shape, params);
 }
 
+
+size_t CactusGraph::compare(size_t input1, size_t input2, CompareDirection direction) {
+    const auto& lhs_buffer = get_output_buffer(input1);
+    const auto& rhs_buffer = get_output_buffer(input2);
+
+    BroadcastInfo broadcast_info = BroadcastInfo::compute(lhs_buffer.shape, rhs_buffer.shape);
+
+    OpParams params{};
+    params.broadcast_info = broadcast_info;
+    params.compare_direction = direction;
+    params.output_precision = Precision::FP16;
+
+    return add_node(OpType::COMPARE, {input1, input2}, broadcast_info.output_shape, params);
+}
+
+size_t CactusGraph::select(size_t mask, size_t true_value, size_t false_value) {
+    const auto& mask_buffer = get_output_buffer(mask);
+    const auto& true_buffer = get_output_buffer(true_value);
+    const auto& false_buffer = get_output_buffer(false_value);
+
+    // Three-way broadcast:
+    // First broadcast mask with true branch, then broadcast that result with false branch.
+    BroadcastInfo mt_info = BroadcastInfo::compute(mask_buffer.shape, true_buffer.shape);
+    BroadcastInfo out_info = BroadcastInfo::compute(mt_info.output_shape, false_buffer.shape);
+
+    OpParams params{};
+    params.output_precision = true_buffer.precision;
+
+    // For now, only support FP16 select.
+    if (true_buffer.precision != Precision::FP16 || false_buffer.precision != Precision::FP16) {
+        throw std::runtime_error("SELECT currently only supports FP16 true/false values");
+    }
+
+    return add_node(
+        OpType::SELECT,
+        {mask, true_value, false_value},
+        out_info.output_shape,
+        params
+    );
+}
+
 size_t CactusGraph::add_clipped(size_t input1, size_t input2) {
     const auto& lhs_buffer = get_output_buffer(input1);
     const auto& rhs_buffer = get_output_buffer(input2);
