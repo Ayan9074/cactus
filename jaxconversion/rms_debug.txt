@@ -1,0 +1,55 @@
+Reading: jaxgarden_llama_tiny.stablehlo.mlir
+
+IR summary:
+  inputs: 23
+  outputs: ['%9___call__19']
+  nodes: 345
+  constants: 50
+
+Op counts:
+  chlo.square                          5
+  stablehlo.add                        20
+  stablehlo.and                        1
+  stablehlo.broadcast_in_dim           99
+  stablehlo.compare                    3
+  stablehlo.concatenate                6
+  stablehlo.convert                    52
+  stablehlo.cosine                     2
+  stablehlo.divide                     20
+  stablehlo.dot_general                21
+  stablehlo.exponential                4
+  stablehlo.gather                     1
+  stablehlo.iota                       3
+  stablehlo.maximum                    2
+  stablehlo.multiply                   24
+  stablehlo.negate                     6
+  stablehlo.power                      2
+  stablehlo.reduce                     10
+  stablehlo.reshape                    26
+  stablehlo.select                     3
+  stablehlo.sine                       2
+  stablehlo.slice                      8
+  stablehlo.sqrt                       7
+  stablehlo.subtract                   2
+  stablehlo.transpose                  16
+
+Lowering with wrapped DEFAULT_PATTERNS...
+CANONICALIZED reduce_sum/divide/multiply -> mean_keepdims: 5
+FUSED rmsnorm          idx=24    consumed=18  lead=node_24      op=chlo.square                    outputs=['%1___call___114___call___1010___call__19']
+OP_LOWERING SOFTMAX FUSED node_133 ['%69___call___186___call___1010___call__19'] axis 3
+FUSED silu             idx=164   consumed=7   lead=node_164     op=stablehlo.negate               outputs=['%0_silu8___call___749___call___1010___call__19']
+OP_LOWERING SOFTMAX FUSED node_284 ['%69___call___1813___call___8417___call__19'] axis 3
+FUSED silu             idx=314   consumed=7   lead=node_314     op=stablehlo.negate               outputs=['%0_silu15___call___7416___call___8417___call__19']
+
+================ FUSION SUMMARY ================
+  silu             2
+  rmsnorm          1
+  TOTAL            3
+
+Pattern opportunities rough check:
+  stablehlo.maximum: 2 possible ReLU-ish but may be masks/clamps
+  stablehlo.reduce: 10 possible softmax/RMSNorm reductions
+  stablehlo.exponential: 4 softmax usually has exp
+  stablehlo.divide: 20 softmax/RMSNorm/etc
+
+Done.

@@ -79,6 +79,22 @@ _lib.cactus_graph_subtract.argtypes = [cactus_graph_t, cactus_node_t,
   cactus_node_t, ctypes.POINTER(cactus_node_t)]
 _lib.cactus_graph_subtract.restype = ctypes.c_int
 
+_lib.cactus_graph_compare.argtypes = [
+    cactus_graph_t,
+    cactus_node_t,
+    cactus_node_t,
+    ctypes.c_int32,
+    ctypes.POINTER(cactus_node_t),
+]
+_lib.cactus_graph_compare.restype = ctypes.c_int
+_lib.cactus_graph_select.argtypes = [
+    cactus_graph_t,
+    cactus_node_t,
+    cactus_node_t,
+    cactus_node_t,
+    ctypes.POINTER(cactus_node_t),
+]
+_lib.cactus_graph_select.restype = ctypes.c_int
 _lib.cactus_graph_multiply.argtypes = [
     cactus_graph_t, cactus_node_t, cactus_node_t, ctypes.POINTER(cactus_node_t)
 ]

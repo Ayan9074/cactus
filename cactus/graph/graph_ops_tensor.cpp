@@ -12,15 +12,36 @@ void compute_transpose_node(GraphNode& node, const std::vector<std::unique_ptr<G
 
     const auto& input_buffer = get_input(node, 0, nodes, node_index_map);
 
-    if (input_buffer.precision != Precision::FP16) {
-        throw std::runtime_error("Transpose only supports FP16 precision");
-    }
-
     const auto& permutation = node.params.permutation;
-
-    const __fp16* input = input_buffer.data_as<__fp16>();
-    __fp16* output = node.output_buffer.data_as<__fp16>();
-    cactus_transpose_f16(input, output, input_buffer.shape.data(), permutation.data(), permutation.size(), 0, input_buffer.total_size);
+    if (input_buffer.precision != node.output_buffer.precision) {
+        throw std::runtime_error("Transpose requires matching input/output precision");
+    }
+    if (input_buffer.precision == Precision::FP16) {
+        const __fp16* input = input_buffer.data_as<__fp16>();
+        __fp16* output = node.output_buffer.data_as<__fp16>();
+        cactus_transpose_f16(input, output, input_buffer.shape.data(), permutation.data(), permutation.size(), 0, input_buffer.total_size);
+        return;
+    }
+    if (input_buffer.precision != Precision::FP32) {
+        throw std::runtime_error("Transpose only supports FP16/FP32 precision");
+    }
+    const float* input = input_buffer.data_as<float>();
+    float* output = node.output_buffer.data_as<float>();
+    const auto& in_shape = input_buffer.shape;
+    const auto& out_shape = node.output_buffer.shape;
+    std::vector<size_t> in_strides(in_shape.size(), 1), out_strides(out_shape.size(), 1);
+    for (int i = static_cast<int>(in_shape.size()) - 2; i >= 0; --i) in_strides[i] = in_strides[i + 1] * in_shape[i + 1];
+    for (int i = static_cast<int>(out_shape.size()) - 2; i >= 0; --i) out_strides[i] = out_strides[i + 1] * out_shape[i + 1];
+    for (size_t oi = 0; oi < node.output_buffer.total_size; ++oi) {
+        size_t rem = oi;
+        size_t ii = 0;
+        for (size_t od = 0; od < out_shape.size(); ++od) {
+            size_t coord = rem / out_strides[od];
+            rem %= out_strides[od];
+            ii += coord * in_strides[permutation[od]];
+        }
+        output[oi] = input[ii];
+    }
 }
 
 void compute_gather_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map) {
@@ -321,13 +342,34 @@ void compute_concat_node(GraphNode& node, const std::vector<std::unique_ptr<Grap
     std::vector<size_t> shape2 = input2_buffer.shape;
     std::vector<size_t> output_shape = node.output_buffer.shape;
 
-    if (input1_buffer.precision != Precision::FP16) {
-        throw std::runtime_error("Concat operation only supports FP16 precision");
+    if (input1_buffer.precision != input2_buffer.precision ||
+        node.output_buffer.precision != input1_buffer.precision) {
+        throw std::runtime_error("Concat operation requires matching input/output precision");
     }
-    cactus_concat_f16(input1_buffer.data_as<__fp16>(), input2_buffer.data_as<__fp16>(),
-                     node.output_buffer.data_as<__fp16>(),
-                     shape1.data(), shape2.data(), output_shape.data(),
-                     shape1.size(), node.params.axis);
+    if (input1_buffer.precision == Precision::FP16) {
+        cactus_concat_f16(input1_buffer.data_as<__fp16>(), input2_buffer.data_as<__fp16>(),
+                         node.output_buffer.data_as<__fp16>(),
+                         shape1.data(), shape2.data(), output_shape.data(),
+                         shape1.size(), node.params.axis);
+        return;
+    }
+    if (input1_buffer.precision != Precision::FP32) {
+        throw std::runtime_error("Concat operation only supports FP16/FP32 precision");
+    }
+
+    const float* a = input1_buffer.data_as<float>();
+    const float* b = input2_buffer.data_as<float>();
+    float* out = node.output_buffer.data_as<float>();
+    int axis = node.params.axis < 0 ? static_cast<int>(shape1.size()) + node.params.axis : node.params.axis;
+    size_t outer = 1, inner = 1;
+    for (int i = 0; i < axis; ++i) outer *= shape1[i];
+    for (size_t i = axis + 1; i < shape1.size(); ++i) inner *= shape1[i];
+    size_t d1 = shape1[axis], d2 = shape2[axis];
+    size_t out_stride = (d1 + d2) * inner;
+    for (size_t o = 0; o < outer; ++o) {
+        std::memcpy(out + o * out_stride, a + o * d1 * inner, d1 * inner * sizeof(float));
+        std::memcpy(out + o * out_stride + d1 * inner, b + o * d2 * inner, d2 * inner * sizeof(float));
+    }
 }
 
 void compute_cat_node(
@@ -344,31 +386,54 @@ void compute_cat_node(
 
     const auto& first_buffer = get_input(node, 0, nodes, node_index_map);
 
-    if (first_buffer.precision != Precision::FP16) {
-        throw std::runtime_error("Cat operation only supports FP16 precision");
-    }
-
-    std::vector<const __fp16*> input_data_ptrs(node.input_ids.size());
+    bool all_fp16 = first_buffer.precision == Precision::FP16;
+    bool all_fp32 = first_buffer.precision == Precision::FP32;
     std::vector<const size_t*> input_shape_ptrs(node.input_ids.size());
-
     for (size_t i = 0; i < node.input_ids.size(); i++) {
         const auto& buffer = get_input(node, i, nodes, node_index_map);
-
-        if (buffer.precision != Precision::FP16) {
-            throw std::runtime_error("Cat operation only supports FP16 precision");
-        }
-
-        input_data_ptrs[i] = buffer.data_as<__fp16>();
+        all_fp16 = all_fp16 && (buffer.precision == Precision::FP16);
+        all_fp32 = all_fp32 && (buffer.precision == Precision::FP32);
         input_shape_ptrs[i] = buffer.shape.data();
     }
-
-    cactus_cat_f16(input_data_ptrs.data(),
-                   node.output_buffer.data_as<__fp16>(),
-                   input_shape_ptrs.data(),
-                   node.output_buffer.shape.data(),
-                   node.input_ids.size(),
-                   node.output_buffer.shape.size(),
-                   node.params.axis);
+    if (!(all_fp16 || all_fp32)) {
+        throw std::runtime_error("Cat operation requires all inputs to have same FP16/FP32 precision");
+    }
+    if (all_fp16) {
+        std::vector<const __fp16*> input_data_ptrs(node.input_ids.size());
+        for (size_t i = 0; i < node.input_ids.size(); i++) {
+            input_data_ptrs[i] = get_input(node, i, nodes, node_index_map).data_as<__fp16>();
+        }
+        cactus_cat_f16(input_data_ptrs.data(),
+                       node.output_buffer.data_as<__fp16>(),
+                       input_shape_ptrs.data(),
+                       node.output_buffer.shape.data(),
+                       node.input_ids.size(),
+                       node.output_buffer.shape.size(),
+                       node.params.axis);
+        return;
+    }
+    if (node.output_buffer.precision != Precision::FP32) {
+        throw std::runtime_error("Cat operation output precision must match FP32 inputs");
+    }
+    const int axis = node.params.axis;
+    size_t outer = 1, inner = 1;
+    const auto& out_shape = node.output_buffer.shape;
+    for (int i = 0; i < axis; ++i) outer *= out_shape[i];
+    for (size_t i = axis + 1; i < out_shape.size(); ++i) inner *= out_shape[i];
+    float* out = node.output_buffer.data_as<float>();
+    size_t axis_offset = 0;
+    for (size_t in_i = 0; in_i < node.input_ids.size(); ++in_i) {
+        const auto& buf = get_input(node, in_i, nodes, node_index_map);
+        const float* src = buf.data_as<float>();
+        size_t axis_dim = buf.shape[axis];
+        size_t out_axis_dim = out_shape[axis];
+        for (size_t o = 0; o < outer; ++o) {
+            std::memcpy(out + o * out_axis_dim * inner + axis_offset * inner,
+                        src + o * axis_dim * inner,
+                        axis_dim * inner * sizeof(float));
+        }
+        axis_offset += axis_dim;
+    }
 }
 
 void compute_index_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map) {

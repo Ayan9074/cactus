@@ -1,0 +1,1783 @@
+[
+  {
+    "arg_index": 0,
+    "param_key": "embedder/input_embedding",
+    "shape": [
+      262144,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 1,
+    "param_key": "final_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 2,
+    "param_key": "layer_0/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 3,
+    "param_key": "layer_0/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 4,
+    "param_key": "layer_0/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 5,
+    "param_key": "layer_0/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 6,
+    "param_key": "layer_0/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 7,
+    "param_key": "layer_0/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 8,
+    "param_key": "layer_0/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 9,
+    "param_key": "layer_0/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 10,
+    "param_key": "layer_0/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 11,
+    "param_key": "layer_0/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 12,
+    "param_key": "layer_0/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 13,
+    "param_key": "layer_1/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 14,
+    "param_key": "layer_1/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 15,
+    "param_key": "layer_1/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 16,
+    "param_key": "layer_1/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 17,
+    "param_key": "layer_1/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 18,
+    "param_key": "layer_1/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 19,
+    "param_key": "layer_1/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 20,
+    "param_key": "layer_1/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 21,
+    "param_key": "layer_1/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 22,
+    "param_key": "layer_1/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 23,
+    "param_key": "layer_1/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 24,
+    "param_key": "layer_10/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 25,
+    "param_key": "layer_10/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 26,
+    "param_key": "layer_10/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 27,
+    "param_key": "layer_10/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 28,
+    "param_key": "layer_10/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 29,
+    "param_key": "layer_10/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 30,
+    "param_key": "layer_10/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 31,
+    "param_key": "layer_10/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 32,
+    "param_key": "layer_10/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 33,
+    "param_key": "layer_10/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 34,
+    "param_key": "layer_10/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 35,
+    "param_key": "layer_11/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 36,
+    "param_key": "layer_11/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 37,
+    "param_key": "layer_11/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 38,
+    "param_key": "layer_11/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 39,
+    "param_key": "layer_11/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 40,
+    "param_key": "layer_11/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 41,
+    "param_key": "layer_11/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 42,
+    "param_key": "layer_11/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 43,
+    "param_key": "layer_11/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 44,
+    "param_key": "layer_11/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 45,
+    "param_key": "layer_11/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 46,
+    "param_key": "layer_12/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 47,
+    "param_key": "layer_12/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 48,
+    "param_key": "layer_12/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 49,
+    "param_key": "layer_12/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 50,
+    "param_key": "layer_12/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 51,
+    "param_key": "layer_12/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 52,
+    "param_key": "layer_12/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 53,
+    "param_key": "layer_12/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 54,
+    "param_key": "layer_12/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 55,
+    "param_key": "layer_12/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 56,
+    "param_key": "layer_12/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 57,
+    "param_key": "layer_13/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 58,
+    "param_key": "layer_13/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 59,
+    "param_key": "layer_13/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 60,
+    "param_key": "layer_13/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 61,
+    "param_key": "layer_13/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 62,
+    "param_key": "layer_13/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 63,
+    "param_key": "layer_13/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 64,
+    "param_key": "layer_13/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 65,
+    "param_key": "layer_13/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 66,
+    "param_key": "layer_13/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 67,
+    "param_key": "layer_13/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 68,
+    "param_key": "layer_14/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 69,
+    "param_key": "layer_14/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 70,
+    "param_key": "layer_14/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 71,
+    "param_key": "layer_14/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 72,
+    "param_key": "layer_14/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 73,
+    "param_key": "layer_14/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 74,
+    "param_key": "layer_14/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 75,
+    "param_key": "layer_14/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 76,
+    "param_key": "layer_14/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 77,
+    "param_key": "layer_14/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 78,
+    "param_key": "layer_14/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 79,
+    "param_key": "layer_15/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 80,
+    "param_key": "layer_15/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 81,
+    "param_key": "layer_15/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 82,
+    "param_key": "layer_15/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 83,
+    "param_key": "layer_15/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 84,
+    "param_key": "layer_15/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 85,
+    "param_key": "layer_15/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 86,
+    "param_key": "layer_15/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 87,
+    "param_key": "layer_15/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 88,
+    "param_key": "layer_15/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 89,
+    "param_key": "layer_15/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 90,
+    "param_key": "layer_16/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 91,
+    "param_key": "layer_16/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 92,
+    "param_key": "layer_16/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 93,
+    "param_key": "layer_16/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 94,
+    "param_key": "layer_16/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 95,
+    "param_key": "layer_16/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 96,
+    "param_key": "layer_16/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 97,
+    "param_key": "layer_16/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 98,
+    "param_key": "layer_16/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 99,
+    "param_key": "layer_16/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 100,
+    "param_key": "layer_16/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 101,
+    "param_key": "layer_17/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 102,
+    "param_key": "layer_17/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 103,
+    "param_key": "layer_17/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 104,
+    "param_key": "layer_17/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 105,
+    "param_key": "layer_17/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 106,
+    "param_key": "layer_17/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 107,
+    "param_key": "layer_17/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 108,
+    "param_key": "layer_17/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 109,
+    "param_key": "layer_17/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 110,
+    "param_key": "layer_17/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 111,
+    "param_key": "layer_17/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 112,
+    "param_key": "layer_2/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 113,
+    "param_key": "layer_2/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 114,
+    "param_key": "layer_2/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 115,
+    "param_key": "layer_2/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 116,
+    "param_key": "layer_2/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 117,
+    "param_key": "layer_2/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 118,
+    "param_key": "layer_2/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 119,
+    "param_key": "layer_2/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 120,
+    "param_key": "layer_2/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 121,
+    "param_key": "layer_2/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 122,
+    "param_key": "layer_2/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 123,
+    "param_key": "layer_3/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 124,
+    "param_key": "layer_3/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 125,
+    "param_key": "layer_3/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 126,
+    "param_key": "layer_3/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 127,
+    "param_key": "layer_3/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 128,
+    "param_key": "layer_3/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 129,
+    "param_key": "layer_3/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 130,
+    "param_key": "layer_3/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 131,
+    "param_key": "layer_3/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 132,
+    "param_key": "layer_3/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 133,
+    "param_key": "layer_3/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 134,
+    "param_key": "layer_4/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 135,
+    "param_key": "layer_4/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 136,
+    "param_key": "layer_4/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 137,
+    "param_key": "layer_4/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 138,
+    "param_key": "layer_4/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 139,
+    "param_key": "layer_4/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 140,
+    "param_key": "layer_4/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 141,
+    "param_key": "layer_4/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 142,
+    "param_key": "layer_4/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 143,
+    "param_key": "layer_4/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 144,
+    "param_key": "layer_4/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 145,
+    "param_key": "layer_5/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 146,
+    "param_key": "layer_5/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 147,
+    "param_key": "layer_5/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 148,
+    "param_key": "layer_5/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 149,
+    "param_key": "layer_5/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 150,
+    "param_key": "layer_5/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 151,
+    "param_key": "layer_5/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 152,
+    "param_key": "layer_5/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 153,
+    "param_key": "layer_5/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 154,
+    "param_key": "layer_5/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 155,
+    "param_key": "layer_5/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 156,
+    "param_key": "layer_6/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 157,
+    "param_key": "layer_6/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 158,
+    "param_key": "layer_6/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 159,
+    "param_key": "layer_6/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 160,
+    "param_key": "layer_6/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 161,
+    "param_key": "layer_6/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 162,
+    "param_key": "layer_6/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 163,
+    "param_key": "layer_6/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 164,
+    "param_key": "layer_6/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 165,
+    "param_key": "layer_6/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 166,
+    "param_key": "layer_6/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 167,
+    "param_key": "layer_7/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 168,
+    "param_key": "layer_7/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 169,
+    "param_key": "layer_7/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 170,
+    "param_key": "layer_7/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 171,
+    "param_key": "layer_7/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 172,
+    "param_key": "layer_7/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 173,
+    "param_key": "layer_7/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 174,
+    "param_key": "layer_7/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 175,
+    "param_key": "layer_7/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 176,
+    "param_key": "layer_7/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 177,
+    "param_key": "layer_7/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 178,
+    "param_key": "layer_8/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 179,
+    "param_key": "layer_8/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 180,
+    "param_key": "layer_8/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 181,
+    "param_key": "layer_8/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 182,
+    "param_key": "layer_8/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 183,
+    "param_key": "layer_8/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 184,
+    "param_key": "layer_8/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 185,
+    "param_key": "layer_8/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 186,
+    "param_key": "layer_8/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 187,
+    "param_key": "layer_8/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 188,
+    "param_key": "layer_8/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 189,
+    "param_key": "layer_9/attn/_key_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 190,
+    "param_key": "layer_9/attn/_query_norm/scale",
+    "shape": [
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 191,
+    "param_key": "layer_9/attn/attn_vec_einsum/w",
+    "shape": [
+      4,
+      256,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 192,
+    "param_key": "layer_9/attn/kv_einsum/w",
+    "shape": [
+      2,
+      1,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 193,
+    "param_key": "layer_9/attn/q_einsum/w",
+    "shape": [
+      4,
+      640,
+      256
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 194,
+    "param_key": "layer_9/mlp/gating_einsum",
+    "shape": [
+      2,
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 195,
+    "param_key": "layer_9/mlp/linear",
+    "shape": [
+      2048,
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 196,
+    "param_key": "layer_9/post_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 197,
+    "param_key": "layer_9/post_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 198,
+    "param_key": "layer_9/pre_attention_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  },
+  {
+    "arg_index": 199,
+    "param_key": "layer_9/pre_ffw_norm/scale",
+    "shape": [
+      640
+    ],
+    "dtype": "bfloat16"
+  }
+]
