@@ -1,0 +1,15 @@
+python jaxconversion/convert_any.py \
+  --gemma3-hf-model-id google/gemma-3-270m \
+  --gemma3-hf-dir "$HOME/.jaxgarden/hf_models/google/gemma-3-270m" \
+  --prompt "The capital of France is" \
+  --mmap-export-dir /private/tmp/gemma3_270m_mmap \
+  --run --test --bench-runs 1
+
+
+
+  python jaxconversion/convert_any.py \
+  --gemma3-hf-model-id google/gemma-3-270m \
+  --gemma3-hf-dir "$HOME/.jaxgarden/hf_models/google/gemma-3-270m" \
+  --prompt "The capital of France is" \
+  --mmap-export-dir /private/tmp/gemma3_270m_mmap_bench \
+  --run --test --bench-runs 3

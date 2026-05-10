@@ -12,7 +12,7 @@ import jax
 import jax.numpy as jnp
 
 
-def jax_to_mlir(fn, example_inputs: tuple) -> str:
+def jax_to_mlir(fn, example_inputs: tuple, *, with_debug_locs: bool = True) -> str:
     """
     JIT-compile a JAX function and lower it to StableHLO MLIR text.
 
@@ -29,9 +29,10 @@ def jax_to_mlir(fn, example_inputs: tuple) -> str:
         The StableHLO MLIR module as text.
     """
     lowered = jax.jit(fn).lower(*example_inputs)
+    mlir_text = lowered.as_text(dialect="stablehlo", debug_info=with_debug_locs)
     with open("out.mlir", 'w') as f:
-        f.write(lowered.as_text())
-    return lowered.as_text()
+        f.write(mlir_text)
+    return mlir_text
 
 
 # ---------------------------------------------------------------------------

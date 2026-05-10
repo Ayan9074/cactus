@@ -1,0 +1,24 @@
+--- python/src/graph.py
++++ python/src/graph.py
+@@
+     def _binary(self, fn_name, a, b):
+         a = self._ensure_tensor(a)
+         b = self._ensure_tensor(b)
++
++        # Cactus binary kernels currently execute as FP16 kernels. StableHLO/JAX
++        # often leaves f32/bf16 bookkeeping tensors around masks, RMSNorm and
++        # softmax, and if those reach ADD/SUBTRACT/MULTIPLY/DIVIDE the graph can
++        # be built but fail later at execute() with:
++        #   Binary operations require matching input/output precision
++        # Keep this wrapper conservative: every Python-created binary node has
++        # FP16 inputs, so C++ also gives it an FP16 output buffer.
++        if a.dtype != self.FP16:
++            a = self.precision_cast(a, self.FP16)
++        if b.dtype != self.FP16:
++            b = self.precision_cast(b, self.FP16)
++
+         out = cactus_node_t()
+         rc = getattr(_lib, fn_name)(self.h, cactus_node_t(a.id), cactus_node_t(b.id), ctypes.byref(out))
+         if rc != 0:
+             raise RuntimeError(f"{fn_name} failed")
+         return self._tensor_from_node(out.value)

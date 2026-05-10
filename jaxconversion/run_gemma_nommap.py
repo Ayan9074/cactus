@@ -57,6 +57,79 @@ def find_arg_file(weight_dir, idx):
     return Path(matches[0])
 
 
+def set_input_by_tensor_dtype(g, t, arr: np.ndarray) -> None:
+    dt = int(getattr(t, "dtype", 1))
+    if dt == 1:
+        g.set_input(t, np.asarray(arr, dtype=np.float16), dtype=1)
+    elif dt == 2:
+        g.set_input(t, np.asarray(arr, dtype=np.float32), dtype=2)
+    else:
+        g.set_input(t, np.asarray(arr, dtype=np.int32), dtype=dt)
+
+
+def load_named_gemma2_param(weight_dir: Path, idx: int) -> np.ndarray:
+    def norm_unshift(x: np.ndarray) -> np.ndarray:
+        # StableHLO applies (1 + scale) for Gemma RMSNorm.
+        # HF checkpoints store the final multiplier, so provide (w - 1) here.
+        return (x.astype(np.float32) - np.float32(1.0)).astype(np.float16)
+
+    if idx == 0:
+        return read_cactus_fp16(weight_dir / "token_embeddings.weights")
+    if idx == 1:
+        return norm_unshift(read_cactus_fp16(weight_dir / "output_norm.weights"))
+
+    # Per-layer layout in this StableHLO:
+    # [attn_output, attn_kv, attn_q, ffn_gate_up, ffn_down, input_norm, post_attn_norm, pre_ffn_norm, post_ffn_norm]
+    j = idx - 2
+    layer = j // 9
+    slot = j % 9
+
+    if slot == 0:
+        o = read_cactus_fp16(weight_dir / f"layer_{layer}_attn_output.weights")  # [D, H*DH]
+        d, hd = o.shape
+        h = 8
+        dh = hd // h
+        return o.reshape(d, h, dh).transpose(1, 2, 0)  # [H, DH, D]
+    if slot == 1:
+        k = read_cactus_fp16(weight_dir / f"layer_{layer}_attn_k.weights")  # [KVH*DH, D]
+        v = read_cactus_fp16(weight_dir / f"layer_{layer}_attn_v.weights")  # [KVH*DH, D]
+        kvh = 4
+        dh = k.shape[0] // kvh
+        kk = k.reshape(kvh, dh, k.shape[1]).transpose(0, 2, 1)  # [KVH, D, DH]
+        vv = v.reshape(kvh, dh, v.shape[1]).transpose(0, 2, 1)  # [KVH, D, DH]
+        return np.stack([kk, vv], axis=0)  # [2, KVH, D, DH]
+    if slot == 2:
+        q = read_cactus_fp16(weight_dir / f"layer_{layer}_attn_q.weights")  # [H*DH, D]
+        h = 8
+        dh = q.shape[0] // h
+        return q.reshape(h, dh, q.shape[1]).transpose(0, 2, 1)  # [H, D, DH]
+    if slot == 3:
+        gate = read_cactus_fp16(weight_dir / f"layer_{layer}_ffn_gate.weights")  # [FF, D]
+        up = read_cactus_fp16(weight_dir / f"layer_{layer}_ffn_up.weights")      # [FF, D]
+        return np.stack([gate.T, up.T], axis=0)  # [2, D, FF]
+    if slot == 4:
+        down = read_cactus_fp16(weight_dir / f"layer_{layer}_ffn_down.weights")  # [D, FF]
+        return down.T  # [FF, D]
+    if slot == 5:
+        return norm_unshift(read_cactus_fp16(weight_dir / f"layer_{layer}_input_norm.weights"))
+    if slot == 6:
+        return norm_unshift(read_cactus_fp16(weight_dir / f"layer_{layer}_post_attn_norm.weights"))
+    if slot == 7:
+        return norm_unshift(read_cactus_fp16(weight_dir / f"layer_{layer}_pre_ffn_norm.weights"))
+    if slot == 8:
+        return norm_unshift(read_cactus_fp16(weight_dir / f"layer_{layer}_post_ffn_norm.weights"))
+
+    raise RuntimeError(f"unreachable slot={slot} idx={idx}")
+
+
+def _pad_first_dim(arr: np.ndarray, target0: int) -> np.ndarray:
+    if arr.shape[0] >= target0:
+        return arr
+    pad_shape = (target0 - arr.shape[0],) + arr.shape[1:]
+    pad = np.zeros(pad_shape, dtype=arr.dtype)
+    return np.concatenate([arr, pad], axis=0)
+
+
 def set_constants(g, env, ir):
     for ssa, const in ir.constants.items():
         if ssa not in env:
@@ -89,6 +162,8 @@ def main():
     ap.add_argument("--mask", choices=["causal", "ones", "zeros"], default="causal")
     ap.add_argument("--logit-index", choices=["last_real", "last_slot"], default="last_real")
     ap.add_argument("--use-bos", type=int, default=1)
+    ap.add_argument("--weights-format", choices=["arg", "named"], default="named")
+    ap.add_argument("--pos-base", type=int, default=11)
     args = ap.parse_args()
 
     ir = parse_mlir(Path(args.mlir).read_text())
@@ -105,8 +180,17 @@ def main():
     wdir = Path(args.weights)
     for i in range(236):
         ssa = f"%arg{i}"
-        arr = read_cactus_fp16(find_arg_file(wdir, i))
-        g.set_input(env[ssa], arr, dtype=1)
+        if args.weights_format == "arg":
+            arr = read_cactus_fp16(find_arg_file(wdir, i))
+        else:
+            arr = load_named_gemma2_param(wdir, i)
+        expected = tuple(int(x) for x in getattr(env[ssa], "shape", ()))
+        if expected and tuple(arr.shape) != expected:
+            if len(arr.shape) == len(expected) and arr.shape[1:] == expected[1:] and arr.shape[0] < expected[0]:
+                arr = _pad_first_dim(arr, expected[0])
+            else:
+                raise ValueError(f"shape mismatch {ssa}: got {arr.shape}, expected {expected}")
+        set_input_by_tensor_dtype(g, env[ssa], arr)
 
     set_constants(g, env, ir)
 
@@ -117,30 +201,32 @@ def main():
 
     def window_inputs(tokens):
         T = 8
-        ctx = tokens[-T:]
+        total = len(tokens)
+        start = max(0, total - T)
+        ctx = tokens[start:total]
         valid = len(ctx)
         if valid < T:
             ctx = ctx + [0] * (T - valid)
-        tokens_np = np.array([ctx], dtype=np.float32)
-        pos_np = np.zeros((1, T), dtype=np.float32)
-        pos_np[0, :valid] = np.arange(valid, dtype=np.float32)
+        tokens_np = np.array([ctx], dtype=np.int32)
+        pos_np = np.zeros((1, T), dtype=np.int32)
+        pos_np[0, :valid] = np.arange(start + int(args.pos_base), start + int(args.pos_base) + valid, dtype=np.int32)
         if args.mask == "ones":
-            mask = np.ones((1, T, T), dtype=np.float32)
+            mask = np.ones((1, T, T), dtype=np.int32)
         elif args.mask == "zeros":
-            mask = np.zeros((1, T, T), dtype=np.float32)
+            mask = np.zeros((1, T, T), dtype=np.int32)
         else:
-            mask = np.zeros((1, T, T), dtype=np.float32)
+            mask = np.zeros((1, T, T), dtype=np.int32)
             for r in range(T):
                 for c in range(T):
-                    mask[0, r, c] = 1.0 if c <= r else 0.0
+                    mask[0, r, c] = 1 if c <= r else 0
         return tokens_np, pos_np, mask, valid - 1
 
     print("Generating...")
     for step in range(args.steps):
         tokens_np, pos_np, mask_np, last = window_inputs(ids)
-        g.set_input(env["%arg236"], tokens_np, dtype=2)
-        g.set_input(env["%arg237"], pos_np, dtype=2)
-        g.set_input(env["%arg238"], mask_np, dtype=2)
+        set_input_by_tensor_dtype(g, env["%arg236"], tokens_np)
+        set_input_by_tensor_dtype(g, env["%arg237"], pos_np)
+        set_input_by_tensor_dtype(g, env["%arg238"], mask_np)
         t0 = time.perf_counter()
         g.execute()
         ms = (time.perf_counter() - t0) * 1000

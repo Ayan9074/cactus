@@ -135,10 +135,18 @@ def _producer_idx(nodes, ssa):
 
 
 def _call_rms_norm(ctx, x, weight, eps):
+    # Cactus RMSNorm kernel is currently FP16-only.
+    x_in = x
+    w_in = weight
+    x_work = x if getattr(x, "dtype", None) == 1 else ctx.graph.precision_cast(x, 1)
+    w_work = weight if getattr(weight, "dtype", None) == 1 else ctx.graph.precision_cast(weight, 1)
     try:
-        return ctx.graph.rms_norm(x, weight, eps=eps)
+        out = ctx.graph.rms_norm(x_work, w_work, eps=eps)
     except TypeError:
-        return ctx.graph.rms_norm(x, weight, eps)
+        out = ctx.graph.rms_norm(x_work, w_work, eps)
+    if getattr(x_in, "dtype", None) != 1:
+        out = ctx.graph.precision_cast(out, getattr(x_in, "dtype", 1))
+    return out
 
 
 def _call_gelu(ctx, x):
@@ -1113,7 +1121,10 @@ def _try_softmax_13_clamped_casted(ctx: LoweringCtx, nodes: list, idx: int):
         return None
 
     axis = _axis_from_reduce(red_max)
-    out = ctx.graph.softmax(_get(ctx, x_ssa), axis=axis)
+    x = _get(ctx, x_ssa)
+    if getattr(x, "dtype", None) != 1:
+        x = ctx.graph.precision_cast(x, 1)
+    out = ctx.graph.softmax(x, axis=axis)
 
     _bind_consumed_outputs(ctx, nodes, idx, 13, out)
     return [out], 13
@@ -1166,7 +1177,10 @@ def _try_softmax_8_with_maximum(ctx: LoweringCtx, nodes: list, idx: int):
         return None
 
     axis = _axis_from_reduce(red_max)
-    out = ctx.graph.softmax(_get(ctx, x_ssa), axis=axis)
+    x = _get(ctx, x_ssa)
+    if getattr(x, "dtype", None) != 1:
+        x = ctx.graph.precision_cast(x, 1)
+    out = ctx.graph.softmax(x, axis=axis)
 
     _bind_consumed_outputs(ctx, nodes, idx, 8, out)
     return [out], 8
@@ -1215,7 +1229,10 @@ def _try_softmax_7(ctx: LoweringCtx, nodes: list, idx: int):
         return None
 
     axis = _axis_from_reduce(red_max)
-    out = ctx.graph.softmax(_get(ctx, x_ssa), axis=axis)
+    x = _get(ctx, x_ssa)
+    if getattr(x, "dtype", None) != 1:
+        x = ctx.graph.precision_cast(x, 1)
+    out = ctx.graph.softmax(x, axis=axis)
 
     _bind_consumed_outputs(ctx, nodes, idx, 7, out)
     return [out], 7
@@ -1250,7 +1267,10 @@ def _try_softmax_4_unstable(ctx: LoweringCtx, nodes: list, idx: int):
         return None
 
     axis = _axis_from_reduce(red_sum)
-    out = ctx.graph.softmax(_get(ctx, x_ssa), axis=axis)
+    x = _get(ctx, x_ssa)
+    if getattr(x, "dtype", None) != 1:
+        x = ctx.graph.precision_cast(x, 1)
+    out = ctx.graph.softmax(x, axis=axis)
 
     _bind_consumed_outputs(ctx, nodes, idx, 4, out)
     return [out], 4
@@ -1429,6 +1449,127 @@ SILU = Pattern(
 
 
 # ---------------------------------------------------------------------------
+# Attention softmax fusion (qk -> softmax -> @v)
+# ---------------------------------------------------------------------------
+
+def _try_attention_from_softmax_window(ctx: LoweringCtx, nodes: list, idx: int):
+    """
+    Fuse common StableHLO attention window:
+
+      scores = (q @ k^T) * scale
+      masked = select(mask, scores, -inf/large-neg)
+      probs = softmax(masked)
+      out = probs @ v
+
+    This matcher anchors on `stablehlo.exponential` in the softmax chain and
+    only fires when the downstream consumer is a `stablehlo.dot_general`.
+    """
+    exp = _op(nodes, idx, 0)
+    if exp is None or exp.op != "stablehlo.exponential":
+        return None
+
+    c0 = _op(nodes, idx, 1)
+    red = _op(nodes, idx, 2)
+    b0 = _op(nodes, idx, 3)
+    c1 = _op(nodes, idx, 4)
+    b1 = _op(nodes, idx, 5)
+    div = _op(nodes, idx, 6)
+    attn = _op(nodes, idx, 7)
+    if not (c0 and red and b0 and c1 and b1 and div and attn):
+        return None
+    if c0.op != "stablehlo.convert":
+        return None
+    if red.op != "stablehlo.reduce":
+        return None
+    if b0.op != "stablehlo.broadcast_in_dim":
+        return None
+    if c1.op != "stablehlo.convert":
+        return None
+    if b1.op != "stablehlo.broadcast_in_dim":
+        return None
+    if div.op != "stablehlo.divide":
+        return None
+    if attn.op != "stablehlo.dot_general":
+        return None
+    if _inp(div, 0) != _out(exp):
+        return None
+    if _inp(attn, 0) != _out(div):
+        return None
+
+    # Walk back to masked score select.
+    sub_prod = _producer_node(nodes, _inp(exp, 0))
+    if sub_prod is None:
+        return None
+    _, sub = sub_prod
+    if sub.op != "stablehlo.subtract":
+        return None
+
+    masked_ssa = _inp(sub, 0)
+    masked_prod = _producer_node(nodes, masked_ssa)
+    if masked_prod is None:
+        return None
+    _, sel = masked_prod
+    if sel.op != "stablehlo.select":
+        return None
+
+    # One select input should be score tensor from multiply(scale, qk_dot).
+    score_mul = None
+    for ssa in sel.inputs:
+        p = _producer_node(nodes, ssa)
+        if p is None:
+            continue
+        _, n = p
+        if n.op == "stablehlo.multiply":
+            # Prefer multiply that consumes a dot_general.
+            a0 = _producer_node(nodes, _inp(n, 0))
+            a1 = _producer_node(nodes, _inp(n, 1))
+            if (a0 and a0[1].op == "stablehlo.dot_general") or (a1 and a1[1].op == "stablehlo.dot_general"):
+                score_mul = n
+                break
+    if score_mul is None:
+        return None
+
+    qk_dot = None
+    scale = 1.0
+    for ssa in score_mul.inputs:
+        p = _producer_node(nodes, ssa)
+        if p and p[1].op == "stablehlo.dot_general":
+            qk_dot = p[1]
+        else:
+            # Try scalar const through bcast/convert.
+            base = _trace_back_through_unary(nodes, ssa)
+            cval = _const_float(ctx, base)
+            if cval is not None and abs(float(cval)) > 0:
+                scale = float(cval)
+    if qk_dot is None:
+        return None
+
+    q_ssa = _inp(qk_dot, 0)
+    k_ssa = _inp(qk_dot, 1)
+    v_ssa = _inp(attn, 1)
+    if q_ssa not in ctx.env or k_ssa not in ctx.env or v_ssa not in ctx.env:
+        return None
+
+    q = _get(ctx, q_ssa)
+    k = _get(ctx, k_ssa)
+    v = _get(ctx, v_ssa)
+
+    out = ctx.graph.attention(q, k, v, float(scale))
+
+    # Bind the whole softmax window and attention output.
+    _bind_consumed_outputs(ctx, nodes, idx, 8, out)
+    ctx.env[_out(attn)] = out
+    return [out], 8
+
+
+ATTENTION = Pattern(
+    name="attention_softmax",
+    handler=_try_attention_from_softmax_window,
+    trigger_ops={"stablehlo.exponential"},
+)
+
+
+# ---------------------------------------------------------------------------
 # Exported pattern list
 # ---------------------------------------------------------------------------
 
@@ -1438,5 +1579,6 @@ DEFAULT_PATTERNS: list[Pattern] = [
     GELU,
     SILU,
     RELU,
+    ATTENTION,
     SOFTMAX,
 ]

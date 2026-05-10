@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jaxgarden"
+version = "0.2.0"
+description = "High-performance model implementations in JAX"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "JAXgarden Contributors"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "jax==0.5.1",
+    "flax>=0.10.4",
+    "safetensors>=0.5.3",
+    "huggingface-hub>=0.30.2",
+    "orbax>=0.1.9",
+    "jinja2>=3.1.6",
+    "tokenizers>=0.21.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "myst-parser",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "transformers",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ml-gde/jax-layers"
+"Bug Tracker" = "https://github.com/ml-gde/jax-layers/issues"
+
+[tool.setuptools]
+packages = ["jaxgarden"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "UP", "C4", "PT", "RUF", "SIM", "TID"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disable_error_code = "var-annotated"
+
+[[tool.mypy.overrides]]
+module = ["tests.*", "examples.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

@@ -408,10 +408,22 @@ def _canonicalize_runtime_mask_path(ir):
 
     This removes fragile compare/select boolean emulation from the hot path.
     """
+    # Find boolean runtime mask arg dynamically (instead of hardcoding %arg238).
+    mask_args = []
+    for ssa in ir.inputs:
+        v = ir.values.get(ssa)
+        if v is None:
+            continue
+        if str(getattr(v, "dtype", "")).lower() == "i1":
+            mask_args.append(ssa)
+    if not mask_args:
+        return 0
+    runtime_mask_ssa = mask_args[-1]
+
     and_outputs = []
     for nid in ir.order:
         n = ir.nodes[nid]
-        if n.op == "stablehlo.and" and len(n.inputs) == 2 and "%arg238" in n.inputs and n.outputs:
+        if n.op == "stablehlo.and" and len(n.inputs) == 2 and runtime_mask_ssa in n.inputs and n.outputs:
             and_outputs.append(n.outputs[0])
 
     if not and_outputs:
@@ -424,7 +436,7 @@ def _canonicalize_runtime_mask_path(ir):
         changed = False
         for ssa in n.inputs:
             if ssa in and_outputs:
-                new_inputs.append("%arg238")
+                new_inputs.append(runtime_mask_ssa)
                 changed = True
             else:
                 new_inputs.append(ssa)
@@ -450,6 +462,8 @@ def decode_stablehlo_const(value: Any, dtype: Any) -> Any:
 
     if isinstance(value, str):
         s = value.strip()
+        if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
+            s = s[1:-1].strip()
         low = s.lower()
 
         if low in ("inf", "+inf", "infinity", "+infinity"):
@@ -464,6 +478,10 @@ def decode_stablehlo_const(value: Any, dtype: Any) -> Any:
             return 0.0
 
         if low.startswith("0x"):
+            # StableHLO tensor constants can be serialized as huge quoted hex blobs
+            # (dense<"0x....">). Those are not scalar literals.
+            if len(low) > 32:
+                raise ValueError("non-scalar hex blob constant")
             bits = int(low, 16)
             dtype_s = str(dtype).lower()
 
@@ -492,17 +510,9 @@ def _constant_storage_dtype(const: Any) -> int:
     """
     Pick the Cactus dtype for a StableHLO constant input node.
     """
-    dtype_s = str(const.dtype).lower().strip()
-    dtype = _cactus_dtype(const.dtype)
-
-    # FP16-first policy only for floating-point scalar arithmetic constants.
-    # Integer/bool/index scalars must keep non-FP16 storage to avoid precision
-    # mismatches in compare/mask paths.
-    if not const.shape:
-        if dtype_s in ("f32", "bf16", "f16"):
-            return 1
-
-    return dtype
+    # Preserve declared StableHLO constant precision at storage boundary.
+    # Mixed-precision op sites are handled by op-lowering alignment logic.
+    return _cactus_dtype(const.dtype)
 
 
 # ---------------------------------------------------------------------------
@@ -639,8 +649,10 @@ def lower_to_cactus(
         dtype = _constant_storage_dtype(const)
         shape = list(const.shape) if const.shape else [1]
 
-        scalar = decode_stablehlo_const(const.value, const.dtype)
-        const_values[ssa] = scalar
+        scalar = None
+        if not const.shape:
+            scalar = decode_stablehlo_const(const.value, const.dtype)
+            const_values[ssa] = scalar
 
         tensor = graph.input(shape, dtype=dtype)
         env[ssa] = tensor

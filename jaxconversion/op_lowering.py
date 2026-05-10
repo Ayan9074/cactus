@@ -18,10 +18,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+import os
 import re
 import itertools
 from typing import Any, TYPE_CHECKING
-
+import numpy as np
 if TYPE_CHECKING:
     from parse import IRNode
     from pattern_registry import LoweringCtx
@@ -44,7 +45,9 @@ _DTYPE_MAP = {
     # Cactus does not have general i32/i64 tensors. These are mapped to FP32
     # only so simple index-like inputs can be carried through the FFI. Boolean
     # or arithmetic integer semantics are NOT implemented by this file.
-    "i1": 2,
+    # Boolean masks are represented as 0/1 numeric tensors in Cactus.
+    # Keep as FP16 to avoid expensive FP32 mask traffic through attention paths.
+    "i1": 1,
     "i32": 2,
     "si32": 2,
     "ui32": 2,
@@ -55,6 +58,75 @@ _DTYPE_MAP = {
 
 _FLOAT_DTYPES = {1, 2}  # Graph.FP16, Graph.FP32
 
+
+def _high_precision_reduce_enabled() -> bool:
+    # Optional parity experiment; disabled by default for performance.
+    return os.environ.get("CACTUS_HIGH_PREC_REDUCE", "0") == "1"
+
+
+def _matmul_prescale() -> float:
+    try:
+        v = float(os.environ.get("CACTUS_MATMUL_PRESCALE", "1.0"))
+    except Exception:
+        v = 1.0
+    if not math.isfinite(v) or v <= 0.0:
+        return 1.0
+    return v
+
+def _node_float_target_dtype(node) -> int | None:
+    if not getattr(node, "result_types", None):
+        return None
+    try:
+        d = _dtype_from_type_str(node.result_types[0]).lower()
+    except Exception:
+        return None
+    if d == "f32":
+        return 2
+    if d in ("f16", "bf16"):
+        return 1
+    return None
+
+
+def _align_binary_precision(ctx, a, b, opname="binary", target: int | None = None):
+    """
+    Cactus binary ops require matching precision.
+
+    For this compiler path, prefer FP16 when mixed FP16/FP32 appears.
+    Reason: Cactus matmul requires FP16 activations, and StableHLO often
+    creates FP32 scalar/iota constants that should not promote the whole
+    transformer activation path to FP32.
+    """
+    da = getattr(a, "dtype", None)
+    db = getattr(b, "dtype", None)
+
+    if da is None or db is None or da == db:
+        return a, b
+
+    # Only handle Cactus float dtypes here.
+    # 1 = FP16/bf16-as-fp16, 2 = FP32.
+    if da not in _FLOAT_DTYPES or db not in _FLOAT_DTYPES:
+        return a, b
+
+    if target is None:
+        # Precision policy:
+        # Default is FP16-preferred for runtime speed / matmul compatibility.
+        # Optional env override allows FP32-preferred alignment for parity studies.
+        prefer_fp32 = os.environ.get("CACTUS_PREFER_FP32_BINARY", "") == "1"
+        if prefer_fp32:
+            target = 2 if (da == 2 or db == 2) else 1
+        else:
+            # If either side is FP16, cast the other side to FP16.
+            # This prevents FP32 RoPE/mask constants from making activations FP32
+            # before a Cactus FP16 matmul.
+            target = 1 if (da == 1 or db == 1) else 2
+
+    if da != target:
+        a = ctx.graph.precision_cast(a, int(target))
+
+    if db != target:
+        b = ctx.graph.precision_cast(b, int(target))
+
+    return a, b
 
 def _cactus_dtype(dtype_str: str) -> int:
     return _DTYPE_MAP.get(dtype_str.strip(), 1)
@@ -427,7 +499,21 @@ def _lower_dot_general(ctx, node):
     n = _prod(rhs_free_shape)
     lhs_2d = _reshape_if_needed(ctx, lhs_t, (m, k))
     rhs_2d = _reshape_if_needed(ctx, rhs_t, (k, n))
+
+    allow_fp32_matmul = os.environ.get("CACTUS_ALLOW_FP32_MATMUL", "") == "1"
+    if not allow_fp32_matmul:
+        if getattr(lhs_2d, "dtype", None) != 1:
+            lhs_2d = ctx.graph.precision_cast(lhs_2d, 1)
+        if getattr(rhs_2d, "dtype", None) != 1:
+            rhs_2d = ctx.graph.precision_cast(rhs_2d, 1)
+
+    s = _matmul_prescale()
+    if s != 1.0:
+        lhs_2d = ctx.graph.scalar_multiply(lhs_2d, float(s))
+        rhs_2d = ctx.graph.scalar_multiply(rhs_2d, float(s))
     out_2d = ctx.graph.matmul(lhs_2d, rhs_2d)
+    if s != 1.0:
+        out_2d = ctx.graph.scalar_multiply(out_2d, float(1.0 / (s * s)))
 
     out_shape = _result_shape(node)
     if not out_shape:
@@ -546,7 +632,21 @@ def _lower_dot_general_unrolled_batched(
 
         lhs_2d = _reshape_if_needed(ctx, lhs_slice, (m, k))
         rhs_2d = _reshape_if_needed(ctx, rhs_slice, (k, n))
+
+        allow_fp32_matmul = os.environ.get("CACTUS_ALLOW_FP32_MATMUL", "") == "1"
+        if not allow_fp32_matmul:
+            if getattr(lhs_2d, "dtype", None) != 1:
+                lhs_2d = ctx.graph.precision_cast(lhs_2d, 1)
+            if getattr(rhs_2d, "dtype", None) != 1:
+                rhs_2d = ctx.graph.precision_cast(rhs_2d, 1)
+
+        s = _matmul_prescale()
+        if s != 1.0:
+            lhs_2d = ctx.graph.scalar_multiply(lhs_2d, float(s))
+            rhs_2d = ctx.graph.scalar_multiply(rhs_2d, float(s))
         out_2d = ctx.graph.matmul(lhs_2d, rhs_2d)
+        if s != 1.0:
+            out_2d = ctx.graph.scalar_multiply(out_2d, float(1.0 / (s * s)))
 
         pieces[tuple(int(i) for i in batch_idx)] = _reshape_if_needed(ctx, out_2d, piece_shape)
 
@@ -610,6 +710,20 @@ def _one_minus(ctx, x):
 
 def _lower_compare(ctx, node):
     a, b = _binary_args(ctx, node, "compare")
+    # Compare drives masking/index validity logic; forcing FP32 here avoids
+    # FP16 threshold/rounding artifacts that can flip mask bits on larger dims.
+    # Keep this local to compare so matmul-heavy paths stay FP16.
+    if getattr(a, "dtype", None) != 2:
+        a = ctx.graph.precision_cast(a, 2)
+    if getattr(b, "dtype", None) != 2:
+        b = ctx.graph.precision_cast(b, 2)
+    if os.environ.get("CACTUS_DEBUG_SWAP_COMPARE_OPERANDS", "") == "1":
+        a, b = b, a
+    if os.environ.get("CACTUS_DEBUG_FORCE_COMPARE_TRUE", "") == "1":
+        z = ctx.graph.add(a, b)
+        z = ctx.graph.scalar_multiply(z, 0.0)
+        one = ctx.graph.scalar_add(z, 1.0)
+        return [one]
     direction = _compare_direction(node)
     return [ctx.graph.compare(a, b, direction)]
 
@@ -617,11 +731,13 @@ def _lower_compare(ctx, node):
 def _lower_and(ctx, node):
     a, b = _binary_args(ctx, node, "and")
     # For 0/1 numeric masks, logical AND = multiply.
+    a, b = _align_binary_precision(ctx, a, b, "and", target=_node_float_target_dtype(node))
     return [ctx.graph.multiply(a, b)]
 
 
 def _lower_or(ctx, node):
     a, b = _binary_args(ctx, node, "or")
+    a, b = _align_binary_precision(ctx, a, b, "or", target=_node_float_target_dtype(node))
     # For 0/1 masks: OR = a + b - a*b
     ab = ctx.graph.multiply(a, b)
     return [ctx.graph.subtract(ctx.graph.add(a, b), ab)]
@@ -637,12 +753,35 @@ def _lower_select(ctx, node):
     true_value = _storage_tensor(_get(ctx, node.inputs[1]))
     false_value = _storage_tensor(_get(ctx, node.inputs[2]))
 
+    # Keep true/false in a branch-safe precision first. Do NOT let mask force
+    # them down to FP16 (that can overflow integer-like branch values and
+    # create NaNs in fallback arithmetic).
+    branch_target = 2 if (
+        getattr(true_value, "dtype", None) == 2 or getattr(false_value, "dtype", None) == 2
+    ) else 1
+    true_value, false_value = _align_binary_precision(
+        ctx, true_value, false_value, "select", target=branch_target
+    )
+    if getattr(mask, "dtype", None) != branch_target:
+        mask = ctx.graph.precision_cast(mask, branch_target)
+
     # Cactus select can fail on dtype/shape edge cases, especially because
     # StableHLO bool/int masks are carried as numeric tensors in this path.
-    # Fallback: select(m, t, f) = m*t + (1-m)*f for numeric 0/1 masks.
     try:
         return [ctx.graph.select(mask, true_value, false_value)]
     except Exception:
+        # Retry with a strict FP32 triplet first. This avoids arithmetic
+        # fallback on inf-valued branches (common in attention masks), where
+        # 0*inf may create NaNs.
+        try:
+            m2 = mask if getattr(mask, "dtype", None) == 2 else ctx.graph.precision_cast(mask, 2)
+            t2 = true_value if getattr(true_value, "dtype", None) == 2 else ctx.graph.precision_cast(true_value, 2)
+            f2 = false_value if getattr(false_value, "dtype", None) == 2 else ctx.graph.precision_cast(false_value, 2)
+            return [ctx.graph.select(m2, t2, f2)]
+        except Exception:
+            pass
+
+        # Final fallback: select(m, t, f) = m*t + (1-m)*f for numeric 0/1 masks.
         target_dtype = 2 if (
             getattr(true_value, "dtype", 1) == 2 or getattr(false_value, "dtype", 1) == 2
         ) else 1
@@ -885,6 +1024,9 @@ def _canonical_softmax_axis(ctx, x, axis):
       permute back
     """
     x = _force_tensor(x, "softmax")
+    # Cactus softmax kernel is FP16-only.
+    if getattr(x, "dtype", None) != 1:
+        x = ctx.graph.precision_cast(x, 1)
 
     rank = len(x.shape)
     if rank == 0:
@@ -916,24 +1058,53 @@ def _canonical_softmax_axis(ctx, x, axis):
 # ---------------------------------------------------------------------------
 
 def _binary_args(ctx, node, opname: str):
-    a = _storage_tensor(_get(ctx, node.inputs[0]))
-    b = _storage_tensor(_get(ctx, node.inputs[1]))
-    return a, b
+    a_raw = _get(ctx, node.inputs[0])
+    b_raw = _get(ctx, node.inputs[1])
+    disable_bv_mat = os.environ.get("CACTUS_DISABLE_BINARY_BV_MATERIALIZE", "") == "1"
 
+    # Prefer explicit materialization for true broadcast views in binary ops.
+    # Relying on implicit backend broadcasting has produced NaNs on some
+    # middle-axis expansions (e.g. [1,1,D] -> [1,T,D]) in real Gemma traces.
+    if _is_broadcast_view(a_raw):
+        if disable_bv_mat:
+            a = _storage_tensor(a_raw)
+        else:
+            try:
+                a = _materialize_broadcast_view(ctx, a_raw, f"{opname}:lhs")
+            except NotImplementedError:
+                a = _storage_tensor(a_raw)
+    else:
+        a = a_raw
+
+    if _is_broadcast_view(b_raw):
+        if disable_bv_mat:
+            b = _storage_tensor(b_raw)
+        else:
+            try:
+                b = _materialize_broadcast_view(ctx, b_raw, f"{opname}:rhs")
+            except NotImplementedError:
+                b = _storage_tensor(b_raw)
+    else:
+        b = b_raw
+    return a, b
 
 def _lower_add(ctx, node):
     a, b = _binary_args(ctx, node, "add")
+    a, b = _align_binary_precision(ctx, a, b, "add", target=_node_float_target_dtype(node))
     return [ctx.graph.add(a, b)]
 
 
 def _lower_subtract(ctx, node):
     a, b = _binary_args(ctx, node, "subtract")
+    a, b = _align_binary_precision(ctx, a, b, "subtract", target=_node_float_target_dtype(node))
     return [ctx.graph.subtract(a, b)]
 
 def _lower_multiply(ctx, node):
+    target_dtype = _node_float_target_dtype(node)
     a, b = _binary_args(ctx, node, "multiply")
 
     try:
+        a, b = _align_binary_precision(ctx, a, b, "multiply", target=target_dtype)
         return [ctx.graph.multiply(a, b)]
     except Exception as e:
         def shape_of(x):
@@ -1033,16 +1204,20 @@ def _lower_divide(ctx, node):
     m = _match_decomposed_softmax_divide(ctx, node)
     if m is not None:
         input_ssa, axis = m
-        print("OP_LOWERING SOFTMAX FUSED", node.id, node.outputs, "axis", axis)
+        if os.environ.get("CACTUS_DEBUG_SOFTMAX_FUSION", "") == "1":
+            print(f"[softmax-fuse] divide node={getattr(node, 'id', '?')} axis={axis} input={input_ssa}")
         x = _get(ctx, input_ssa)
         return [_canonical_softmax_axis(ctx, x, axis)]
 
     a, b = _binary_args(ctx, node, "divide")
+    a, b = _align_binary_precision(ctx, a, b, "divide", target=_node_float_target_dtype(node))
     return [ctx.graph.divide(a, b)]
 
 
 def _lower_cactus_mean_keepdims(ctx, node):
     x = _force_tensor(_get(ctx, node.inputs[0]), "cactus.mean_keepdims")
+    if _high_precision_reduce_enabled() and getattr(x, "dtype", None) == 1:
+        x = ctx.graph.precision_cast(x, 2)
 
     axis = int(node.attrs["axis"])
     if axis < 0:
@@ -1058,6 +1233,8 @@ def _lower_cactus_mean_keepdims(ctx, node):
 
 def _lower_cactus_mean(ctx, node):
     x = _force_tensor(_get(ctx, node.inputs[0]), "cactus.mean")
+    if _high_precision_reduce_enabled() and getattr(x, "dtype", None) == 1:
+        x = ctx.graph.precision_cast(x, 2)
     axis = int(node.attrs["axis"])
     if axis < 0:
         axis += len(x.shape)
@@ -1361,7 +1538,12 @@ def _lower_convert(ctx, node):
     src_dtype = x.dtype
 
     if src_dtype in _FLOAT_DTYPES and target in _FLOAT_DTYPES:
-        return [x]
+        # Preserve StableHLO cast semantics for float<->float conversions.
+        # This is important for parity because many transformer paths upcast
+        # to f32 around normalization/softmax numerics.
+        if src_dtype == target:
+            return [x]
+        return [ctx.graph.precision_cast(x, target)]
     return [ctx.graph.precision_cast(x, target)]
 
 
@@ -1371,6 +1553,8 @@ def _lower_convert(ctx, node):
 
 def _lower_reduce(ctx, node):
     x = _force_tensor(_get(ctx, node.inputs[0]), "reduce")
+    if _high_precision_reduce_enabled() and getattr(x, "dtype", None) == 1:
+        x = ctx.graph.precision_cast(x, 2)
     dims = node.attrs.get("dimensions", [-1])
     if isinstance(dims, int):
         dims = [dims]
@@ -1533,21 +1717,57 @@ def _lower_gather(ctx, node):
     idx_shape = tuple(idx.shape)
     expected = _shape_from_type_str(node.result_types[0]) if node.result_types else None
 
+    # Safety clamp for runtime-generated indices:
+    # StableHLO gather is index-based; any precision drift in decomposed index
+    # arithmetic can create out-of-range values and crash execution.
+    # Clamp to valid first-axis bounds before gather.
+    if table_shape and table_shape[0] > 0 and bool(node.attrs.get("_cactus_embedding_gather", False)):
+        if getattr(idx, "dtype", None) != 2:
+            idx = ctx.graph.precision_cast(idx, 2)
+        z = ctx.graph.scalar_multiply(idx, 0.0)
+        hi = ctx.graph.scalar_add(z, float(int(table_shape[0]) - 1))
+        # nonneg = max(idx, 0) = 0.5 * (idx + abs(idx))
+        nonneg = ctx.graph.scalar_multiply(
+            ctx.graph.add(idx, ctx.graph.abs(idx)),
+            0.5,
+        )
+        # clamped = min(nonneg, hi) = hi - max(hi - nonneg, 0)
+        d = ctx.graph.subtract(hi, nonneg)
+        dpos = ctx.graph.scalar_multiply(
+            ctx.graph.add(d, ctx.graph.abs(d)),
+            0.5,
+        )
+        idx = ctx.graph.subtract(hi, dpos)
+
     # Gemma embedding gather:
     #   table: [vocab, hidden]
     #   idx:   [B,T] or [B,T,1]
     #   out:   [B,T,hidden]
+    #
+    # IMPORTANT:
+    # Cactus embedding kernel has stricter storage-format expectations than
+    # generic gather. Use it by default only for canonically-marked embedding
+    # gathers and fp16 tables; otherwise fall back to generic gather.
+    force_embedding_kernel = os.environ.get("CACTUS_USE_EMBEDDING_KERNEL", "") == "1"
+    disable_embedding_kernel = os.environ.get("CACTUS_DISABLE_EMBEDDING_KERNEL", "") == "1"
+    marked_embedding = bool(node.attrs.get("_cactus_embedding_gather", False))
+    table_is_fp16 = (getattr(table, "dtype", None) == 1)
+    use_embedding_kernel = (
+        (force_embedding_kernel or (marked_embedding and table_is_fp16))
+        and not disable_embedding_kernel
+    )
     if len(table_shape) == 2 and expected:
         hidden = table_shape[1]
 
-        if len(idx_shape) >= 1 and idx_shape[-1] == 1:
-            squeezed_idx_shape = idx_shape[:-1]
-            if tuple(expected) == tuple(squeezed_idx_shape) + (hidden,):
-                idx = ctx.graph.reshape(idx, squeezed_idx_shape)
-                return [ctx.graph.embedding_from_tensor(table, idx)]
+        if use_embedding_kernel:
+            if len(idx_shape) >= 1 and idx_shape[-1] == 1:
+                squeezed_idx_shape = idx_shape[:-1]
+                if tuple(expected) == tuple(squeezed_idx_shape) + (hidden,):
+                    idx = ctx.graph.reshape(idx, squeezed_idx_shape)
+                    return [ctx.graph.embedding_from_tensor(table, idx)]
 
-        if tuple(expected) == tuple(idx_shape) + (hidden,):
-            return [ctx.graph.embedding_from_tensor(table, idx)]
+            if tuple(expected) == tuple(idx_shape) + (hidden,):
+                return [ctx.graph.embedding_from_tensor(table, idx)]
 
     # Fallback: simple first-axis gather only.
     out = ctx.graph.gather(table, idx)
@@ -1690,6 +1910,8 @@ def _lower_power(ctx, node):
 
 def _lower_softmax(ctx, node):
     x = _force_tensor(_get(ctx, node.inputs[0]), "softmax")
+    if getattr(x, "dtype", None) != 1:
+        x = ctx.graph.precision_cast(x, 1)
     axis = int(node.attrs.get("dimension", -1))
     actual_axis = _norm_axis(axis, len(x.shape))
     # Cactus compute_softmax_node ignores params.axis and always softmaxes over
